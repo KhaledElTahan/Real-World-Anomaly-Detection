@@ -5,7 +5,7 @@
 
 import torch
 import torch.nn as nn
-from detectron2.layers import ROIAlign
+from roi_align import ROIAlign
 
 
 class ResNetRoIHead(nn.Module):
