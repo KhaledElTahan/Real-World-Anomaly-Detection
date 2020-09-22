@@ -117,10 +117,11 @@ _C.EXTRACT.SAVE_RESULTS_PATH = ""
 _C.BACKBONE = CfgNode()
 
 # Path to the configuration of the backbone model.
-_C.BACKBONE.CONFIG_FILE_PATH = ""
+# Path root should be "configs/slowfast-configs/"
+_C.BACKBONE.CONFIG_FILE_PATH = "configs/slowfast-configs/Kinetics/SLOWFAST_8x8_R50.yaml"
 
 # Path to the checkpoint to load the initial weight.
-_C.BACKBONE.CHECKPOINT_FILE_PATH = 1
+_C.BACKBONE.CHECKPOINT_FILE_PATH = ""
 
 # If False -> Backbone will be part of the overall model
 # If True -> Backbone will only be a feature extractor
@@ -129,6 +130,12 @@ _C.BACKBONE.FEATURE_EXTRACTION = True
 # If true fine tune the mode, else require no gradient.
 _C.BACKBONE.TRAINABLE = False
 
+# Use those attributes to inject them into the backbone cfg
+# The backbone_cfg will set those attibutes with the mode cfg values 
+_C.BACKBONE.MERGE_CFG_LIST = [
+    "NUM_GPUS",
+    "NUM_SHARDS",
+] 
 
 # -----------------------------------------------------------------------------
 # Model options

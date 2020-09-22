@@ -12,11 +12,15 @@ def parse_args():
     Args:
         gpus (int): number of used gpus, if 0 then use cpu
         cfg (str): path to the config file.
+        init_method (str): initialization method to launch the job with multiple
+            devices. Options includes TCP or shared file-system for
+            initialization. details can be find in
+            https://pytorch.org/docs/stable/distributed.html#tcp-initialization
         opts (argument): provide addtional options from the command line, it
             overwrites the config loaded from file.
         """
     parser = argparse.ArgumentParser(
-        description="Provide SlowFast video training and testing pipeline."
+        description="Provide model evaluation, feature extraction, training and testing pipeline."
     )
     parser.add_argument(
         "--gpus",
@@ -28,7 +32,13 @@ def parse_args():
         "--cfg",
         dest="cfg_file",
         help="Path to the config file",
-        default="configs/Kinetics/SLOWFAST_4x16_R50.yaml",
+        # default="configs/Kinetics/SLOWFAST_4x16_R50.yaml",
+        type=str,
+    )
+    parser.add_argument(
+        "--init_method",
+        help="Initialization method, includes TCP or shared file-system",
+        default="tcp://localhost:9999",
         type=str,
     )
     parser.add_argument(
@@ -38,9 +48,12 @@ def parse_args():
         nargs=argparse.REMAINDER,
     )
 
-    if len(sys.argv) == 1:
+    if '-h' in sys.argv or '--help' in sys.argv:
         parser.print_help()
-    
+
+        if len(sys.argv) == 2:
+            sys.exit()
+
     return parser.parse_args()
 
 
@@ -49,7 +62,7 @@ def load_config(args):
     Given the arguemnts, load and initialize the configs.
     Args:
         args (argument): arguments includes `gpus`, `cfg_file`,
-            and `opts`.
+            `init_method` , and `opts`.
     """
     # Setup cfg.
     cfg = get_cfg()
