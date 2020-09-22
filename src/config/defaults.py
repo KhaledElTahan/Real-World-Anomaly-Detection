@@ -94,6 +94,23 @@ _C.TEST.CHECKPOINT_TYPE = "pytorch"
 # Path to saving prediction results file.
 _C.TEST.SAVE_RESULTS_PATH = ""
 
+# ---------------------------------------------------------------------------- #
+# Feature Extraction options
+# ---------------------------------------------------------------------------- #
+_C.EXTRACT = CfgNode()
+
+# If True extract the data features, else skip the extraction.
+_C.EXTRACT.ENABLE = True
+
+# Dataset for testing.
+_C.EXTRACT.DATASET = "kinetics"
+
+# Total mini-batch size
+_C.EXTRACT.BATCH_SIZE = 8
+
+# Path to saving extraction results files.
+_C.EXTRACT.SAVE_RESULTS_PATH = ""
+
 # -----------------------------------------------------------------------------
 # Backbone options
 # -----------------------------------------------------------------------------
