@@ -117,11 +117,12 @@ _C.EXTRACT.SAVE_RESULTS_PATH = ""
 _C.BACKBONE = CfgNode()
 
 # Path to the configuration of the backbone model.
-# Path root should be "configs/slowfast-configs/"
-_C.BACKBONE.CONFIG_FILE_PATH = "configs/slowfast-configs/Kinetics/SLOWFAST_8x8_R50.yaml"
+# Path root should be "configs"
+_C.BACKBONE.CONFIG_FILE_PATH = "slowfast-configs/Kinetics/c2/SLOWFAST_8x8_R50.yaml"
 
 # Path to the checkpoint to load the initial weight.
-_C.BACKBONE.CHECKPOINT_FILE_PATH = ""
+# Path root should be "checkpoints"
+_C.BACKBONE.CHECKPOINT_FILE_PATH = "slowfast-checkpoints/Kinetics/c2/SLOWFAST_8x8_R50.pkl"
 
 # If False -> Backbone will be part of the overall model
 # If True -> Backbone will only be a feature extractor

@@ -1,8 +1,9 @@
 """Helper to reuuse the backbone model"""
-from pathlib import Path
+import src.utils.pathutils as pathutils
 import operator
 from src.models.slowfast.config.defaults import get_cfg as get_backbone_default_cfg
 from src.models.slowfast.models import build_model
+import src.models.slowfast.utils.checkpoint as cu
 
 def _merge_configurations(backbone_cfg, cfg):
     """
@@ -39,13 +40,11 @@ def _load_native_backbone_cfg(cfg):
             backbone configuration file
     """
 
-    backbone_cfg_file_name = cfg.BACKBONE.CONFIG_FILE_PATH
-    app_directory = Path(__file__).parents[2].absolute()
-
     backbone_cfg = get_backbone_default_cfg()
-    backbone_cfg.merge_from_file(app_directory / backbone_cfg_file_name)
+    backbone_cfg.merge_from_file(pathutils.get_configs_path() / cfg.BACKBONE.CONFIG_FILE_PATH)
 
     return backbone_cfg
+
 
 
 def load_model(cfg):
@@ -56,6 +55,15 @@ def load_model(cfg):
     """
 
     backbone_cfg = _merge_configurations(_load_native_backbone_cfg(cfg), cfg)
-    model = build_model(backbone_cfg)
+    backbone_model = build_model(backbone_cfg)
 
-    print(model)
+    cu.load_checkpoint(
+        pathutils.get_checkpoints_path() / cfg.BACKBONE.CHECKPOINT_FILE_PATH,
+        backbone_model,
+        cfg.NUM_GPUS > 1,
+        None,
+        inflation=False,
+        convert_from_caffe2=backbone_cfg.TRAIN.CHECKPOINT_TYPE == "caffe2"
+    )
+
+    return backbone_model
