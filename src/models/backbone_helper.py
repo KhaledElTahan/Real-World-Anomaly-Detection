@@ -1,7 +1,8 @@
 """Helper to reuuse the backbone model"""
 from pathlib import Path
 import operator
-from slowfast.config.defaults import get_cfg as get_backbone_default_cfg
+from src.models.slowfast.config.defaults import get_cfg as get_backbone_default_cfg
+from src.models.slowfast.models import build_model
 
 def _merge_configurations(backbone_cfg, cfg):
     """
@@ -55,5 +56,6 @@ def load_model(cfg):
     """
 
     backbone_cfg = _merge_configurations(_load_native_backbone_cfg(cfg), cfg)
+    model = build_model(backbone_cfg)
 
-    print(backbone_cfg)
+    print(model)

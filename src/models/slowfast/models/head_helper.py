@@ -5,7 +5,7 @@
 
 import torch
 import torch.nn as nn
-from roi_align import ROIAlign
+from slowfast.models.roi_align import ROIAlign
 
 
 class ResNetRoIHead(nn.Module):

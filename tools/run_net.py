@@ -1,8 +1,8 @@
 """Wrapper to use the video model."""
 import sys
-import os
-sys.path.insert(0, os.path.abspath('..'))
-
+from pathlib import Path
+app_directory = Path(__file__).absolute().parents[1]
+sys.path.insert(0, str(app_directory)) 
 from src.utils.misc import launch_job
 from src.utils.parser import load_config, parse_args
 from tools.extract_video_features import extract
