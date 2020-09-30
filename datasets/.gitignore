@@ -1,7 +1,5 @@
 # Ignore everything in this directory
 *
+
 # Except this file
 !.gitignore
-!Temporal_Anomaly_Annotation_for_Testing_Videos.txt
-!ReadMe-Anomaly-Detection.txt
-!Anomaly_Train.txt
