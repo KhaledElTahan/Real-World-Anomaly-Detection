@@ -1,7 +1,7 @@
 """Util Video Transformations, PyTorch Implementation"""
 import math
 import numpy as np
-import torch 
+import torch
 
 
 def random_short_side_scale_jitter(

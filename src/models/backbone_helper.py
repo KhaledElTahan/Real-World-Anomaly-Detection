@@ -1,6 +1,6 @@
-"""Helper to reuuse the backbone model"""
-import src.utils.pathutils as pathutils
+"""Helper to reuse the backbone model"""
 import operator
+import src.utils.pathutils as pathutils
 from src.models.slowfast.config.defaults import get_cfg as get_backbone_default_cfg
 from src.models.slowfast.models import build_model
 import src.models.slowfast.utils.checkpoint as cu
@@ -9,7 +9,10 @@ def _merge_configurations(backbone_cfg, cfg):
     """
     Merge the configurations from cfg into backbone_cfg
     Supports only two levels of inner attributes.
-    Examples:
+    Args:
+        backbone_cfg: The backbone model configuration file
+        cfg: The video model configuration file
+    Example:
         cfg.BACKBONE.MERGE_CFG_LIST = [
             "NUM_GPUS",
             "NUM_SHARDS",
@@ -46,15 +49,24 @@ def _load_native_backbone_cfg(cfg):
     return backbone_cfg
 
 
+def get_backbone_merged_cfg(cfg):
+    """
+    Loads the configuration file of the backbone, merges it with cfg
+        then return the merged backbone configuration
+    Args:
+        cfg: The video model configuration file
+    """
+    return _merge_configurations(_load_native_backbone_cfg(cfg), cfg)
+
 
 def load_model(cfg):
     """
-    Load the backbone model with respect to the configurations file
+    Create a backbone model from the configurations and load its weights
     Args:
         cfg: The video model configuration file
     """
 
-    backbone_cfg = _merge_configurations(_load_native_backbone_cfg(cfg), cfg)
+    backbone_cfg = get_backbone_merged_cfg(cfg)
     backbone_model = build_model(backbone_cfg)
 
     cu.load_checkpoint(
@@ -67,3 +79,14 @@ def load_model(cfg):
     )
 
     return backbone_model
+
+
+def get_feature_extractor(cfg):
+    """
+    Create a backbone model from the configurations and load its weights,
+        then remove its head based on the backbone cfg
+    Args:
+        cfg: The video model configuration file
+    """
+
+    backbone_model = load_model(cfg)
