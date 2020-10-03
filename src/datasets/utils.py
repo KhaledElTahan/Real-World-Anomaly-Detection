@@ -231,3 +231,14 @@ def loader_worker_init_fn(dataset):
         dataset (torch.utils.data.Dataset): the given dataset.
     """
     return None
+
+
+def video_name_to_features_name(video_name, ext):
+    """
+    Changes video file name to features file name with new extension
+    Args:
+        ext (String): The new extension
+    Examples:
+        video_name_to_features_name("video.mp4", "rar") -> video.rar
+    """
+    return video_name.split('.')[0] + '.' + ext

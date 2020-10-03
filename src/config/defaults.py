@@ -63,6 +63,13 @@ _C.TRAIN.CHECKPOINT_TYPE = "pytorch"
 # If True, perform inflation when loading checkpoint.
 _C.TRAIN.CHECKPOINT_INFLATE = False
 
+# Set it during the training, used in index shifting
+_C.TRAIN.CURRENT_EPOCH = 0
+
+# If true, each epoch we shift the mapping between one normal and one anomaly video
+# If false, training for all epochs happens with the same pair of (normal, anomaly)
+_C.TRAIN.SHIFT_INDEX = True
+
 # ---------------------------------------------------------------------------- #
 # Testing options
 # ---------------------------------------------------------------------------- #
@@ -108,8 +115,8 @@ _C.EXTRACT.DATASET = "UCFAnomalyDetection"
 # Total mini-batch size
 _C.EXTRACT.BATCH_SIZE = 8
 
-# Path to saving extraction results files.
-_C.EXTRACT.SAVE_RESULTS_PATH = ""
+# The extension of results files.
+_C.EXTRACT.FEATURES_EXT = "rar"
 
 # -----------------------------------------------------------------------------
 # Backbone options
