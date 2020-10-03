@@ -117,7 +117,7 @@ _C.EXTRACT.SAVE_RESULTS_PATH = ""
 _C.BACKBONE = CfgNode()
 
 # General name to the backbone model
-_C.BACKBONE.NAME = "Kinetics/c2/SLOWFAST_8x8_R50"
+_C.BACKBONE.NAME = "Kinetics_c2_SLOWFAST_8x8_R50"
 
 # Path to the configuration of the backbone model.
 # Path root should be "configs"
@@ -249,6 +249,9 @@ _C.DATA.REVERSE_INPUT_CHANNEL = False
 # Data Transformations options
 # -----------------------------------------------------------------------------
 _C.TRANSFORM = CfgNode()
+
+# A Code to distinguish the features extracted after applying the transformations
+_C.TRANSFORM.CODE = "NONE"
 
 # ---------------------------------------------------------------------------- #
 # Optimizer options

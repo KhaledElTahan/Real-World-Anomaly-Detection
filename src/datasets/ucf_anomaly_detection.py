@@ -92,7 +92,8 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         self._path_to_normal_videos = []
 
         if self.cfg.DATA.READ_FEATURES: # Read features
-            dataset_directory = dataset_directory / "features" / self.cfg.BACKBONE.NAME / self.mode
+            features_name = self.cfg.BACKBONE.NAME + "_" + self.cfg.TRANSFORM.CODE
+            dataset_directory = dataset_directory / "features" / features_name / self.mode
         else: # Read videos
             dataset_directory = dataset_directory / "videos" / self.mode
 
@@ -151,17 +152,18 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 self.mode, len(self._path_to_videos), path_to_file
             )
         )
-        
+
         dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
 
         print()
-        print("DATASET STATS:: Mode:{} Type:{}", self.mode, dataset_type)
-        print("Dataset actual directory: {}", dataset_directory)
+        print("~::DATASET STATS::~")
+        print("Name: UFC Anomaly Detection - Mode: {} - Type: {}".format(self.mode, dataset_type))
+        print("Dataset actual directory: {}".format(dataset_directory))
         print("Number of output classes: {}".format(len(self.output_classes)))
         print("Output classes: ", end="")
         print(self.output_classes)
-        print("Number of anomaly videos", len(self._path_to_anomaly_videos))
-        print("Number of normal videos", len(self._path_to_normal_videos))
+        print("Number of anomaly videos:", len(self._path_to_anomaly_videos))
+        print("Number of normal videos:", len(self._path_to_normal_videos))
 
 
 
