@@ -116,6 +116,9 @@ _C.EXTRACT.SAVE_RESULTS_PATH = ""
 # -----------------------------------------------------------------------------
 _C.BACKBONE = CfgNode()
 
+# General name to the backbone model
+_C.BACKBONE.NAME = "Kinetics/c2/SLOWFAST_8x8_R50"
+
 # Path to the configuration of the backbone model.
 # Path root should be "configs"
 _C.BACKBONE.CONFIG_FILE_PATH = "slowfast-configs/Kinetics/c2/SLOWFAST_8x8_R50.yaml"
@@ -171,6 +174,10 @@ _C.DATA = CfgNode()
 
 # The path to the data directory.
 _C.DATA.PATH_TO_DATA_DIR = "UFC_Anomaly_Detection"
+
+# If true, read from the extracted by "BACKBONE"
+# If false, read from videos
+_C.DATA.READ_FEATURES = True
 
 # The general separator used between path and label.
 _C.DATA.PATH_LABEL_SEPARATOR = " "

@@ -1,6 +1,4 @@
 """A Module for the UCF Anomaly Dataset"""
-import os
-from pathlib import Path
 import random
 import torch
 import torch.utils.data
@@ -93,7 +91,10 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         self._path_to_normal_videos = []
 
-        dataset_directory = dataset_directory / self.mode
+        if self.cfg.DATA.READ_FEATURES: # Read features
+            dataset_directory = dataset_directory / "features" / self.cfg.BACKBONE.NAME / self.mode
+        else: # Read videos
+            dataset_directory = dataset_directory / "videos" / self.mode
 
         with path_to_file.open("r") as file_ptr:
             for line in file_ptr.read().splitlines():
@@ -136,7 +137,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         assert (
             len(self._path_to_videos) > 0
         ), "Failed to load UCF Anomaly Detection {} from {}".format(
-            self.mode, dataset_directory
+            self.mode, path_to_file
         )
 
         assert(
@@ -150,13 +151,18 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 self.mode, len(self._path_to_videos), path_to_file
             )
         )
+        
+        dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
 
         print()
-        print("DATASET STATS::")
-        print("Output {} Classes:".format(len(self.output_classes)))
+        print("DATASET STATS:: Mode:{} Type:{}", self.mode, dataset_type)
+        print("Dataset actual directory: {}", dataset_directory)
+        print("Number of output classes: {}".format(len(self.output_classes)))
+        print("Output classes: ", end="")
         print(self.output_classes)
         print("Number of anomaly videos", len(self._path_to_anomaly_videos))
         print("Number of normal videos", len(self._path_to_normal_videos))
+
 
 
     def __getitem__(self, index):
