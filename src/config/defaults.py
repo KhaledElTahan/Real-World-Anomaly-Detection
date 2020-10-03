@@ -102,8 +102,8 @@ _C.EXTRACT = CfgNode()
 # If True extract the data features, else skip the extraction.
 _C.EXTRACT.ENABLE = True
 
-# Dataset for testing.
-_C.EXTRACT.DATASET = "kinetics"
+# Dataset for extracting the features.
+_C.EXTRACT.DATASET = "UCFAnomalyDetection"
 
 # Total mini-batch size
 _C.EXTRACT.BATCH_SIZE = 8
@@ -170,10 +170,19 @@ _C.MODEL.HEAD_ACT = ""
 _C.DATA = CfgNode()
 
 # The path to the data directory.
-_C.DATA.PATH_TO_DATA_DIR = ""
+_C.DATA.PATH_TO_DATA_DIR = "UFC_Anomaly_Detection"
 
-# The separator used between path and label.
+# The general separator used between path and label.
 _C.DATA.PATH_LABEL_SEPARATOR = " "
+
+# The training separator used between path and label.
+_C.DATA.PATH_LABEL_SEPARATOR_TRAINING = "/"
+
+# The validation separator used between path and label.
+_C.DATA.PATH_LABEL_SEPARATOR_VALIDATION = " "
+
+# The testing separator used between path and label.
+_C.DATA.PATH_LABEL_SEPARATOR_TESTING = "  " # two spaces
 
 # Video path prefix if any.
 _C.DATA.PATH_PREFIX = ""
@@ -229,6 +238,10 @@ _C.DATA.ENSEMBLE_METHOD = "sum"
 # If True, revert the default input channel (RBG <-> BGR).
 _C.DATA.REVERSE_INPUT_CHANNEL = False
 
+# -----------------------------------------------------------------------------
+# Data Transformations options
+# -----------------------------------------------------------------------------
+_C.TRANSFORM = CfgNode()
 
 # ---------------------------------------------------------------------------- #
 # Optimizer options

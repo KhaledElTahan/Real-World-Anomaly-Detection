@@ -17,6 +17,10 @@ def get_checkpoints_path():
     """Retrieve the absolute Path object of the checkpoints directory"""
     return get_app_path() / "checkpoints"
 
+def get_datasets_path():
+    """Retrieve the absolute Path object of the datasets directory"""
+    return get_app_path() / "datasets"
+
 def get_configs_path():
     """Retrieve the absolute Path object of the configurations directory"""
     return get_app_path() / "configs"

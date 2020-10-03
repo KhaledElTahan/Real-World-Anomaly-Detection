@@ -1,68 +1,68 @@
-"""A Module for the UFC Anomaly Dataset"""
+"""A Module for the UCF Anomaly Dataset"""
 import os
+from pathlib import Path
 import random
 import torch
 import torch.utils.data
-from fvcore.common.file_io import PathManager
 
 from src.datasets import decoder as decoder
 from src.datasets import utils as utils
+from src.utils import pathutils
 from src.datasets import video_container as container
 from src.datasets.build import DATASET_REGISTRY
 
 
 @DATASET_REGISTRY.register()
-class UFCAnomalyDetection(torch.utils.data.Dataset):
+class UCFAnomalyDetection(torch.utils.data.Dataset):
     """
-    UFCAnomalyDetection video loader.
+    UCFAnomalyDetection video loader.
     """
 
     def __init__(self, cfg, mode, num_retries=10):
         """
-        Construct the UFC Anomaly Detection video loader with a given csv file. The format of
-        the csv file is:
-        ```
-        path_to_video_1 label_1
-        path_to_video_2 label_2
-        ...
-        path_to_video_N label_N
-        ```
+        Construct the UCF Anomaly Detection video loader with a given two txt files. 
+        The format of the training file is:
+            ```
+            label_1/video_name_1
+            label_2/video_name_2
+            ...
+            label_N/video_name_N
+            ```
+        The format of the testing file is:
+            ```
+            video_name_1 label_1 1st_anomaly_s_idx_1 1st_anomaly_e_idx_1 2nd_anomaly_s_idx_1 2nd_anomaly_e_idx_1
+            video_name_2 label_2 1st_anomaly_s_idx_2 1st_anomaly_e_idx_2 2nd_anomaly_s_idx_2 2nd_anomaly_e_idx_2
+            ...
+            video_name_N label_N 1st_anomaly_s_idx_N 1st_anomaly_e_idx_N 2nd_anomaly_s_idx_N 2nd_anomaly_e_idx_N
+            ```
+            Notes:
+                Each video might have zero, one, or two anomalies
+                In case of:
+                    Two Anomalies: video_name label 1st_anomaly_s_idx 1st_anomaly_e_idx 2nd_anomaly_s_idx 2nd_anomaly_e_idx
+                    One Anomaly: video_name label 1st_anomaly_s_idx 1st_anomaly_e_idx -1 -1
+                    Zero Anomalies: video_name Normal -1 -1 -1 -1
+                
         URLs:
             https://www.crcv.ucf.edu/projects/real-world/
             https://visionlab.uncc.edu/download/summary/60-data/477-ucf-anomaly-detection-dataset
             https://www.dropbox.com/sh/75v5ehq4cdg5g5g/AABvnJSwZI7zXb8_myBA0CLHa?dl=0
         Args:
             cfg (CfgNode): configs.
-            mode (string): Options includes `train`, `val`, or `test` mode.
-                For the train and val mode, the data loader will take data
-                from the train or val set, and sample one clip per video.
-                For the test mode, the data loader will take data from test set,
-                and sample multiple clips per video.
+            mode (string): Options includes `train`, or `test` mode.
             num_retries (int): number of retries.
         """
-        # Only support train, val, and test mode.
+        # Only support train, and test mode.
         assert mode in [
             "train",
-            "val",
             "test",
-        ], "Split '{}' not supported for Kinetics".format(mode)
+        ], "Split '{}' not supported for UCF Anomaly Detection".format(mode)
         self.mode = mode
         self.cfg = cfg
 
         self._video_meta = {}
         self._num_retries = num_retries
-        # For training or validation mode, one single clip is sampled from every
-        # video. For testing, NUM_ENSEMBLE_VIEWS clips are sampled from every
-        # video. For every clip, NUM_SPATIAL_CROPS is cropped spatially from
-        # the frames.
-        if self.mode in ["train", "val"]:
-            self._num_clips = 1
-        elif self.mode in ["test"]:
-            self._num_clips = (
-                cfg.TEST.NUM_ENSEMBLE_VIEWS * cfg.TEST.NUM_SPATIAL_CROPS
-            )
 
-        print("Constructing Kinetics {}...".format(mode))
+        print("Constructing UCF Anomaly Detection {}...".format(mode))
 
         self._construct_loader()
 
@@ -70,43 +70,94 @@ class UFCAnomalyDetection(torch.utils.data.Dataset):
         """
         Construct the video loader.
         """
-        path_to_file = os.path.join(
-            self.cfg.DATA.PATH_TO_DATA_DIR, "{}.csv".format(self.mode)
-        )
-        assert PathManager.exists(path_to_file), "{} dir not found".format(
-            path_to_file
-        )
 
+        dataset_directory = pathutils.get_datasets_path() / self.cfg.DATA.PATH_TO_DATA_DIR
+
+        if self.mode == "train":
+            path_to_file = dataset_directory / "Anomaly_Train.txt"
+        elif self.mode == "test":
+            path_to_file = dataset_directory / "Temporal_Anomaly_Annotation_for_Testing_Videos.txt"
+
+        assert path_to_file.is_file(), "{} file not found".format(path_to_file)
+
+        # Store all datasets combined
         self._path_to_videos = []
         self._labels = []
-        self._spatial_temporal_idx = []
-        with PathManager.open(path_to_file, "r") as f:
-            for clip_idx, path_label in enumerate(f.read().splitlines()):
-                assert (
-                    len(path_label.split(self.cfg.DATA.PATH_LABEL_SEPARATOR))
-                    == 2
-                )
-                path, label = path_label.split(
-                    self.cfg.DATA.PATH_LABEL_SEPARATOR
-                )
-                for idx in range(self._num_clips):
-                    self._path_to_videos.append(
-                        os.path.join(self.cfg.DATA.PATH_PREFIX, path)
-                    )
-                    self._labels.append(int(label))
-                    self._spatial_temporal_idx.append(idx)
-                    self._video_meta[clip_idx * self._num_clips + idx] = {}
+        self._temporal_annotations = []
+        self._is_anomaly = []
+
+        # Store anomaly and normal separately
+        self._path_to_anomaly_videos = []
+        self._anomaly_videos_labels = []
+        self._anomaly_temporal_annotations = []
+
+        self._path_to_normal_videos = []
+
+        dataset_directory = dataset_directory / self.mode
+
+        with path_to_file.open("r") as file_ptr:
+            for line in file_ptr.read().splitlines():
+                line = line.strip()
+
+                if self.mode == "train":
+                    assert len(line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)) == 2
+
+                    video_path = dataset_directory / line
+                    video_label = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)[0]
+                    video_label = "Normal" if video_label == "Training_Normal_Videos_Anomaly" else video_label
+                    temporal_annotation = (-1, -1, -1, -1)
+
+                elif self.mode == "test":
+                    assert len(line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TESTING)) == 6
+
+                    line_splitted = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TESTING)
+
+                    video_path = dataset_directory / line_splitted[0]
+                    video_label = line_splitted[1]
+                    temporal_annotation = (
+                        int(line_splitted[2]),
+                        int(line_splitted[3]),
+                        int(line_splitted[4]),
+                        int(line_splitted[5]))
+
+                self._path_to_videos.append(video_path)
+                self._labels.append(video_label)
+                self._temporal_annotations.append(temporal_annotation)
+                self._is_anomaly.append(video_label != "Normal")
+
+                if video_label != "Normal":
+                    self._path_to_anomaly_videos.append(video_path)
+                    self._anomaly_videos_labels.append(video_label)
+                    self._anomaly_temporal_annotations.append(temporal_annotation)
+                else:
+                    self._path_to_normal_videos.append(video_path)
+
+
         assert (
             len(self._path_to_videos) > 0
-        ), "Failed to load Kinetics split {} from {}".format(
-            self._split_idx, path_to_file
+        ), "Failed to load UCF Anomaly Detection {} from {}".format(
+            self.mode, dataset_directory
         )
 
+        assert(
+            len(self._path_to_videos) == len(self._path_to_anomaly_videos) + len(self._path_to_normal_videos)
+        )
+
+        self.output_classes = sorted(list(set(self._labels)))
+
         print(
-            "Constructing kinetics dataloader (size: {}) from {}".format(
-                len(self._path_to_videos), path_to_file
+            "DONE:: Constructing UCF Anomaly Detection {} (size: {}) from {}".format(
+                self.mode, len(self._path_to_videos), path_to_file
             )
         )
+
+        print()
+        print("DATASET STATS::")
+        print("Output {} Classes:".format(len(self.output_classes)))
+        print(self.output_classes)
+        print("Number of anomaly videos", len(self._path_to_anomaly_videos))
+        print("Number of normal videos", len(self._path_to_normal_videos))
+
 
     def __getitem__(self, index):
         """
