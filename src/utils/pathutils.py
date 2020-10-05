@@ -36,13 +36,14 @@ def get_specific_dataset_path(cfg, mode, features=False):
     assert mode in ["train", "val", "test"]
 
     if features: # Read features
-            features_name = cfg.BACKBONE.NAME + "_" + cfg.TRANSFORM.CODE
-            dataset_directory = dataset_directory / "features" / features_name / mode
+        features_name = cfg.BACKBONE.NAME + "_" + cfg.TRANSFORM.CODE
+        dataset_directory = dataset_directory / "features" / features_name
     else: # Read videos
-            dataset_directory = dataset_directory / "videos" / mode
+        dataset_directory = dataset_directory / "videos"
 
     return dataset_directory
 
 def get_configs_path():
     """Retrieve the absolute Path object of the configurations directory"""
     return get_app_path() / "configs"
+    

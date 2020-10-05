@@ -99,7 +99,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 line = line.strip()
                 
                 if self.cfg.DATA.READ_FEATURES:
-                    line = utils.video_name_to_features_name(line, self.cfg.EXTRACT.FEATURES_EXT)
+                    line = utils.video_name_to_features_name(line, self.cfg.DATA.EXT, self.cfg.EXTRACT.FEATURES_EXT)
 
                 if self.mode == "train":
                     assert len(line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)) == 2
@@ -114,7 +114,8 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
                     line_splitted = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TESTING)
 
-                    video_path = dataset_directory / line_splitted[0]
+                    label_in_path = line_splitted[1] if line_splitted[1] != "Normal" else "Testing_Normal_Videos_Anomaly"
+                    video_path = dataset_directory / label_in_path / line_splitted[0]
                     video_label = line_splitted[1]
                     temporal_annotation = (
                         int(line_splitted[2]),
@@ -167,13 +168,80 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         print("Number of normal videos:", len(self._path_to_normal_videos))
 
 
-    def __get_frames_or_features(self, item_path):
+    def _decode_video(self, video_path):
+        """"
+        Load the video and decode it
+        Args:
+            video_path (Path): The absolute path of the video
+        """
+
+        video_container = None
+        try:
+            video_container = container.get_video_container(
+                video_path,
+                self.cfg.DATA_LOADER.ENABLE_MULTI_THREAD_DECODE,
+                self.cfg.DATA.DECODING_BACKEND,
+            )
+        except Exception as e:
+            print(
+                "Failed to load video from {} with error {}".format(
+                    self.video_path, e
+                )
+            )
+
+        # Return None if the current video was not able to access,
+        # To allow a retrial from __getitem__
+        if video_container is None:
+            return None
+
+        # Decode video. Meta info is used to perform selective decoding.
+        frames = decoder.decode(
+            video_container,
+            sampling_rate,
+            self.cfg.DATA.NUM_FRAMES,
+            temporal_sample_index,
+            self.cfg.TEST.NUM_ENSEMBLE_VIEWS,
+            video_meta=self._video_meta[index],
+            target_fps=self.cfg.DATA.TARGET_FPS,
+            backend=self.cfg.DATA.DECODING_BACKEND,
+            max_spatial_scale=max_scale,
+        )
+
+        # If decoding failed (wrong format, video is too short, and etc),
+        # Return None to allow a retrial from __getitem__
+        if frames is None:
+            return None
+
+        # Perform color normalization.
+        frames = utils.tensor_normalize(
+            frames, self.cfg.DATA.MEAN, self.cfg.DATA.STD
+        )
+        # T H W C -> C T H W.
+        frames = frames.permute(3, 0, 1, 2)
+        # Perform data augmentation.
+        frames = utils.spatial_sampling(
+            frames,
+            spatial_idx=spatial_sample_index,
+            min_scale=min_scale,
+            max_scale=max_scale,
+            crop_size=crop_size,
+            random_horizontal_flip=self.cfg.DATA.RANDOM_FLIP,
+            inverse_uniform_sampling=self.cfg.DATA.INV_UNIFORM_SAMPLE,
+        )
+
+        label = self._labels[index]
+        frames = utils.pack_pathway_output(self.cfg, frames)
+        return frames, label, index, {}
+
+
+
+    def _get_frames_or_features(self, item_path):
         """
         Gets the frames of the item or the features based on self.cfg.DATA.READ_FEATURES
         Args:
             item_path (pathlib.Path): path for video or features file
         """
-        return random.randint()
+        return random.randint(0, 5)
 
 
     def __getitem__(self, index):
@@ -193,20 +261,47 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         """
         # 1) Extra work could be done here incase of different reading order.
 
-        if self.mode == "train":
-            min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)
-            max_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
+        # If the video can not be decoded, 
+        # repeatly find a random video replacement that can be decoded.
+        for _ in range(self._num_retries):
+            if self.mode == "train":
+                min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)
+                max_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
 
-            normal_idx = index % min_len
-            anomaly_idx = index
+                normal_idx = index % min_len
+                anomaly_idx = index % max_len
 
-            if self.cfg.TRAIN.SHIFT_INDEX:
-                anomaly_idx = (index + self.cfg.TRAIN.CURRENT_EPOCH) % max_len
+                if self.cfg.TRAIN.SHIFT_INDEX:
+                    anomaly_idx = (index + self.cfg.TRAIN.CURRENT_EPOCH) % max_len
 
-            normal_items = self.__get_frames_or_features(self._path_to_normal_videos[normal_idx])
-            anomaly_items = self.__get_frames_or_features(self._path_to_anomaly_videos[anomaly_idx])
-        else:
-            items = self.__get_frames_or_features(self._path_to_videos[index])
+                normal_items = self._get_frames_or_features(self._path_to_normal_videos[normal_idx])
+                anomaly_items = self._get_frames_or_features(self._path_to_anomaly_videos[anomaly_idx])
+
+                normal_label = "Normal"
+                anomaly_label = self.__anomaly_videos_labels[anomaly_idx]
+
+                items = [normal_items, anomaly_items]
+                labels = [normal_label, anomaly_label]
+            else:
+                items = [self._get_frames_or_features(self._path_to_videos[index])]
+                labels = [self._labels[index]]
+
+            if items is None or items[0] is None:
+                index = random.randint(0, max_len - 1)
+            else:
+                break
+
+        if items is None or items[0] is None:
+            raise RuntimeError(
+                "Failed to fetch video after {} retries.".format(
+                    self._num_retries
+                )
+            )
+
+        return items
+
+
+            
 
 
     def __len__(self):

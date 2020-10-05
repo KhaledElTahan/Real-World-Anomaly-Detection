@@ -233,12 +233,13 @@ def loader_worker_init_fn(dataset):
     return None
 
 
-def video_name_to_features_name(video_name, ext):
+def video_name_to_features_name(video_name, old_ext, new_ext):
     """
     Changes video file name to features file name with new extension
     Args:
-        ext (String): The new extension
+        old_ext (String): The old extension of the video file
+        new_ext (String): The new extension of the features file
     Examples:
-        video_name_to_features_name("video.mp4", "rar") -> video.rar
+        video_name_to_features_name("video.mp4 label 1 1", "mp4", "rar") -> "video.rar label 1 1"
     """
-    return video_name.split('.')[0] + '.' + ext
+    return video_name.replace(old_ext, new_ext)
