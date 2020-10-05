@@ -184,7 +184,12 @@ _C.DATA.PATH_TO_DATA_DIR = "UFC_Anomaly_Detection"
 
 # If true, read from the extracted by "BACKBONE"
 # If false, read from videos
-_C.DATA.READ_FEATURES = True
+_C.DATA.READ_FEATURES = False
+
+# If "all", an error will be created if all the dataset files aren't available
+# If "available", will use only the available files, error will be created if empty
+# If "ignore", will not check whether files exist or not
+_C.DATA.USE_FILES = "available"
 
 # The general separator used between path and label.
 _C.DATA.PATH_LABEL_SEPARATOR = " "

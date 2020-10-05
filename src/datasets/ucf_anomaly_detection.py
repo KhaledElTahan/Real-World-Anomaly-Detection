@@ -94,6 +94,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         dataset_directory = pathutils.get_specific_dataset_path(self.cfg, self.mode, self.cfg.DATA.READ_FEATURES)
 
+        labels_set = set()
         with path_to_file.open("r") as file_ptr:
             for line in file_ptr.read().splitlines():
                 line = line.strip()
@@ -123,6 +124,11 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                         int(line_splitted[4]),
                         int(line_splitted[5]))
 
+                labels_set.add(video_label)
+
+                if not self._check_file_exists(video_path):
+                    continue
+
                 self._path_to_videos.append(video_path)
                 self._labels.append(video_label)
                 self._temporal_annotations.append(temporal_annotation)
@@ -146,7 +152,8 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             len(self._path_to_videos) == len(self._path_to_anomaly_videos) + len(self._path_to_normal_videos)
         )
 
-        self.output_classes = sorted(list(set(self._labels)))
+        self.output_classes = sorted(list(labels_set))
+        current_files_putput_classes = sorted(list(set(self._labels)))
 
         print(
             "DONE:: Constructing UCF Anomaly Detection {} (size: {}) from {}".format(
@@ -164,8 +171,30 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         print("Number of output classes: {}".format(len(self.output_classes)))
         print("Output classes: ", end="")
         print(self.output_classes)
+        print("Number of loaded data output classes: {}".format(len(current_files_putput_classes)))
+        print("Loaded data output classes: ", end="")
+        print(current_files_putput_classes)
         print("Number of anomaly videos:", len(self._path_to_anomaly_videos))
         print("Number of normal videos:", len(self._path_to_normal_videos))
+
+
+    def _check_file_exists(self, path):
+        """
+        Checks whether a file exists and takes an action according to self.cfg.DATA.USE_FILES
+        Args:
+            path (Path): Video of features file path
+        Returns:
+            True: if file exists or self.cfg.DATA.USE_FILES == "ignore"
+            False: if file doesn't exist and self.cfg.DATA.USE_FILES == "available"
+            Exception: if file doesn't exist and self.cfg.DATA.USE_FILES == "all"
+            
+        """
+        if not path.exists():
+            if self.cfg.DATA.USE_FILES == "all":
+                raise RuntimeError("File {} doesn't exist, and cfg.DATA.USE_FILES is 'all'".format(path))
+            elif self.cfg.DATA.USE_FILES == "available":
+                return False
+        return True
 
 
     def _decode_video(self, video_path):

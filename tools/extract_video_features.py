@@ -6,5 +6,7 @@ from src.datasets import ucf_anomaly_detection
 def extract(cfg):
     # backbone_model = backbone_helper.load_model(cfg)
 
-    dataset = ucf_anomaly_detection.UCFAnomalyDetection(cfg, "train")
+    dataset_train = ucf_anomaly_detection.UCFAnomalyDetection(cfg, "train")
+    print()
+    dataset_test = ucf_anomaly_detection.UCFAnomalyDetection(cfg, "test")
 
