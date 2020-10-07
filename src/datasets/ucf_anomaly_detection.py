@@ -10,6 +10,8 @@ from src.utils import pathutils
 from src.datasets import video_container as container
 from src.datasets.build import DATASET_REGISTRY
 from src.datasets import transform_helper
+from src.utils import funcutils
+from src.models import backbone_helper as backbone_helper
 
 @DATASET_REGISTRY.register()
 class UCFAnomalyDetection(torch.utils.data.Dataset):
@@ -97,7 +99,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         labels_set = set()
         with path_to_file.open("r") as file_ptr:
-            for line in file_ptr.read().splitlines():
+            for index, line in enumerate(file_ptr.read().splitlines()):
                 line = line.strip()
                 
                 if self.cfg.DATA.READ_FEATURES:
@@ -134,6 +136,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 self._labels.append(video_label)
                 self._temporal_annotations.append(temporal_annotation)
                 self._is_anomaly.append(video_label != "Normal")
+                self._video_meta[index] = {}
 
                 if video_label != "Normal":
                     self._path_to_anomaly_videos.append(video_path)
@@ -170,6 +173,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         """
         dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
         current_files_output_classes = sorted(list(set(self._labels)))
+        backbone_cfg = backbone_helper.get_backbone_merged_cfg(self.cfg)
 
         print("Dataset Summary:")
 
@@ -178,6 +182,9 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             ["Name", "UFC Anomaly Detection"],
             ["Mode", self.mode],
             ["Type", dataset_type],
+            ["Backbone", self.cfg.BACKBONE.NAME],
+            ["SlowFast.Alpha", backbone_cfg.SLOWFAST.ALPHA]
+                if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH else None,
             ["Directory", self._dataset_directory],
             ["N. Output Classes", len(self.output_classes)],
             ["Output Classes", self.output_classes[:7]],
@@ -216,13 +223,13 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         return True
 
 
+    @funcutils.debug_signature
     def _decode_video(self, video_path):
         """"
         Load the video and decode it
         Args:
             video_path (Path): The absolute path of the video
         """
-
         video_container = None
         try:
             video_container = container.get_video_container(
@@ -238,18 +245,14 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         if video_container is None:
             return None
 
-        # Decode video. Meta info is used to perform selective decoding.
-        frames = decoder.decode(
-            video_container,
-            sampling_rate,
-            self.cfg.DATA.NUM_FRAMES,
-            temporal_sample_index,
-            self.cfg.TEST.NUM_ENSEMBLE_VIEWS,
-            video_meta=self._video_meta[index],
-            target_fps=self.cfg.DATA.TARGET_FPS,
-            backend=self.cfg.DATA.DECODING_BACKEND,
-            max_spatial_scale=max_scale,
-        )
+        temporal_sample_index = -1
+        spatial_sample_index = -1
+        min_scale = self.cfg.DATA.TRAIN_JITTER_SCALES[0]
+        max_scale = self.cfg.DATA.TRAIN_JITTER_SCALES[1]
+        crop_size = self.cfg.DATA.TRAIN_CROP_SIZE
+
+        # Decode video. 
+        frames = decoder.decode(video_container)
 
         # If decoding failed (wrong format, video is too short, and etc),
         # Return None to allow a retrial from __getitem__
@@ -279,8 +282,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         frames = transform_helper.apply_transformations(frames, self.cfg)
 
         frames = utils.pack_pathway_output(self.cfg, frames)
-        return frames, label, index, {}
-
+        return frames
 
 
     def _get_frames_or_features(self, item_path):
@@ -289,7 +291,10 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Args:
             item_path (pathlib.Path): path for video or features file
         """
-        return random.randint(0, 5)
+        if self.cfg.DATA.READ_FEATURES:
+            return random.randint(0, 5)
+        else:
+            return self._decode_video(item_path)
 
 
     def __getitem__(self, index):

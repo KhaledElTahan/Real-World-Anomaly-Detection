@@ -9,8 +9,15 @@ def extract(cfg):
     cfg.DATA.READ_FEATURES = False
 
     dataset_train = ucf_anomaly_detection.UCFAnomalyDetection(cfg, "train")
-    print()
     dataset_test = ucf_anomaly_detection.UCFAnomalyDetection(cfg, "test")
+
+    frames, labels, annotations = dataset_test[0]
+
+    fast_frames = frames[0][0]
+    slow_frames = frames[0][1]
+
+    print("Fast Frames: {}".format(fast_frames.shape))
+    print("Slow Frames: {}".format(slow_frames.shape))
 
     # backbone_model = backbone_helper.load_model(cfg)
 
