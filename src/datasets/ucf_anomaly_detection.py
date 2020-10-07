@@ -2,13 +2,14 @@
 import random
 import torch
 import torch.utils.data
+from tabulate import tabulate
 
 from src.datasets import decoder as decoder
 from src.datasets import utils as utils
 from src.utils import pathutils
 from src.datasets import video_container as container
 from src.datasets.build import DATASET_REGISTRY
-
+from src.datasets import transform_helper
 
 @DATASET_REGISTRY.register()
 class UCFAnomalyDetection(torch.utils.data.Dataset):
@@ -70,12 +71,12 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Construct the video loader.
         """
 
-        dataset_directory = pathutils.get_datasets_path() / self.cfg.DATA.PATH_TO_DATA_DIR
+        dataset_parent_directory = pathutils.get_datasets_path() / self.cfg.DATA.PATH_TO_DATA_DIR
 
         if self.mode == "train":
-            path_to_file = dataset_directory / "Anomaly_Train.txt"
+            path_to_file = dataset_parent_directory / "Anomaly_Train.txt"
         elif self.mode == "test":
-            path_to_file = dataset_directory / "Temporal_Anomaly_Annotation_for_Testing_Videos.txt"
+            path_to_file = dataset_parent_directory / "Temporal_Anomaly_Annotation_for_Testing_Videos.txt"
 
         assert path_to_file.is_file(), "{} file not found".format(path_to_file)
 
@@ -92,7 +93,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         self._path_to_normal_videos = []
 
-        dataset_directory = pathutils.get_specific_dataset_path(self.cfg, self.mode, self.cfg.DATA.READ_FEATURES)
+        self._dataset_directory = pathutils.get_specific_dataset_path(self.cfg, self.mode, self.cfg.DATA.READ_FEATURES)
 
         labels_set = set()
         with path_to_file.open("r") as file_ptr:
@@ -105,7 +106,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 if self.mode == "train":
                     assert len(line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)) == 2
 
-                    video_path = dataset_directory / line
+                    video_path = self._dataset_directory / line
                     video_label = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)[0]
                     video_label = "Normal" if video_label == "Training_Normal_Videos_Anomaly" else video_label
                     temporal_annotation = (-1, -1, -1, -1)
@@ -116,7 +117,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                     line_splitted = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TESTING)
 
                     label_in_path = line_splitted[1] if line_splitted[1] != "Normal" else "Testing_Normal_Videos_Anomaly"
-                    video_path = dataset_directory / label_in_path / line_splitted[0]
+                    video_path = self._dataset_directory / label_in_path / line_splitted[0]
                     video_label = line_splitted[1]
                     temporal_annotation = (
                         int(line_splitted[2]),
@@ -153,29 +154,47 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         )
 
         self.output_classes = sorted(list(labels_set))
-        current_files_putput_classes = sorted(list(set(self._labels)))
-
+        
         print(
-            "DONE:: Constructing UCF Anomaly Detection {} (size: {}) from {}".format(
+            "Done Constructing UCF Anomaly Detection {} (size: {}) from {}".format(
                 self.mode, len(self._path_to_videos), path_to_file
             )
         )
 
-        dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
+        self._print_dataset_stats()
 
-        # print dataset statistics
+
+    def _print_dataset_stats(self):
+        """
+        Prints a statistical summary of the dataset
+        """
+        dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
+        current_files_output_classes = sorted(list(set(self._labels)))
+
+        print("Dataset Summary:")
+
+        headers = ["Attribute", "Value"]
+        table = [
+            ["Name", "UFC Anomaly Detection"],
+            ["Mode", self.mode],
+            ["Type", dataset_type],
+            ["Directory", self._dataset_directory],
+            ["N. Output Classes", len(self.output_classes)],
+            ["Output Classes", self.output_classes[:7]],
+            ["Cont....", self.output_classes[7:]],
+            ["N. Loaded Output Classes", len(current_files_output_classes)],
+            ["Loaded Output Classes", current_files_output_classes[:7]],
+            ["Cont....", current_files_output_classes[7:]] if len(current_files_output_classes) > 7 else None,
+            ["Loading Files Type", self.cfg.DATA.USE_FILES],
+            ["N. Loaded Videos", len(self._path_to_videos)],
+            ["N. Loaded Anomaly Videos", len(self._path_to_anomaly_videos)],
+            ["N. Loaded Normal Videos", len(self._path_to_normal_videos)],
+        ]
+
+        table = [x for x in table if x is not None]
+        
+        print(tabulate(table, headers, tablefmt="pretty", colalign=("center", "left")))
         print()
-        print("~::DATASET STATS::~")
-        print("Name: UFC Anomaly Detection - Mode: {} - Type: {}".format(self.mode, dataset_type))
-        print("Dataset actual directory: {}".format(dataset_directory))
-        print("Number of output classes: {}".format(len(self.output_classes)))
-        print("Output classes: ", end="")
-        print(self.output_classes)
-        print("Number of loaded data output classes: {}".format(len(current_files_putput_classes)))
-        print("Loaded data output classes: ", end="")
-        print(current_files_putput_classes)
-        print("Number of anomaly videos:", len(self._path_to_anomaly_videos))
-        print("Number of normal videos:", len(self._path_to_normal_videos))
 
 
     def _check_file_exists(self, path):
@@ -212,11 +231,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 self.cfg.DATA.DECODING_BACKEND,
             )
         except Exception as e:
-            print(
-                "Failed to load video from {} with error {}".format(
-                    self.video_path, e
-                )
-            )
+            print("Failed to load video from {} with error {}".format(video_path, e))
 
         # Return None if the current video was not able to access,
         # To allow a retrial from __getitem__
@@ -245,8 +260,10 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         frames = utils.tensor_normalize(
             frames, self.cfg.DATA.MEAN, self.cfg.DATA.STD
         )
+
         # T H W C -> C T H W.
         frames = frames.permute(3, 0, 1, 2)
+
         # Perform data augmentation.
         frames = utils.spatial_sampling(
             frames,
@@ -258,7 +275,9 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             inverse_uniform_sampling=self.cfg.DATA.INV_UNIFORM_SAMPLE,
         )
 
-        label = self._labels[index]
+        # Apply a list of transformations according to configurations
+        frames = transform_helper.apply_transformations(frames, self.cfg)
+
         frames = utils.pack_pathway_output(self.cfg, frames)
         return frames, label, index, {}
 
@@ -293,7 +312,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         # If the video can not be decoded, 
         # repeatly find a random video replacement that can be decoded.
         for _ in range(self._num_retries):
-            if self.mode == "train":
+            if self.mode == "train" and not self.cfg.DATA.READ_FEATURES:
                 min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)
                 max_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
 
@@ -307,16 +326,21 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 anomaly_items = self._get_frames_or_features(self._path_to_anomaly_videos[anomaly_idx])
 
                 normal_label = "Normal"
-                anomaly_label = self.__anomaly_videos_labels[anomaly_idx]
+                anomaly_label = self._anomaly_videos_labels[anomaly_idx]
+
+                normal_annotations = (-1, -1, -1, -1)
+                anomaly_annotations = self._anomaly_temporal_annotations[anomaly_idx]
 
                 items = [normal_items, anomaly_items]
                 labels = [normal_label, anomaly_label]
-            else:
+                annotations = [normal_annotations, anomaly_annotations]
+            else: 
                 items = [self._get_frames_or_features(self._path_to_videos[index])]
                 labels = [self._labels[index]]
+                annotations = [self._temporal_annotations[index]]
 
             if items is None or items[0] is None:
-                index = random.randint(0, max_len - 1)
+                index = random.randint(0, len(self._path_to_videos) - 1)
             else:
                 break
 
@@ -327,7 +351,9 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 )
             )
 
-        return items
+        # Do I need to construct label as one hot vector or as an idx here?
+
+        return items, labels, annotations
 
 
             
