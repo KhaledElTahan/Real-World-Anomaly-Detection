@@ -113,6 +113,9 @@ _C.EXTRACT.ENABLE = True
 _C.EXTRACT.DATASET = "UCFAnomalyDetection"
 
 # Total mini-batch size
+_C.EXTRACT.FRAMES_BATCH_SIZE = 16
+
+# Total mini-batch size
 _C.EXTRACT.BATCH_SIZE = 8
 
 # The extension of results files.

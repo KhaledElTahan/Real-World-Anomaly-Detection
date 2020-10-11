@@ -1,4 +1,5 @@
 """Dataset Utils"""
+import math
 import numpy as np
 import random
 import time
@@ -64,7 +65,7 @@ def get_sequence(center_idx, half_len, sample_rate, num_frames):
     return seq
 
 
-def pack_pathway_output(cfg, frames): 
+def pack_pathway_output(cfg, frames):
     """
     Prepare output as a list of tensors. Each tensor corresponding to a
     unique pathway.
@@ -103,6 +104,72 @@ def pack_pathway_output(cfg, frames):
             )
         )
     return frame_list
+
+
+def _frames_to_frames_batches_native(frames :torch.Tensor, batch_size):
+    """
+    Converts tensor of `channel` x `num frames` x `height` x `width` to list of 
+    len = `frames / batch size ` of tensors `channel` x `batch size` x `height` x `width`.
+    Args:
+        frames (torch.Tensor): the frames tensor of format (c, t, h, w)
+        batch_size: The size of frames batches
+    Return:
+        frames_batches (list(list(torch.Tensor))): The batches of frames
+        num_batches (Int): The number of frames batches, i.e. frames/batch_size
+    """
+    frames_batches = list(torch.split(frames, batch_size, dim=1))
+
+    return [frames_batches], len(frames_batches)
+
+
+def frames_to_frames_batches(cfg, frames):
+    """
+    Receives list of tensors of frames, either [frames] or [slow_pathway, fast_pathway]
+    then converts each frames tensor from `channel` x `num frames` x `height` x `width` to
+    list of len = `frames / batch size ` of tensors `channel` x `batch size` x `height` x `width`.
+    Args:
+        cfg (cfgNode): Video Model Configuration
+        frames (list(torch.Tensor)): List of frames from dataset __getitem__
+            on the form of [frames] or [slow_pathway, fast_pathway]
+    Return:
+        frames_batches list((list(torch.Tensor))): The batches of frames
+            on the form of [frames_batches] or [slow_batches, fast_batches]
+        num_batches (Int): The number of frames batches, i.e. frames/batch_size
+    """
+    # First, retrieve the backbone configurations file
+    backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
+
+    if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.SINGLE_PATHWAY_ARCH:
+        return _frames_to_frames_batches_native(frames, cfg.EXTRACT.FRAMES_BATCH_SIZE)
+    elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
+        slow_batches, num_slow_batches = _frames_to_frames_batches_native(
+            frames[0], int(cfg.EXTRACT.FRAMES_BATCH_SIZE / backbone_cfg.SLOWFAST.ALPHA))
+        fast_batches, num_fast_batches = _frames_to_frames_batches_native(frames[1],
+            cfg.EXTRACT.FRAMES_BATCH_SIZE)
+
+        assert num_slow_batches == num_fast_batches
+
+        return [slow_batches[0], fast_batches[0]], num_slow_batches
+
+
+def frames_to_batches_of_frames_batches(cfg, frames):
+         """
+    Receives list of tensors of frames, either [frames] or [slow_pathway, fast_pathway]
+    then converts each frames tensor from `channel` x `num frames` x `height` x `width` to
+    list of len = `frames / batch size ` of tensors `channel` x `batch size` x `height` x `width`.
+    Args:
+        cfg (cfgNode): Video Model Configuration
+        frames (list(torch.Tensor)): List of frames from dataset __getitem__
+            on the form of [frames] or [slow_pathway, fast_pathway]
+    Return:
+        frames_batches list((list(torch.Tensor))): The batches of frames
+            on the form of [frames_batches] or [slow_batches, fast_batches]
+        num_batches (Int): The number of frames batches, i.e. frames/batch_size
+    """
+    # First, retrieve the backbone configurations file
+    backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
+
+    pass
 
 
 def spatial_sampling(

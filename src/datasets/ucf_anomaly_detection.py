@@ -172,6 +172,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Prints a statistical summary of the dataset
         """
         dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
+        dataset_action = "Extract Videos" if self.cfg.EXTRACT.ENABLE else "Video Model"
         current_files_output_classes = sorted(list(set(self._labels)))
         backbone_cfg = backbone_helper.get_backbone_merged_cfg(self.cfg)
 
@@ -182,6 +183,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             ["Name", "UFC Anomaly Detection"],
             ["Mode", self.mode],
             ["Type", dataset_type],
+            ["Action", dataset_action],
             ["Backbone", self.cfg.BACKBONE.NAME],
             ["SlowFast.Alpha", backbone_cfg.SLOWFAST.ALPHA]
                 if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH else None,
@@ -267,6 +269,8 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         # T H W C -> C T H W.
         frames = frames.permute(3, 0, 1, 2)
 
+        print("Frames: {}".format(frames.shape))
+
         # Perform data augmentation.
         frames = utils.spatial_sampling(
             frames,
@@ -305,19 +309,30 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Args:
             index (int): the video index provided by the pytorch sampler.
         Returns:
-            frames (tensor): the frames of sampled from the video. The dimension
-                is `channel` x `num frames` x `height` x `width`.
-            label (int): the label of the current video.
-            index (int): if the video provided by pytorch sampler can be
-                decoded, then return the index of the video. If not, return the
-                index of the video replacement that can be decoded.
+            items (list(list(torch.Tensors))): the frames or features from the video.
+                The dimension of torch.Tensor is `channel` x `num frames` x `height` x `width`.
+                The first list is used for anomaly and normal distinction, i.e.
+                    it will be on form of [normal_items, anomaly_items] or [items]
+                The second list is used only incase if items is frames for pathway distinction
+                    i.e. it will be on form of [slow_frames, slow_frames] or [frames]
+                Thus, all possible formats for one or two videos are:
+                    1) [normal_features, anomaly_features]
+                    2) [features]
+                    3) [normal_frames: [frames], anomaly_frames: [frames]]
+                    4) [frames: [frames]]
+                    5) [normal_frames: [slow_frames, fast_frames], anomaly_frames: [slow_frames, fast_frames]]
+                    6) [frames: : [slow_frames, fast_frames]] -> In case of feature extraction
+            label (list(int)): the label of the current one or two videos,
+                on the form of [label] or ["Normal", label]
+            annotation (list(tuples)): the annotations of current one or two videos, 
+                on the form of [tuple] or [normal tuple, anomaly tuple] 
         """
         # 1) Extra work could be done here incase of different reading order.
 
         # If the video can not be decoded, 
         # repeatly find a random video replacement that can be decoded.
         for _ in range(self._num_retries):
-            if self.mode == "train" and not self.cfg.DATA.READ_FEATURES:
+            if self.mode == "train" and not self.cfg.EXTRACT.ENABLE:
                 min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)
                 max_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
 
@@ -371,7 +386,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         """
         # 1) Extra work could be done here incase of different reading order.
 
-        if self.cfg.DATA.READ_FEATURES and self.mode == "train":
+        if self.mode == "train" and not self.cfg.EXTRACT.ENABLE:
             # Make sure on __getitem__ to index using
             # idx % min(_path_to_anomaly_videos, _path_to_normal_videos)
             dataset_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
