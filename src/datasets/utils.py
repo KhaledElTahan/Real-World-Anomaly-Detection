@@ -52,23 +52,24 @@ def pack_pathway_output(cfg, frames):
     return frame_list
 
 
-def _frames_to_frames_batches_native(frames :torch.Tensor, batch_size):
+def _frames_to_frames_batches_native(frames :torch.Tensor, batch_size, dim=1):
     """
     Converts tensor of `channel` x `num frames` x `height` x `width` to list of 
     len = `frames / batch size ` of tensors `channel` x `batch size` x `height` x `width`.
     Args:
         frames (torch.Tensor): the frames tensor of format (c, t, h, w)
         batch_size: The size of frames batches
+        dim (int): If dim = 2, this means that we have a batch of videos
     Return:
         frames_batches (list(list(torch.Tensor))): The batches of frames
         num_batches (Int): The number of frames batches, i.e. frames/batch_size
     """
-    frames_batches = list(torch.split(frames, batch_size, dim=1))
+    frames_batches = list(torch.split(frames, batch_size, dim))
 
     return [frames_batches], len(frames_batches)
 
 
-def frames_to_frames_batches(cfg, frames):
+def frames_to_frames_batches(cfg, frames, dim=1):
     """
     Receives list of tensors of frames, either [frames] or [slow_pathway, fast_pathway]
     then converts each frames tensor from `channel` x `num frames` x `height` x `width` to
@@ -77,6 +78,7 @@ def frames_to_frames_batches(cfg, frames):
         cfg (cfgNode): Video Model Configuration
         frames (list(torch.Tensor)): List of frames from dataset __getitem__
             on the form of [frames] or [slow_pathway, fast_pathway]
+        dim (int): If dim = 2, this means that we have a batch of videos
     Return:
         frames_batches list((list(torch.Tensor))): The batches of frames
             on the form of [frames_batches] or [slow_batches, fast_batches]
@@ -87,12 +89,12 @@ def frames_to_frames_batches(cfg, frames):
 
     if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.SINGLE_PATHWAY_ARCH:
         frames_batches, num_batches = _frames_to_frames_batches_native(frames,
-            cfg.EXTRACT.FRAMES_BATCH_SIZE)
+            cfg.EXTRACT.FRAMES_BATCH_SIZE, dim),
     elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
         slow_batches, num_slow_batches = _frames_to_frames_batches_native(
-            frames[0], int(cfg.EXTRACT.FRAMES_BATCH_SIZE / backbone_cfg.SLOWFAST.ALPHA))
+            frames[0], int(cfg.EXTRACT.FRAMES_BATCH_SIZE / backbone_cfg.SLOWFAST.ALPHA), dim)
         fast_batches, num_fast_batches = _frames_to_frames_batches_native(frames[1],
-            cfg.EXTRACT.FRAMES_BATCH_SIZE)
+            cfg.EXTRACT.FRAMES_BATCH_SIZE, dim)
 
         # Assume number of fast frames is 257 -> ceil (257/16) = 17
         # Assume SlowFast.Alpha is 4
@@ -236,6 +238,21 @@ def revert_tensor_normalize(tensor, mean, std):
     tensor = tensor * std
     tensor = tensor + mean
     return tensor
+
+
+def create_sampler(dataset, shuffle, cfg):
+    """
+    Create sampler for the given dataset.
+    Args:
+        dataset (torch.utils.data.Dataset): the given dataset.
+        shuffle (bool): set to ``True`` to have the data reshuffled
+            at every epoch.
+        cfg (CfgNode): configs. Details can be found in
+            slowfast/config/defaults.py
+    Returns:
+        sampler (Sampler): the created sampler.
+    """
+    return None
 
 
 def loader_worker_init_fn(dataset):

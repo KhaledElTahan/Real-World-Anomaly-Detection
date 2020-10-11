@@ -115,8 +115,11 @@ _C.EXTRACT.DATASET = "UCFAnomalyDetection"
 # Total mini-batch size
 _C.EXTRACT.FRAMES_BATCH_SIZE = 16
 
-# Total mini-batch size
-_C.EXTRACT.BATCH_SIZE = 8
+# Number of frames batches to be evaluated by backbone
+_C.EXTRACT.FRAMES_BATCHES_BATCH_SIZE = 8
+
+# Batch size of loaded videos
+_C.EXTRACT.VIDEOS_BATCH_SIZE = 1
 
 # The extension of results files.
 _C.EXTRACT.FEATURES_EXT = "rar"
