@@ -11,60 +11,6 @@ from src.datasets import transform as transform
 from src.models import backbone_helper as backbone_helper
 
 
-def retry_load_images(image_paths, retry=10, backend="pytorch"):
-    """
-    This function is to load images with support of retrying for failed load.
-
-    Args:
-        image_paths (list): paths of images needed to be loaded.
-        retry (int, optional): maximum time of loading retrying. Defaults to 10.
-        backend (str): `pytorch` or `cv2`.
-
-    Returns:
-        imgs (list): list of loaded images.
-    """
-    for i in range(retry):
-        imgs = []
-        for image_path in image_paths:
-            with PathManager.open(image_path, "rb") as f:
-                img_str = np.frombuffer(f.read(), np.uint8)
-                img = cv2.imdecode(img_str, flags=cv2.IMREAD_COLOR)
-            imgs.append(img)
-
-        if all(img is not None for img in imgs):
-            if backend == "pytorch":
-                imgs = torch.as_tensor(np.stack(imgs))
-            return imgs
-        else:
-            print("Reading failed. Will retry.")
-            time.sleep(1.0)
-        if i == retry - 1:
-            raise Exception("Failed to load images {}".format(image_paths))
-
-
-def get_sequence(center_idx, half_len, sample_rate, num_frames):
-    """
-    Sample frames among the corresponding clip.
-
-    Args:
-        center_idx (int): center frame idx for current clip
-        half_len (int): half of the clip length
-        sample_rate (int): sampling rate for sampling frames inside of the clip
-        num_frames (int): number of expected sampled frames
-
-    Returns:
-        seq (list): list of indexes of sampled frames in this clip.
-    """
-    seq = list(range(center_idx - half_len, center_idx + half_len, sample_rate))
-
-    for seq_idx in range(len(seq)):
-        if seq[seq_idx] < 0:
-            seq[seq_idx] = 0
-        elif seq[seq_idx] >= num_frames:
-            seq[seq_idx] = num_frames - 1
-    return seq
-
-
 def pack_pathway_output(cfg, frames):
     """
     Prepare output as a list of tensors. Each tensor corresponding to a
@@ -140,20 +86,33 @@ def frames_to_frames_batches(cfg, frames):
     backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
 
     if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.SINGLE_PATHWAY_ARCH:
-        return _frames_to_frames_batches_native(frames, cfg.EXTRACT.FRAMES_BATCH_SIZE)
+        frames_batches, num_batches = _frames_to_frames_batches_native(frames,
+            cfg.EXTRACT.FRAMES_BATCH_SIZE)
     elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
         slow_batches, num_slow_batches = _frames_to_frames_batches_native(
             frames[0], int(cfg.EXTRACT.FRAMES_BATCH_SIZE / backbone_cfg.SLOWFAST.ALPHA))
         fast_batches, num_fast_batches = _frames_to_frames_batches_native(frames[1],
             cfg.EXTRACT.FRAMES_BATCH_SIZE)
 
-        assert num_slow_batches == num_fast_batches
+        # Assume number of fast frames is 257 -> ceil (257/16) = 17
+        # Assume SlowFast.Alpha is 4
+        # Then, number of slow frames is 64 -> ceil(64/(16/4)) = 16
+        if num_fast_batches > num_slow_batches:
+            fast_batches[0] = fast_batches[0][:-1]
 
-        return [slow_batches[0], fast_batches[0]], num_slow_batches
+        frames_batches, num_batches = [slow_batches[0], fast_batches[0]], num_slow_batches
+    else:
+        raise NotImplementedError(
+            "Model arch {} is not in {}".format(
+                backbone_cfg.MODEL.ARCH,
+                backbone_cfg.MODEL.SINGLE_PATHWAY_ARCH + backbone_cfg.MODEL.MULTI_PATHWAY_ARCH,
+            )
+        )
+    return frames_batches, num_batches
 
 
 def frames_to_batches_of_frames_batches(cfg, frames):
-         """
+    """
     Receives list of tensors of frames, either [frames] or [slow_pathway, fast_pathway]
     then converts each frames tensor from `channel` x `num frames` x `height` x `width` to
     list of len = `frames / batch size ` of tensors `channel` x `batch size` x `height` x `width`.
@@ -260,18 +219,6 @@ def tensor_normalize(tensor, mean, std):
     tensor = tensor - mean
     tensor = tensor / std
     return tensor
-
-
-def get_random_sampling_rate(long_cycle_sampling_rate, sampling_rate):
-    """
-    When multigrid training uses a fewer number of frames, we randomly
-    increase the sampling rate so that some clips cover the original span.
-    """
-    if long_cycle_sampling_rate > 0:
-        assert long_cycle_sampling_rate >= sampling_rate
-        return random.randint(sampling_rate, long_cycle_sampling_rate)
-    else:
-        return sampling_rate
 
 
 def revert_tensor_normalize(tensor, mean, std):

@@ -227,8 +227,8 @@ _C.DATA.INPUT_CHANNEL_NUM = 3
 # The std value of the video raw pixels across the R G B channels.
 _C.DATA.STD = [0.225, 0.225, 0.225]
 
-# The spatial augmentation jitter scales for training.
-_C.DATA.TRAIN_JITTER_SCALES = [256, 320]
+# The spatial scales.
+_C.DATA.SCALES = [240, 320]
 
 # The spatial crop size for training.
 _C.DATA.TRAIN_CROP_SIZE = 224

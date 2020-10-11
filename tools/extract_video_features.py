@@ -15,7 +15,7 @@ def extract(cfg):
     dataset_train = ucf_anomaly_detection.UCFAnomalyDetection(cfg, "train")
     dataset_test = ucf_anomaly_detection.UCFAnomalyDetection(cfg, "test")
 
-    frames, label, annotation = dataset_test[0]
+    frames, label, annotation = dataset_test[1]
 
     # First Index is used to distinguish between normal and anomaly video
     # Since we only use feature extraction, then all will be considered the same
@@ -30,6 +30,9 @@ def extract(cfg):
 
     print("Slow Frames first batch: {}".format(frames[0][0].shape))
     print("Fast Frames first batch: {}".format(frames[1][0].shape))
+
+    print("len(SlowFrames): {}".format(len(frames[0])))
+    print("len(FastFrames): {}".format(len(frames[1])))
 
     print("Number of batches: {}".format(num_batches))
     print("")

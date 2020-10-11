@@ -4,14 +4,15 @@ import torch
 import torch.utils.data
 from tabulate import tabulate
 
-from src.datasets import decoder as decoder
-from src.datasets import utils as utils
+from src.datasets import decoder
+from src.datasets import utils
 from src.utils import pathutils
 from src.datasets import video_container as container
 from src.datasets.build import DATASET_REGISTRY
 from src.datasets import transform_helper
 from src.utils import funcutils
-from src.models import backbone_helper as backbone_helper
+from src.models import backbone_helper
+from src.datasets import transform
 
 @DATASET_REGISTRY.register()
 class UCFAnomalyDetection(torch.utils.data.Dataset):
@@ -201,7 +202,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         ]
 
         table = [x for x in table if x is not None]
-        
+
         print(tabulate(table, headers, tablefmt="pretty", colalign=("center", "left")))
         print()
 
@@ -215,7 +216,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             True: if file exists or self.cfg.DATA.USE_FILES == "ignore"
             False: if file doesn't exist and self.cfg.DATA.USE_FILES == "available"
             Exception: if file doesn't exist and self.cfg.DATA.USE_FILES == "all"
-            
         """
         if not path.exists():
             if self.cfg.DATA.USE_FILES == "all":
@@ -247,12 +247,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         if video_container is None:
             return None
 
-        temporal_sample_index = -1
-        spatial_sample_index = -1
-        min_scale = self.cfg.DATA.TRAIN_JITTER_SCALES[0]
-        max_scale = self.cfg.DATA.TRAIN_JITTER_SCALES[1]
-        crop_size = self.cfg.DATA.TRAIN_CROP_SIZE
-
         # Decode video. 
         frames = decoder.decode(video_container)
 
@@ -269,18 +263,9 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         # T H W C -> C T H W.
         frames = frames.permute(3, 0, 1, 2)
 
-        print("Frames: {}".format(frames.shape))
-
-        # Perform data augmentation.
-        frames = utils.spatial_sampling(
-            frames,
-            spatial_idx=spatial_sample_index,
-            min_scale=min_scale,
-            max_scale=max_scale,
-            crop_size=crop_size,
-            random_horizontal_flip=self.cfg.DATA.RANDOM_FLIP,
-            inverse_uniform_sampling=self.cfg.DATA.INV_UNIFORM_SAMPLE,
-        )
+        # Spatial Scaling
+        if frames.shape[1] != self.cfg.DATA.SCALES[0] or frames.shape[2] != self.cfg.DATA.SCALES[1]:
+            frames = transform.spatial_resize(frames, self.cfg.DATA.SCALES[0], self.cfg.DATA.SCALES[1])
 
         # Apply a list of transformations according to configurations
         frames = transform_helper.apply_transformations(frames, self.cfg)
@@ -374,9 +359,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         # Do I need to construct label as one hot vector or as an idx here?
 
         return items, labels, annotations
-
-
-            
 
 
     def __len__(self):
