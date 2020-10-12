@@ -1,14 +1,10 @@
 """Dataset Utils"""
-import math
-import numpy as np
-import random
-import time
-import cv2
-import torch
-from fvcore.common.file_io import PathManager
 
-from src.datasets import transform as transform
-from src.models import backbone_helper as backbone_helper
+import numpy as np
+import torch
+
+from src.datasets import transform
+from src.models import backbone_helper
 
 
 def pack_pathway_output(cfg, frames):
@@ -52,24 +48,35 @@ def pack_pathway_output(cfg, frames):
     return frame_list
 
 
-def _frames_to_frames_batches_native(frames :torch.Tensor, batch_size, dim=1):
+def _frames_to_frames_batches_native(frames :torch.Tensor, batch_size):
     """
-    Converts tensor of `channel` x `num frames` x `height` x `width` to list of 
+    Converts tensor of `channel` x `num frames` x `height` x `width` to list of
     len = `frames / batch size ` of tensors `channel` x `batch size` x `height` x `width`.
     Args:
         frames (torch.Tensor): the frames tensor of format (c, t, h, w)
         batch_size: The size of frames batches
-        dim (int): If dim = 2, this means that we have a batch of videos
-    Return:
+    Returns:
         frames_batches (list(list(torch.Tensor))): The batches of frames
         num_batches (Int): The number of frames batches, i.e. frames/batch_size
+    Example:
+        _frames_to_frames_batches_native(
+            torch.Tensor(3, 65, 240, 320),
+            16
+        ) =>
+        [
+            torch.Tensor(3, 16, 240, 320),
+            torch.Tensor(3, 16, 240, 320),
+            torch.Tensor(3, 16, 240, 320),
+            torch.Tensor(3, 1, 240, 320),
+        ],
+        4
     """
-    frames_batches = list(torch.split(frames, batch_size, dim))
+    frames_batches = list(torch.split(frames, batch_size, dim = 1))
 
     return [frames_batches], len(frames_batches)
 
 
-def frames_to_frames_batches(cfg, frames, dim=1):
+def frames_to_frames_batches(cfg, frames):
     """
     Receives list of tensors of frames, either [frames] or [slow_pathway, fast_pathway]
     then converts each frames tensor from `channel` x `num frames` x `height` x `width` to
@@ -78,23 +85,42 @@ def frames_to_frames_batches(cfg, frames, dim=1):
         cfg (cfgNode): Video Model Configuration
         frames (list(torch.Tensor)): List of frames from dataset __getitem__
             on the form of [frames] or [slow_pathway, fast_pathway]
-        dim (int): If dim = 2, this means that we have a batch of videos
-    Return:
+    Returns:
         frames_batches list((list(torch.Tensor))): The batches of frames
             on the form of [frames_batches] or [slow_batches, fast_batches]
         num_batches (Int): The number of frames batches, i.e. frames/batch_size
+    Example:
+        at at cfg.EXTRACT.FRAMES_BATCH_SIZE = 16
+        input: ['torch.Size([3, 353, 240, 320])', 'torch.Size([3, 1412, 240, 320])']
+        Outout:
+        [
+            [   # Slow frames
+                'torch.Size([3, 4, 240, 320])',
+                'torch.Size([3, 4, 240, 320])',
+                   ... Same line 84 times ...
+                'torch.Size([3, 4, 240, 320])',
+                'torch.Size([3, 1, 240, 320])'
+            ],
+            [   # Fast frames
+                'torch.Size([3, 16, 240, 320])',
+                'torch.Size([3, 16, 240, 320])',
+                   ... Same line 84 times ...
+                'torch.Size([3, 16, 240, 320])',
+                'torch.Size([3, 4, 240, 320])'
+            ]
+        ]
     """
     # First, retrieve the backbone configurations file
     backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
 
     if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.SINGLE_PATHWAY_ARCH:
         frames_batches, num_batches = _frames_to_frames_batches_native(frames,
-            cfg.EXTRACT.FRAMES_BATCH_SIZE, dim),
+            cfg.EXTRACT.FRAMES_BATCH_SIZE)
     elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
         slow_batches, num_slow_batches = _frames_to_frames_batches_native(
-            frames[0], int(cfg.EXTRACT.FRAMES_BATCH_SIZE / backbone_cfg.SLOWFAST.ALPHA), dim)
+            frames[0], int(cfg.EXTRACT.FRAMES_BATCH_SIZE / backbone_cfg.SLOWFAST.ALPHA))
         fast_batches, num_fast_batches = _frames_to_frames_batches_native(frames[1],
-            cfg.EXTRACT.FRAMES_BATCH_SIZE, dim)
+            cfg.EXTRACT.FRAMES_BATCH_SIZE)
 
         # Assume number of fast frames is 257 -> ceil (257/16) = 17
         # Assume SlowFast.Alpha is 4
@@ -113,24 +139,108 @@ def frames_to_frames_batches(cfg, frames, dim=1):
     return frames_batches, num_batches
 
 
+def _frames_to_batches_of_frames_batches_native(frames, batch_size):
+    """
+    Given a list of frames batches, stack them into batches of frames batches
+    Args:
+        frames (list(torch.Tensor)): List of frames batches
+        batch_size: batch size of 'frames batch'es
+    Returns:
+        (list(torch.Tensor)): List of batches of frames batches
+    Example:
+        _frames_to_batches_of_frames_batches_native(
+            [
+                torch.Tensor(3, 16, 240, 320),
+                torch.Tensor(3, 16, 240, 320),
+                torch.Tensor(3, 16, 240, 320),
+                torch.Tensor(3, 16, 240, 320),
+                torch.Tensor(3, 16, 240, 320),
+                torch.Tensor(3, 16, 240, 320),
+                torch.Tensor(3, 14, 240, 320),
+            ]
+            batch_size = 4
+        ) =>
+        [
+            torch.Tensor(4, 3, 16, 240, 320),
+            torch.Tensor(2, 3, 16, 240, 320),
+            torch.Tensor(1, 3, 14, 240, 320),  # Since frames number is different
+        ]
+    """
+    frames_chunks = [
+        frames[idx:idx + batch_size]
+        for idx in range(0, len(frames), batch_size)
+    ]
+
+    # last frames batch might not be of the same length, hence cannot stack it
+    if len(frames_chunks[-1]) > 1 and frames_chunks[-1][-1].shape != frames_chunks[-1][-2].shape:
+        last_item = frames_chunks[-1][-1]
+        frames_chunks[-1] = frames_chunks[-1][:-1]
+        frames_chunks.append([last_item])
+
+    frames_batches = []
+    for frames_chunk in frames_chunks:
+        frames_batches.append(torch.stack(frames_chunk))
+
+    return frames_batches
+
+
 def frames_to_batches_of_frames_batches(cfg, frames):
     """
     Receives list of tensors of frames, either [frames] or [slow_pathway, fast_pathway]
-    then converts each frames tensor from `channel` x `num frames` x `height` x `width` to
-    list of len = `frames / batch size ` of tensors `channel` x `batch size` x `height` x `width`.
+    then converts each frames tensor from `channel` x `num frames` x `height` x `width` to a list of tensors of
+    `cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE` x `channel` x `cfg.EXTRACT.FRAMES_BATCH_SIZE` x `height` x `width`
     Args:
         cfg (cfgNode): Video Model Configuration
         frames (list(torch.Tensor)): List of frames from dataset __getitem__
             on the form of [frames] or [slow_pathway, fast_pathway]
     Return:
         frames_batches list((list(torch.Tensor))): The batches of frames
-            on the form of [frames_batches] or [slow_batches, fast_batches]
-        num_batches (Int): The number of frames batches, i.e. frames/batch_size
+            on the form of [[general_frames_batch], [general_frames_batch], ..] or
+            [[slow_batch, fast_batch], [slow_batch, fast_batch], ..]
+    Example:
+        at cfg.EXTRACT.FRAMES_BATCH_SIZE = 16
+        at cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE = 8
+        input: ['torch.Size([3, 682, 240, 320])', 'torch.Size([3, 2729, 240, 320])']
+        output:[
+            ['torch.Size([8, 3, 4, 240, 320])', 'torch.Size([8, 3, 16, 240, 320])'],
+            ['torch.Size([8, 3, 4, 240, 320])', 'torch.Size([8, 3, 16, 240, 320])'],
+                    ......... The same previous line 18 times .........
+            ['torch.Size([8, 3, 4, 240, 320])', 'torch.Size([8, 3, 16, 240, 320])'],
+            ['torch.Size([2, 3, 4, 240, 320])', 'torch.Size([2, 3, 16, 240, 320])'],
+            ['torch.Size([1, 3, 2, 240, 320])', 'torch.Size([1, 3, 9, 240, 320])']
+        ]
     """
-    # First, retrieve the backbone configurations file
+    frames, _ = frames_to_frames_batches(cfg, frames)
+
     backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
 
-    pass
+    if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.SINGLE_PATHWAY_ARCH:
+        frames = frames[0]
+        general_frames_batches = _frames_to_batches_of_frames_batches_native(
+            frames, cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE)
+
+        frames_batches = []
+        for batch in general_frames_batches:
+            frames_batches.append([batch])
+
+    elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
+        slow_frames = frames[0]
+        fast_frames = frames[1]
+        slow_frames_batches = _frames_to_batches_of_frames_batches_native(
+            slow_frames, cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE)
+        fast_frames_batches = _frames_to_batches_of_frames_batches_native(
+            fast_frames, cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE)
+
+        frames_batches = []
+        for idx, _ in enumerate(slow_frames_batches):
+            frames_batches.append(
+                [
+                    slow_frames_batches[idx],
+                    fast_frames_batches[idx]
+                ]
+            )
+
+    return frames_batches
 
 
 def spatial_sampling(

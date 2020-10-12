@@ -119,7 +119,7 @@ _C.EXTRACT.FRAMES_BATCH_SIZE = 16
 _C.EXTRACT.FRAMES_BATCHES_BATCH_SIZE = 8
 
 # Batch size of loaded videos
-_C.EXTRACT.VIDEOS_BATCH_SIZE = 1
+_C.EXTRACT.VIDEOS_BATCH_SIZE = 1 # at moment only 1 is supported
 
 # The extension of results files.
 _C.EXTRACT.FEATURES_EXT = "rar"

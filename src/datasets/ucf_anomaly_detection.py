@@ -225,7 +225,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         return True
 
 
-    @funcutils.debug_signature
     def _decode_video(self, video_path):
         """"
         Load the video and decode it

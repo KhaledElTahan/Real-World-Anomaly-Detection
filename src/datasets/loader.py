@@ -32,13 +32,7 @@ def construct_loader(cfg, split):
         shuffle = False
         drop_last = False
 
-    if cfg.EXTRACT.ENABLE:
-        dataset_name = cfg.EXTRACT.DATASET
-        batch_size = int(cfg.EXTRACT.VIDEOS_BATCH_SIZE / max(1, cfg.NUM_GPUS))
-        shuffle = False
-        drop_last = False
-        tmp_workers = cfg.DATA_LOADER.NUM_WORKERS
-        cfg.DATA_LOADER.NUM_WORKERS = cfg.EXTRACT.VIDEOS_BATCH_SIZE
+    assert not cfg.EXTRACT.ENABLE
 
     # Construct the dataset
     dataset = build_dataset(dataset_name, cfg, split)
@@ -58,7 +52,5 @@ def construct_loader(cfg, split):
         collate_fn=None,
         worker_init_fn=utils.loader_worker_init_fn(dataset),
     )
-
-    cfg.DATA_LOADER.NUM_WORKERS = tmp_workers
 
     return loader
