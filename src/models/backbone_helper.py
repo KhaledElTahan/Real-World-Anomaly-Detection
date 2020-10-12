@@ -1,4 +1,5 @@
 """Helper to reuse the backbone model"""
+import torch
 import operator
 import src.utils.pathutils as pathutils
 from src.models.slowfast.config.defaults import get_cfg as get_backbone_default_cfg
@@ -79,14 +80,3 @@ def load_model(cfg):
     )
 
     return backbone_model
-
-
-def get_feature_extractor(cfg):
-    """
-    Create a backbone model from the configurations and load its weights,
-        then remove its head based on the backbone cfg
-    Args:
-        cfg: The video model configuration file
-    """
-
-    backbone_model = load_model(cfg)

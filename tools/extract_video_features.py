@@ -34,8 +34,9 @@ def extract(cfg):
         
         for frames_batch in frames_batches:
             debugutils.print_tensors_nicely(frames_batch)
-            preds = backbone_model(frames_batch)
+            preds, features = backbone_model(frames_batch)
             debugutils.print_tensors_nicely(preds)
+            debugutils.print_tensors_nicely(features)
             exit()
 
 

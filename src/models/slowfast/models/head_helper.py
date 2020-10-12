@@ -5,6 +5,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from slowfast.models.roi_align import ROIAlign
 
 
@@ -195,6 +196,23 @@ class ResNetBasicHead(nn.Module):
                 "function.".format(act_func)
             )
 
+
+    def create_features(self, inputs):
+        """
+        Creates a copy from the features and normalizes it
+        Args:
+            inputs (torch.Tensor): Output from pathways
+        """
+        # save features
+        features = inputs.clone().detach()
+        # flatten the features tensor
+        features = features.mean(3).mean(2).reshape(features.shape[0], -1)
+        # apply l2 normalization on features
+        F.normalize(features)
+
+        return features
+
+
     def forward(self, inputs):
         assert (
             len(inputs) == self.num_pathways
@@ -206,6 +224,9 @@ class ResNetBasicHead(nn.Module):
         x = torch.cat(pool_out, 1)
         # (N, C, T, H, W) -> (N, T, H, W, C).
         x = x.permute((0, 2, 3, 4, 1))
+
+        features = self.create_features(x)
+
         # Perform dropout.
         if hasattr(self, "dropout"):
             x = self.dropout(x)
@@ -217,4 +238,4 @@ class ResNetBasicHead(nn.Module):
             x = x.mean([1, 2, 3])
 
         x = x.view(x.shape[0], -1)
-        return x
+        return x, features
