@@ -184,7 +184,7 @@ def _frames_to_batches_of_frames_batches_native(frames, batch_size):
     return frames_batches
 
 
-def frames_to_batches_of_frames_batches(cfg, frames):
+def frames_to_batches_of_frames_batches(cfg, frames, drop_last=True):
     """
     Receives list of tensors of frames, either [frames] or [slow_pathway, fast_pathway]
     then converts each frames tensor from `channel` x `num frames` x `height` x `width` to a list of tensors of
@@ -193,6 +193,7 @@ def frames_to_batches_of_frames_batches(cfg, frames):
         cfg (cfgNode): Video Model Configuration
         frames (list(torch.Tensor)): List of frames from dataset __getitem__
             on the form of [frames] or [slow_pathway, fast_pathway]
+        drop_last (Bool): drop last batch if frames length is not the same as other batches
     Return:
         frames_batches list((list(torch.Tensor))): The batches of frames
             on the form of [[general_frames_batch], [general_frames_batch], ..] or
@@ -207,7 +208,7 @@ def frames_to_batches_of_frames_batches(cfg, frames):
                     ......... The same previous line 18 times .........
             ['torch.Size([8, 3, 4, 240, 320])', 'torch.Size([8, 3, 16, 240, 320])'],
             ['torch.Size([2, 3, 4, 240, 320])', 'torch.Size([2, 3, 16, 240, 320])'],
-            ['torch.Size([1, 3, 2, 240, 320])', 'torch.Size([1, 3, 9, 240, 320])']
+            ['torch.Size([1, 3, 2, 240, 320])', 'torch.Size([1, 3, 9, 240, 320])'] => Will be dropped if drop_last
         ]
     """
     frames, _ = frames_to_frames_batches(cfg, frames)
@@ -220,7 +221,7 @@ def frames_to_batches_of_frames_batches(cfg, frames):
             frames, cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE)
 
         frames_batches = []
-        for batch in general_frames_batches:
+        for idx, batch in enumerate(general_frames_batches):
             frames_batches.append([batch])
 
     elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
@@ -240,6 +241,11 @@ def frames_to_batches_of_frames_batches(cfg, frames):
                 ]
             )
 
+    if drop_last and len(frames_batches) > 1 \
+        and frames_batches[-1][0].shape != frames_batches[-2][0].shape:
+        frames_batches = frames_batches[:-1]
+
+    assert len(frames_batches) > 0
     return frames_batches
 
 

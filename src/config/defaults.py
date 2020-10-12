@@ -113,7 +113,7 @@ _C.EXTRACT.ENABLE = True
 _C.EXTRACT.DATASET = "UCFAnomalyDetection"
 
 # Total mini-batch size
-_C.EXTRACT.FRAMES_BATCH_SIZE = 16
+_C.EXTRACT.FRAMES_BATCH_SIZE = 32 
 
 # Number of frames batches to be evaluated by backbone
 _C.EXTRACT.FRAMES_BATCHES_BATCH_SIZE = 8
