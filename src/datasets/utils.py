@@ -242,7 +242,7 @@ def frames_to_batches_of_frames_batches(cfg, frames, drop_last=True):
             )
 
     if drop_last and len(frames_batches) > 1 \
-        and frames_batches[-1][0].shape != frames_batches[-2][0].shape:
+        and frames_batches[-1][0].shape[2] != frames_batches[-2][0].shape[2]:
         frames_batches = frames_batches[:-1]
 
     assert len(frames_batches) > 0

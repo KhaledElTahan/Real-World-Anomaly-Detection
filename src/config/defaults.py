@@ -144,6 +144,9 @@ _C.BACKBONE.CHECKPOINT_FILE_PATH = "slowfast-checkpoints/Kinetics/c2/SLOWFAST_8x
 # If True -> Backbone will only be a feature extractor
 _C.BACKBONE.FEATURE_EXTRACTION = True
 
+# Use it in building the classifier
+_C.BACKBONE.FEATURES_LENGTH = 2304
+
 # If true fine tune the mode, else require no gradient.
 _C.BACKBONE.TRAINABLE = False
 

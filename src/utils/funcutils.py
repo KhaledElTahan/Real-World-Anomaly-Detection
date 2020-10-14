@@ -1,6 +1,6 @@
 """Function Utils, decorators for debugging and other utilities"""
 import functools
-
+import gc
 
 def debug(func):
     """Print the function signature and return value"""
@@ -42,4 +42,14 @@ def debug_signature(func):
         print(f"{func.__name__!r} returned")
         return value
     return wrapper_debug
-    
+
+
+def force_garbage_collection(func):
+    """Force garbage collection after the function execution"""
+
+    @functools.wraps(func)
+    def wrapper_gc(*args, **kwargs):
+        value = func(*args, **kwargs)
+        gc.collect()
+        return value
+    return wrapper_gc
