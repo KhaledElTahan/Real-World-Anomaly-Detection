@@ -4,25 +4,34 @@ from pprint import pprint
 import torch
 
 
-def tensors_list_to_shapes_list(tensors_list):
+def _tesnors_to_shapes(tensors):
     """
     Converts a nested list/tuple of torch tensors to list of shapes
     Args:
-        tensors_list (list/tuple): Nested list of torch tensors
+        tensors (list/tuple): Nested list of torch tensors
     Returns:
-        shapes_list (list): List of same format as tensors_list
+        shapes (list/tuple): List of same format as tensors_list
             but every tensor is replaced by its str(tensor.shape)
     """
-    shapes_list = []
-    for item in tensors_list:
-        if isinstance(item, list) or isinstance(item, tuple):
-            shapes_list.append(tensors_list_to_shapes_list(item))
-        elif isinstance(item, torch.Tensor):
-            shapes_list.append(str(item.shape))
-        else:
-            shapes_list.append(item)
+    if isinstance(tensors, list):
+        shapes = []
+    elif isinstance(tensors, tuple):
+        shapes = ()
 
-    return shapes_list
+    for item in tensors:
+        if isinstance(item, (list, tuple)):
+            res = _tesnors_to_shapes(item)
+        elif isinstance(item, torch.Tensor):
+            res = str(item.shape)
+        else:
+            res = item
+
+        if isinstance(tensors, list):
+            shapes = shapes + [res]
+        elif isinstance(tensors, tuple):
+            shapes = shapes + (res,)
+
+    return shapes
 
 
 def tensors_to_shapes(tensors):
@@ -38,7 +47,7 @@ def tensors_to_shapes(tensors):
     if isinstance(tensors, torch.Tensor):
         return str(tensors.shape)
     elif isinstance(tensors, list) or isinstance(tensors, tuple):
-        return tensors_list_to_shapes_list(tensors)
+        return _tesnors_to_shapes(tensors)
 
     # undefinted, just ignore
     return tensors
@@ -50,4 +59,4 @@ def print_tensors_nicely(tensors):
     Args:
         tensors:  Nested list of torch tensors or a signle torch tensor
     """
-    pprint(tensors_list_to_shapes_list(tensors))
+    pprint(tensors_to_shapes(tensors))

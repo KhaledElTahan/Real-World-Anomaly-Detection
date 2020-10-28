@@ -56,6 +56,8 @@ def debug(sign, ret, sign_beautify=False, ret_beautify=False):
             else:
                 print(f"{func.__name__!r} returned")
 
+            print()
+
             return value
         return wrapper_debug
     return decorator_debug
