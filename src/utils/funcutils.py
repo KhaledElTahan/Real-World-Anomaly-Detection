@@ -1,47 +1,64 @@
 """Function Utils, decorators for debugging and other utilities"""
 import functools
 import gc
+from pprint import pprint
 
-def debug(func):
-    """Print the function signature and return value"""
-
-    @functools.wraps(func)
-    def wrapper_debug(*args, **kwargs):
-        args_repr = [repr(a) for a in args]
-        kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
-        signature = ", ".join(args_repr + kwargs_repr)
-        print(f"Calling {func.__name__}({signature})")
-        value = func(*args, **kwargs)
-        print(f"{func.__name__!r} returned {value!r}")
-        return value
-    return wrapper_debug
+from src.utils import debugutils
 
 
-def debug_return(func):
-    """Print the function name & return value"""
+def debug(sign, ret, sign_beautify=False, ret_beautify=False):
+    """
+    Print the function signature and/or return value
+    Args:
+        sign (Bool): Print function signature
+        ret (Bool): Print function return value
+        sign_beautify (Bool): Beautify function signature
+        ret_beautify (Bool): Beautify function return value
+    """
+    def decorator_debug(func):
+        @functools.wraps(func)
+        def wrapper_debug(*args, **kwargs):
 
-    @functools.wraps(func)
-    def wrapper_debug(*args, **kwargs):
-        print(f"Calling {func.__name__}()")
-        value = func(*args, **kwargs)
-        print(f"{func.__name__!r} returned {value!r}")
-        return value
-    return wrapper_debug
+            if sign:
+                args_repr = [
+                    debugutils.tensors_to_shapes(repr(a))
+                    if sign_beautify else repr(a)
+                    for a in args
+                ]
+                kwargs_repr = [
+                    f"{k}={debugutils.tensors_to_shapes(v)!r}"
+                    if sign_beautify else f"{k}={v!r}"
+                    for k, v in kwargs.items()]
 
+                if sign_beautify:
+                    print(f"Calling {func.__name__}()")
+                    if len(args) > 0:
+                        print("Arguments:") 
+                        pprint(args_repr)
+                    if len(kwargs) > 0:
+                        print("Keyword Arguments:")
+                        pprint(kwargs_repr)
+                else:
+                    signature = ", ".join(args_repr + kwargs_repr)
+                    print(f"Calling {func.__name__}({signature})")
+            else:
+                print(f"Calling {func.__name__}()")
 
-def debug_signature(func):
-    """Print the function signature"""
+            value = func(*args, **kwargs)
 
-    @functools.wraps(func)
-    def wrapper_debug(*args, **kwargs):
-        args_repr = [repr(a) for a in args]
-        kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
-        signature = ", ".join(args_repr + kwargs_repr)
-        print(f"Calling {func.__name__}({signature})")
-        value = func(*args, **kwargs)
-        print(f"{func.__name__!r} returned")
-        return value
-    return wrapper_debug
+            if ret:
+                if ret_beautify:
+                    print(f"{func.__name__!r} returned")
+                    print("Return Value:")
+                    pprint(debugutils.tensors_to_shapes(value))
+                else:
+                    print(f"{func.__name__!r} returned {value!r}")
+            else:
+                print(f"{func.__name__!r} returned")
+
+            return value
+        return wrapper_debug
+    return decorator_debug
 
 
 def force_garbage_collection(before, after):
