@@ -2,11 +2,11 @@
 
 import torch
 
-from src.utils as funcutils
+from src.utils import funcutils
 from src.models import backbone_helper
 
 
-@funcutils.force_garbage_collection
+@funcutils.force_garbage_collection(before=True, after=True)
 @torch.no_grad()
 def get_features_length(cfg, backbone_model, model_memory="cpu"):
     """

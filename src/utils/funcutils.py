@@ -44,12 +44,23 @@ def debug_signature(func):
     return wrapper_debug
 
 
-def force_garbage_collection(func):
-    """Force garbage collection after the function execution"""
+def force_garbage_collection(before, after):
+    """
+    Force garbage collection before & after the function execution
+    Args:
+        before (Bool): Force garbage collection before the function execution
+        after (Bool): Force garbage collection after the function execution
+    """
+    def decorator_gc(func):
+        @functools.wraps(func)
+        def wrapper_gc(*args, **kwargs):
+            if before:
+                gc.collect()
 
-    @functools.wraps(func)
-    def wrapper_gc(*args, **kwargs):
-        value = func(*args, **kwargs)
-        gc.collect()
-        return value
-    return wrapper_gc
+            value = func(*args, **kwargs)
+
+            if after:
+                gc.collect()
+            return value
+        return wrapper_gc
+    return decorator_gc
