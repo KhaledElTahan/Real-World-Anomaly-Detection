@@ -21,7 +21,7 @@ def debug(sign, ret, sign_beautify=False, ret_beautify=False):
 
             if sign:
                 args_repr = [
-                    debugutils.tensors_to_shapes(repr(a))
+                    debugutils.tensors_to_shapes(a)
                     if sign_beautify else repr(a)
                     for a in args
                 ]
@@ -29,7 +29,6 @@ def debug(sign, ret, sign_beautify=False, ret_beautify=False):
                     f"{k}={debugutils.tensors_to_shapes(v)!r}"
                     if sign_beautify else f"{k}={v!r}"
                     for k, v in kwargs.items()]
-
                 if sign_beautify:
                     print(f"Calling {func.__name__}()")
                     if len(args) > 0:
@@ -44,6 +43,7 @@ def debug(sign, ret, sign_beautify=False, ret_beautify=False):
             else:
                 print(f"Calling {func.__name__}()")
 
+            print()
             value = func(*args, **kwargs)
 
             if ret:

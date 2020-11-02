@@ -16,6 +16,7 @@ def extract(cfg):
     Args:
         cfg (cfgNode): Video Model Configurations
     """
+    simple_test()
     temp_read_features = cfg.DATA.READ_FEATURES
     temo_extract_enabled = cfg.EXTRACT.ENABLE
 
@@ -36,7 +37,7 @@ def extract(cfg):
         print("Warning: Set cfg.BACKBONE.FEATURES_LENGTH with value {}", features_length)
 
     for cur_iter, (frames, label, annotation) in enumerate(dataset_test):
-      
+   
         # First Index is used to distinguish between normal and anomaly video
         # Since we only use feature extraction, then all will be considered the same
         # Second Index is ued to distinguish between pathways
@@ -80,3 +81,10 @@ def _print_extract_stats(cfg, features_length):
 
     print(tabulate(table, headers, tablefmt="pretty", colalign=("center", "left")))
     print()
+
+
+def simple_test():
+    utils.changes_segments_number(torch.rand(size = (2, 3, 4)), 8)
+
+
+    exit()

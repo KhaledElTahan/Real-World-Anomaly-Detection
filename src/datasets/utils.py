@@ -5,6 +5,7 @@ import torch
 
 from src.datasets import transform
 from src.models import backbone_helper
+from src.utils import funcutils
 
 
 def pack_pathway_output(cfg, frames):
@@ -247,6 +248,68 @@ def frames_to_batches_of_frames_batches(cfg, frames, drop_last=True):
 
     assert len(frames_batches) > 0
     return frames_batches
+
+
+def changes_segments_number(tensors_segments, output_segments_num):
+    """
+    Changes number of input tensors segments
+    Args:
+        tensors_segments (Torch.Tensor): Tensor with two or more dimensions
+        output_segments_num (Int): Number of output segments
+    Returns:
+        new_segments (Torch.Tensor): Same as tensors_segments except the first
+            dimension to be the output_segments_num
+        mapping_indices (List): The intervals used to map tensors_segments
+            to new_segments
+    Examples:
+        1)  changes_segments_number(Tensor(50, 2, 3), 5)
+            Returns:
+                torch.Tensor(5, 2, 3)
+                [[0, 9], [10, 19], [20, 28], [29, 38], [39, 49]]
+        2)  changes_segments_number(Tensor(2, 2, 3), 4)
+            Returns:
+                torch.Tensor(4, 2, 3)
+                [[0, 0], [0, 0], [0, 0], [1, 1]]
+                Note: 3rd Element [0, 0]:
+                    1) linspace is [0, 0, 0, 1, 1]
+                    1) We don't take last frame to segment
+                    2) Because we need it to be next segment's first frame
+                    3) No overlapping
+    """
+    assert isinstance(tensors_segments, torch.Tensor)
+    assert len(tensors_segments.shape) >= 2
+
+    # Example => Want to change from 50 segments to 5
+    # torch.round(torch.linspace(0, 49, 6))
+    # tensor([ 0, 10, 20, 29, 39, 49])
+    # 0 -> 9, 10 -> 19, 20 -> 28, 29 -> 38, 39 -> 49
+    segments_indices = torch.round(
+        torch.linspace(0, tensors_segments.shape[0] - 1, output_segments_num + 1)
+        ).to(torch.int).tolist()
+    
+    new_shape = (output_segments_num,)
+    for dim_value in tensors_segments.shape[1:]:
+        new_shape = new_shape + (dim_value,)
+
+    new_segments = torch.zeros(size = new_shape)
+
+    # apply l2 if more than segment?
+    mapping_indices = []
+    for idx in range(len(segments_indices) - 1):
+        ss_idx = segments_indices[idx]
+        ee_idx = segments_indices[idx + 1] - 1
+
+        if idx == len(segments_indices) - 2:
+            ee_idx = segments_indices[idx + 1]
+
+        if ee_idx <= ss_idx:
+            new_segments[idx] = tensors_segments[ss_idx]
+            mapping_indices.append([ss_idx, ss_idx])
+        else:
+            new_segments[idx] = tensors_segments[ss_idx:ee_idx + 1].mean(0)
+            mapping_indices.append([ss_idx, ee_idx])
+
+    return new_segments, mapping_indices
 
 
 def spatial_sampling(
