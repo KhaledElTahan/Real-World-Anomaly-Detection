@@ -1,11 +1,12 @@
 """Dataset Utils"""
 
+from pathlib import Path
 import numpy as np
 import torch
 
 from src.datasets import transform
 from src.models import backbone_helper
-from src.utils import funcutils
+from src.utils import funcutils, pathutils
 
 
 def pack_pathway_output(cfg, frames):
@@ -361,8 +362,8 @@ def segmentize_features(cfg, features_batch, annotation):
         start_frame = annotation[idx]
         end_frame = annotation[idx + 1]
 
-        for i in range(len(mapping_frames)):
-            if _is_inside(start_frame, end_frame, mapping_frames[i][0], mapping_frames[i][1]):
+        for i, segment_frames in enumerate(mapping_frames):
+            if _is_inside(start_frame, end_frame, segment_frames[0], segment_frames[1]):
                 is_anomaly_segment[i] = 1
 
         idx += 2
@@ -501,13 +502,26 @@ def loader_worker_init_fn(dataset):
     return None
 
 
-def video_name_to_features_name(video_name, old_ext, new_ext):
+def change_extension(video_name, old_ext, new_ext):
     """
-    Changes video file name to features file name with new extension
+    Changes the file name's extension
     Args:
-        old_ext (String): The old extension of the video file
-        new_ext (String): The new extension of the features file
+        old_ext (String): The old extension of the file
+        new_ext (String): The new extension of the file
     Examples:
-        video_name_to_features_name("video.mp4 label 1 1", "mp4", "rar") -> "video.rar label 1 1"
+        change_extension("video.mp4 label 1 1", "mp4", "rar") -> "video.rar label 1 1"
     """
     return video_name.replace(old_ext, new_ext)
+
+
+def video_path_to_features_path(cfg, video_path :Path):
+    """
+    Convert video path to its features file path
+    Args:
+        cfg (cfgNode): Video model configurations node
+        video_path (pathlib.Path): Path of the video
+    Returns:
+        features_path (pathlib.Path): Path of the features file
+    """
+    parent_directory = pathutils.get_specific_dataset_path(cfg, features=True) / video_path.parent.name
+    return parent_directory / change_extension(str(video_path.name), cfg.DATA.EXT, cfg.EXTRACT.FEATURES_EXT)

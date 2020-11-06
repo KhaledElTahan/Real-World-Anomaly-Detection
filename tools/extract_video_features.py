@@ -36,7 +36,7 @@ def extract(cfg):
     if features_length != cfg.BACKBONE.FEATURES_LENGTH:
         print("Warning: Set cfg.BACKBONE.FEATURES_LENGTH with value {}", features_length)
 
-    for cur_iter, (frames, label, annotation) in enumerate(dataset_test):
+    for cur_iter, (frames, label, annotation, video_index) in enumerate(dataset_test):
    
         # First Index is used to distinguish between normal and anomaly video
         # Since we only use feature extraction, then all will be considered the same
@@ -48,7 +48,8 @@ def extract(cfg):
 
         print(annotation[0])
         print(is_anomaly_segment)
-
+        print(dataset_test.get_video_path(video_index))
+        print(utils.video_path_to_features_path(cfg, dataset_test.get_video_path(video_index)))
 
         exit()
 

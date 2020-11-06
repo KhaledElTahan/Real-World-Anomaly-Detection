@@ -22,7 +22,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
     def __init__(self, cfg, mode, num_retries=10):
         """
-        Construct the UCF Anomaly Detection video loader with a given two txt files. 
+        Construct the UCF Anomaly Detection video loader with a given two txt files.
         The format of the training file is:
             ```
             label_1/video_name_1
@@ -96,7 +96,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         self._path_to_normal_videos = []
 
-        self._dataset_directory = pathutils.get_specific_dataset_path(self.cfg, self.mode, self.cfg.DATA.READ_FEATURES)
+        self._dataset_directory = pathutils.get_specific_dataset_path(self.cfg, self.cfg.DATA.READ_FEATURES)
 
         labels_set = set()
         with path_to_file.open("r") as file_ptr:
@@ -104,7 +104,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 line = line.strip()
                 
                 if self.cfg.DATA.READ_FEATURES:
-                    line = utils.video_name_to_features_name(line, self.cfg.DATA.EXT, self.cfg.EXTRACT.FEATURES_EXT)
+                    line = utils.change_extension(line, self.cfg.DATA.EXT, self.cfg.EXTRACT.FEATURES_EXT)
 
                 if self.mode == "train":
                     assert len(line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)) == 2
@@ -309,8 +309,8 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                     6) [frames: : [slow_frames, fast_frames]] -> In case of feature extraction
             label (list(int)): the label of the current one or two videos,
                 on the form of [label] or ["Normal", label]
-            annotation (list(tuples)): the annotations of current one or two videos, 
-                on the form of [tuple] or [normal tuple, anomaly tuple] 
+            annotation (list(tuples)): the annotations of current one or two videos,
+                on the form of [tuple] or [normal tuple, anomaly tuple]
         """
         # 1) Extra work could be done here incase of different reading order.
 
@@ -358,7 +358,32 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         # Do I need to construct label as one hot vector or as an idx here?
 
-        return items, labels, annotations
+        return items, labels, annotations, index
+
+
+    def get_video_path(self, index, all_videos=True):
+        """
+        Given the video index, return the video path
+        Args:
+            index (int): the video index
+            all_videos (Bool): Wether to use the all videos list index,
+                or use the normal and anomaly indices
+        Return:
+            video_path (Path): The absolute path of the video
+        """
+        if all_videos:
+            return self._path_to_videos[index]
+
+        min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)
+        max_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
+
+        normal_idx = index % min_len
+        anomaly_idx = index % max_len
+
+        if self.cfg.TRAIN.SHIFT_INDEX:
+            anomaly_idx = (index + self.cfg.TRAIN.CURRENT_EPOCH) % max_len
+
+        return self._path_to_normal_videos[normal_idx], self._path_to_anomaly_videos[anomaly_idx]
 
 
     def __len__(self):

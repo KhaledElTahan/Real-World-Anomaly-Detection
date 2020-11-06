@@ -10,6 +10,7 @@ def debug(apply=True, sign=True, ret=True, sign_beautify=False, ret_beautify=Fal
     """
     Print the function signature and/or return value
     Args:
+        apply (Bool): Turn on or off the effect of this decorator
         sign (Bool): Print function signature
         ret (Bool): Print function return value
         sign_beautify (Bool): Beautify function signature

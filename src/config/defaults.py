@@ -125,7 +125,7 @@ _C.EXTRACT.NUMBER_OUTPUT_SEGMENTS = 32
 _C.EXTRACT.VIDEOS_BATCH_SIZE = 1 # at moment only 1 is supported
 
 # The extension of results files.
-_C.EXTRACT.FEATURES_EXT = "rar"
+_C.EXTRACT.FEATURES_EXT = "pt"
 
 # -----------------------------------------------------------------------------
 # Backbone options

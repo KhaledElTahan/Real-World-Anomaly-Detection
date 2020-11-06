@@ -21,7 +21,7 @@ def get_datasets_path():
     """Retrieve the absolute Path object of the datasets directory"""
     return get_app_path() / "datasets"
 
-def get_specific_dataset_path(cfg, mode, features=False):
+def get_specific_dataset_path(cfg, features=False):
     """
     Retrieve the absolute Path object of a specific dataset directory
     Args:
@@ -32,8 +32,6 @@ def get_specific_dataset_path(cfg, mode, features=False):
             if false, retrieve the videos dataset directory
     """
     dataset_directory = get_datasets_path() / cfg.DATA.PATH_TO_DATA_DIR
-
-    assert mode in ["train", "val", "test"]
 
     if features: # Read features
         features_name = cfg.BACKBONE.NAME + "_" + cfg.TRANSFORM.CODE
