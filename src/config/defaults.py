@@ -112,6 +112,9 @@ _C.EXTRACT.ENABLE = True
 # Dataset for extracting the features.
 _C.EXTRACT.DATASET = "UCFAnomalyDetection"
 
+# Available split for the dataset.
+_C.EXTRACT.DATASET_SPLITS = ["train", "test"]
+
 # Total mini-batch size
 _C.EXTRACT.FRAMES_BATCH_SIZE = 32 
 
