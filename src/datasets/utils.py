@@ -286,7 +286,7 @@ def changes_segments_number(tensors_segments, output_segments_num):
     segments_indices = torch.round(
         torch.linspace(0, tensors_segments.shape[0] - 1, output_segments_num + 1)
         ).to(torch.int).tolist()
-    
+
     new_shape = (output_segments_num,)
     for dim_value in tensors_segments.shape[1:]:
         new_shape = new_shape + (dim_value,)
@@ -310,6 +310,64 @@ def changes_segments_number(tensors_segments, output_segments_num):
             mapping_indices.append([ss_idx, ee_idx])
 
     return new_segments, mapping_indices
+
+
+@funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+def segmentize_features(cfg, features_batch, annotation):
+    """
+    Segmentize features into cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS number of segments
+    and tell whether each segment is anomaly or not
+    Args:
+        cfg (cfgNode): Video model configurations node
+        features_batch (torch.Tensor): Features or a whole video
+        annotation (Tuple): Frames intervals in which the video is anomalous
+    Returns:
+        features_segments (torch.Tensor): cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS Segments of frames
+        is_anomaly_segment (torch.Tensor): tells us whether each segment is anomalous or not
+    """
+
+    features_segments, mapping_indices = changes_segments_number(features_batch,
+        cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS)
+
+    is_anomaly_segment = torch.zeros(size = (cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS,), dtype=int)
+
+    def _indix_to_frame(index, frames_batch_size, start):
+        frame = index * frames_batch_size
+        if not start:
+            frame += frames_batch_size - 1
+        return frame
+
+    mapping_frames = []
+    for indices in mapping_indices:
+        mapping_frames.append(
+            [
+                _indix_to_frame(indices[0], cfg.EXTRACT.FRAMES_BATCH_SIZE, True),
+                _indix_to_frame(indices[1], cfg.EXTRACT.FRAMES_BATCH_SIZE, False)
+            ]
+        )
+
+    def _is_inside(start_frame, end_frame, segment_start_frame, segment_end_frame):
+        assert start_frame < end_frame
+        assert segment_start_frame < segment_end_frame
+
+        if start_frame > segment_end_frame:
+            return False
+        if end_frame < segment_start_frame:
+            return False
+        return True
+
+    idx = 0
+    while idx < len(annotation) and annotation[idx] != -1:
+        start_frame = annotation[idx]
+        end_frame = annotation[idx + 1]
+
+        for i in range(len(mapping_frames)):
+            if _is_inside(start_frame, end_frame, mapping_frames[i][0], mapping_frames[i][1]):
+                is_anomaly_segment[i] = 1
+
+        idx += 2
+
+    return features_segments, is_anomaly_segment
 
 
 def spatial_sampling(

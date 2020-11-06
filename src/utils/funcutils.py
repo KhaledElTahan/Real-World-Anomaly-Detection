@@ -6,7 +6,7 @@ from pprint import pprint
 from src.utils import debugutils
 
 
-def debug(sign, ret, sign_beautify=False, ret_beautify=False):
+def debug(apply=True, sign=True, ret=True, sign_beautify=False, ret_beautify=False):
     """
     Print the function signature and/or return value
     Args:
@@ -18,6 +18,8 @@ def debug(sign, ret, sign_beautify=False, ret_beautify=False):
     def decorator_debug(func):
         @functools.wraps(func)
         def wrapper_debug(*args, **kwargs):
+            if not apply:
+                return func(*args, **kwargs)
 
             if sign:
                 args_repr = [

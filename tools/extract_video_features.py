@@ -42,6 +42,15 @@ def extract(cfg):
         # Since we only use feature extraction, then all will be considered the same
         # Second Index is ued to distinguish between pathways
         frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames[0])
+        debugutils.print_tensors_nicely(frames_batches)
+
+        new_segments, is_anomaly_segment = utils.segmentize_features(cfg, torch.rand(size = (44, 2304)), annotation[0])
+
+        print(annotation[0])
+        print(is_anomaly_segment)
+
+
+        exit()
 
         for frames_batch in frames_batches:
             debugutils.print_tensors_nicely(frames_batch)
@@ -84,7 +93,4 @@ def _print_extract_stats(cfg, features_length):
 
 
 def simple_test():
-    utils.changes_segments_number(torch.rand(size = (2, 3, 4)), 8)
-
-
-    exit()
+    pass

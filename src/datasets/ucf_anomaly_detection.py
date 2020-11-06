@@ -285,7 +285,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             return self._decode_video(item_path)
 
 
-    @funcutils.debug(sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+    @funcutils.debug(apply=True, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
     def __getitem__(self, index):
         """
         Given the video index, return the list of frames, label, and video

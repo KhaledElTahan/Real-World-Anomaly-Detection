@@ -118,6 +118,9 @@ _C.EXTRACT.FRAMES_BATCH_SIZE = 32
 # Number of frames batches to be evaluated by backbone
 _C.EXTRACT.FRAMES_BATCHES_BATCH_SIZE = 4
 
+# Number of segments of the output features
+_C.EXTRACT.NUMBER_OUTPUT_SEGMENTS = 32
+
 # Batch size of loaded videos
 _C.EXTRACT.VIDEOS_BATCH_SIZE = 1 # at moment only 1 is supported
 
