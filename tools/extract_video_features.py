@@ -45,24 +45,14 @@ def extract(cfg):
 
             frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames[0])
 
-            if cfg.NUM_GPUS > 0:
-                for i, _ in enumerate(frames_batches):
-                    for j, _ in enumerate(frames_batches[i]):
-                        frames_batches[i][j] = frames_batches[i][j].cuda()
-
             features_batches = []
             for frames_batch in frames_batches:
-                _, features = backbone_model(frames_batch)
-                features_batches.append(features)
-
-
-            if cfg.NUM_GPUS > 0:
-                for i, _ in enumerate(frames_batches):
-                    for j, _ in enumerate(frames_batches[i]):
-                        frames_batches[i][j] = frames_batches[i][j].cpu()
-
-                for i, _ in enumerate(features_batches):
-                    features_batches[i] = features_batches[i].cpu()
+                _, features = backbone_model(
+                    frames_batch.cuda() if cfg.NUM_GPUS > 0 else frames_batch
+                )
+                features_batches.append(
+                    features.cpu() if cfg.NUM_GPUS > 0 else features
+                )
 
             for i, _ in enumerate(features_batches):
                 features_batches[i] = features_batches[i].detach()
