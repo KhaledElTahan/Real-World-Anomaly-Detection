@@ -70,6 +70,8 @@ def extract(cfg):
                 cfg, dataset.get_video_path(video_index)
             )
 
+            features_path.parent.mkdir(parents=True, exist_ok=True)
+
             torch.save(
                 {"features_segments": new_segments, "is_anomaly_segment":is_anomaly_segment},
                 features_path
