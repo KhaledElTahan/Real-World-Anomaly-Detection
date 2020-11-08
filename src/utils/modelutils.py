@@ -8,15 +8,13 @@ from src.models import backbone_helper
 
 @funcutils.force_garbage_collection(before=True, after=True)
 @torch.no_grad()
-def get_features_length(cfg, backbone_model, model_memory="cpu"):
+def get_features_length(cfg, backbone_model):
     """
     Feed the backbone with least dummy input with the same dataset shape
     and find the length of the features
     Args:
         cfg (cfgNode): The video model configurations
         backbone_model (torch.nn.Module): The feature extractor model
-        model_memory (String): put "cpu" if the model is on the cpu,
-            otherwise put "gpu".
     Returns:
         (int): The length of the features dimension
     """
@@ -43,10 +41,9 @@ def get_features_length(cfg, backbone_model, model_memory="cpu"):
             )
         )
 
-    if model_memory.lower() != "cpu":
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    if cfg.NUM_GPUS > 0:
         for idx, _ in enumerate(inputs):
-            inputs[idx] = inputs[idx].to(device)
+            inputs[idx] = inputs[idx].cuda()
 
     backbone_model.eval()
     _, feats = backbone_model(inputs)
