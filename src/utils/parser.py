@@ -29,6 +29,13 @@ def parse_args():
         type=int,
     )
     parser.add_argument(
+        "--extract",
+        dest="extract",
+        help="Select this option to extract the features",
+        action='store_true',
+    )
+    parser.set_defaults(extract=False)
+    parser.add_argument(
         "--cfg",
         dest="cfg_file",
         help="Path to the config file",
@@ -56,7 +63,6 @@ def parse_args():
 
     return parser.parse_args()
 
-
 def load_config(args):
     """
     Given the arguemnts, load and initialize the configs.
@@ -82,6 +88,7 @@ def load_config(args):
         cfg.RNG_SEED = args.rng_seed
     if hasattr(args, "output_dir"):
         cfg.OUTPUT_DIR = args.output_dir
-
+    if hasattr(args, "extract"):
+        cfg.EXTRACT.ENABLE = args.extract
 
     return cfg
