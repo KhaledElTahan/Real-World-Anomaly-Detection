@@ -195,7 +195,7 @@ _C.MODEL.HEAD_ACT = ""
 _C.DATA = CfgNode()
 
 # The path to the data directory.
-_C.DATA.PATH_TO_DATA_DIR = "UFC_Anomaly_Detection"
+_C.DATA.PATH_TO_DATA_DIR = "UCF_Anomaly_Detection"
 
 # If true, read from the extracted by "BACKBONE"
 # If false, read from videos
