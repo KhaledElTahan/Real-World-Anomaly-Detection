@@ -57,6 +57,10 @@ def extract(cfg):
 
 
             if cfg.NUM_GPUS > 0:
+                for i, _ in enumerate(frames_batches):
+                    for j, _ in enumerate(frames_batches[i]):
+                        frames_batches[i][j] = frames_batches[i][j].cpu()
+
                 for i, _ in enumerate(features_batches):
                     features_batches[i] = features_batches[i].cpu()
 
