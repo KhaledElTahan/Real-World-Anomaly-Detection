@@ -47,9 +47,13 @@ def extract(cfg):
 
             features_batches = []
             for frames_batch in frames_batches:
-                _, features = backbone_model(
-                    frames_batch.cuda() if cfg.NUM_GPUS > 0 else frames_batch
-                )
+
+                if cfg.NUM_GPUS > 0:
+                    for i, _ in enumerate(frames_batch):
+                        frames_batch[i] = frames_batch[i].cuda()
+
+                _, features = backbone_model(frames_batch)
+                
                 features_batches.append(
                     features.cpu() if cfg.NUM_GPUS > 0 else features
                 )
