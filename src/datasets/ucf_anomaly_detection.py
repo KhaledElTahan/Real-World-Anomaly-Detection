@@ -280,6 +280,15 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             item_path (pathlib.Path): path for video or features file
         """
         if self.cfg.DATA.READ_FEATURES:
+            # tensor_a = torch.rand(2,3)
+            # tensor_b = torch.rand(1,3)
+
+            # db = {'a': tensor_a, 'b': tensor_b}
+
+            # torch.save(db, path/'torch_db')
+            # loaded = torch.load(path/'torch_db')
+            # print( loaded['a'] == tensor_a )
+            # print( loaded['b'] == tensor_b )
             return random.randint(0, 5)
         else:
             return self._decode_video(item_path)

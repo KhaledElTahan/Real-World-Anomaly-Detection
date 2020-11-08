@@ -3,14 +3,13 @@
 import torch
 from tabulate import tabulate
 from tqdm import tqdm
-import time
 
 from src.models import backbone_helper
-from src.datasets import ucf_anomaly_detection
 from src.datasets import utils
 from src.datasets import build
-from src.utils import debugutils
 from src.utils import modelutils
+from src.utils import debugutils
+
 
 @torch.no_grad()
 def extract(cfg):
@@ -41,7 +40,7 @@ def extract(cfg):
     
     _print_extract_stats(cfg, features_length, total_len)
 
-    progress_bar = tqdm(total=2, desc="Feature Extraction Progress")
+    progress_bar = tqdm(total=total_len, desc="Feature Extraction Progress")
     for dataset in datasets:
         for cur_iter, (frames, label, annotation, video_index) in enumerate(dataset):
 
@@ -50,15 +49,28 @@ def extract(cfg):
             # Second Index is ued to distinguish between pathways
             frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames[0])
 
+            if cfg.NUM_GPUS > 0:
+                for i, _ in enumerate(frames_batches):
+                    for j, _ in enumerate(frames_batches[i]):
+                        frames_batches[i][j] = frames_batches[i][j].cuda()
+
             features_batches = []
             for frames_batch in frames_batches:
                 _, features = backbone_model(frames_batch)
                 features_batches.append(features)
 
+
+            if cfg.NUM_GPUS > 0:
+                for i, _ in enumerate(features_batches):
+                    features_batches[i] = features_batches[i].cpu()
+
+            for i, _ in enumerate(features_batches):
+                    features_batches[i] = features_batches[i].detach()
+
             new_segments, is_anomaly_segment = utils.segmentize_features(cfg, torch.cat(features_batches), annotation[0])
             features_path = utils.video_path_to_features_path(cfg, dataset.get_video_path(video_index))
 
-            torch.save({"features_segments": new_segments, "is_anomaly_segment":is_anomaly_segment}, str(features_path))
+            torch.save({"features_segments": new_segments, "is_anomaly_segment":is_anomaly_segment}, features_path)
             progress_bar.update(n = 1)
     progress_bar.close()
 
@@ -94,7 +106,3 @@ def _print_extract_stats(cfg, features_length, videos_num):
 
     print(tabulate(table, headers, tablefmt="pretty", colalign=("center", "left")))
     print()
-
-
-def simple_test():
-    pass
