@@ -1,5 +1,6 @@
 """Extract video features from the dataset using the backbone model."""
 
+import gc
 import torch
 from tabulate import tabulate
 from tqdm import tqdm
@@ -44,6 +45,7 @@ def extract(cfg):
         for _, (frames, _, annotation, video_index) in enumerate(dataset):
 
             frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames[0])
+            del frames
 
             features_batches = []
             for frames_batch in frames_batches:
@@ -61,6 +63,7 @@ def extract(cfg):
                 features_batches.append(
                     features.cpu() if cfg.NUM_GPUS > 0 else features
                 )
+            del frames_batches
 
             for i, _ in enumerate(features_batches):
                 features_batches[i] = features_batches[i].detach()
@@ -68,6 +71,8 @@ def extract(cfg):
             new_segments, is_anomaly_segment = utils.segmentize_features(
                 cfg, torch.cat(features_batches), annotation[0]
             )
+            del features_batches
+
             features_path = utils.video_path_to_features_path(
                 cfg, dataset.get_video_path(video_index)
             )
@@ -78,6 +83,10 @@ def extract(cfg):
                 {"features_segments": new_segments, "is_anomaly_segment":is_anomaly_segment},
                 features_path
             )
+            del new_segments, is_anomaly_segment
+
+            gc.collect() # Force Garbage Collection
+
             progress_bar.update(n = 1)
     progress_bar.close()
 
