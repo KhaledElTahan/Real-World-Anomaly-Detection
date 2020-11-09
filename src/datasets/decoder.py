@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torchvision.io as io
 
+from src.utils import funcutils
 
 def temporal_sampling(frames, start_idx, end_idx, num_samples):
     """
@@ -68,6 +69,7 @@ def pyav_decode_stream(
     return result, max_pts
 
 
+@funcutils.force_garbage_collection(before=True, after=True)
 def pyav_decode(container):
     """
     Decode the video into frames
@@ -92,8 +94,7 @@ def pyav_decode(container):
     )
     container.close()
 
-    frames = [frame.to_rgb().to_ndarray() for frame in video_frames]
-    frames = torch.as_tensor(np.stack(frames))
+    frames = torch.as_tensor(np.stack([frame.to_rgb().to_ndarray() for frame in video_frames]))
 
     return frames, fps
 
