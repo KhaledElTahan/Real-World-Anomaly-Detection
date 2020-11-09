@@ -225,6 +225,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         return True
 
 
+    @funcutils.debug(apply=True, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
     def _decode_video(self, video_path):
         """"
         Load the video and decode it
@@ -263,7 +264,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         frames = frames.permute(3, 0, 1, 2)
 
         # Spatial Scaling
-        if frames.shape[1] != self.cfg.DATA.SCALES[0] or frames.shape[2] != self.cfg.DATA.SCALES[1]:
+        if frames.shape[2] != self.cfg.DATA.SCALES[0] or frames.shape[3] != self.cfg.DATA.SCALES[1]:
             frames = transform.spatial_resize(frames, self.cfg.DATA.SCALES[0], self.cfg.DATA.SCALES[1])
 
         # Apply a list of transformations according to configurations
