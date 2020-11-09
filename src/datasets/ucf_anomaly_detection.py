@@ -173,7 +173,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Prints a statistical summary of the dataset
         """
         dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
-        dataset_action = "Extract Videos" if self.cfg.EXTRACT.ENABLE else "Video Model"
+        dataset_action = "Extract Features" if self.cfg.EXTRACT.ENABLE else "Video Model"
         current_files_output_classes = sorted(list(set(self._labels)))
         backbone_cfg = backbone_helper.get_backbone_merged_cfg(self.cfg)
 
