@@ -225,7 +225,8 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         return True
 
 
-    @funcutils.debug(apply=True, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+    @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+    @funcutils.force_garbage_collection(before=True, after=True)
     def _decode_video(self, video_path):
         """"
         Load the video and decode it
