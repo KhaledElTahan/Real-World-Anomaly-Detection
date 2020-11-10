@@ -35,7 +35,7 @@ def get_specific_dataset_path(cfg, features=False):
 
     if features: # Read features
         features_name = cfg.BACKBONE.NAME + "_" + cfg.TRANSFORM.CODE + "_" + \
-            cfg.EXTRACT.FRAMES_BATCH_SIZE + "x" + cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS
+            str(cfg.EXTRACT.FRAMES_BATCH_SIZE) + "x" + str(cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS)
         dataset_directory = dataset_directory / "features" / features_name
     else: # Read videos
         dataset_directory = dataset_directory / "videos"

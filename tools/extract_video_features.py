@@ -44,6 +44,13 @@ def extract(cfg):
     for dataset in datasets:
         for _, (frames, _, annotation, video_index) in enumerate(dataset):
 
+            features_path = utils.video_path_to_features_path(
+                cfg, dataset.get_video_path(video_index)
+            )
+            if features_path.exists():
+                progress_bar.update(n = 1)
+                continue
+
             frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames[0])
             del frames
 
@@ -72,10 +79,6 @@ def extract(cfg):
                 cfg, torch.cat(features_batches), annotation[0]
             )
             del features_batches
-
-            features_path = utils.video_path_to_features_path(
-                cfg, dataset.get_video_path(video_index)
-            )
 
             features_path.parent.mkdir(parents=True, exist_ok=True)
 
