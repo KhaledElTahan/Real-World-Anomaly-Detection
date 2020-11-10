@@ -327,9 +327,8 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         # If the video can not be decoded, 
         # repeatly find a random video replacement that can be decoded.
+        skip_reading = False
         for _ in range(self._num_retries):
-            skip_reading = False
-
             if self.mode == "train" and not self.cfg.EXTRACT.ENABLE:
                 min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)
                 max_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
@@ -371,7 +370,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                     labels = [self._labels[index]]
                     annotations = [self._temporal_annotations[index]]
 
-            if items is None or items[0] is None:
+            if not skip_reading and items is None or items[0] is None:
                 index = random.randint(0, len(self._path_to_videos) - 1)
             else:
                 break
