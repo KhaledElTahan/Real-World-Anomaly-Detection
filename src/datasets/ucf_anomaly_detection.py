@@ -362,20 +362,20 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                     features_path.exists()
 
                 if skip_reading:
-                    items = None
-                    labels = None
-                    annotations = None
+                    items = [None]
+                    labels = [None]
+                    annotations = [None]
                 else:
                     items = [self._get_frames_or_features(self._path_to_videos[index])]
                     labels = [self._labels[index]]
                     annotations = [self._temporal_annotations[index]]
 
-            if not skip_reading and items is None or items[0] is None:
+            if not skip_reading and (items is None or items[0] is None):
                 index = random.randint(0, len(self._path_to_videos) - 1)
             else:
                 break
 
-        if not skip_reading and items is None or items[0] is None:
+        if not skip_reading and (items is None or items[0] is None):
             raise RuntimeError(
                 "Failed to fetch video after {} retries.".format(
                     self._num_retries

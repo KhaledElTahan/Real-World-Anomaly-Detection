@@ -4,6 +4,7 @@ import gc
 import torch
 from tabulate import tabulate
 from tqdm import tqdm
+import time
 
 from src.models import backbone_helper
 from src.datasets import utils
@@ -48,7 +49,8 @@ def extract(cfg):
                 cfg, dataset.get_video_path(video_index)
             )
             if not cfg.EXTRACT.FORCE_REWRITE and features_path.exists():
-                progress_bar.update(n = 1)
+                progress_bar.update(n=1)
+                time.sleep(0.05)
                 continue
 
             frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames[0])
@@ -90,7 +92,7 @@ def extract(cfg):
 
             gc.collect() # Force Garbage Collection
 
-            progress_bar.update(n = 1)
+            progress_bar.update(n=1)
     progress_bar.close()
 
     print()
