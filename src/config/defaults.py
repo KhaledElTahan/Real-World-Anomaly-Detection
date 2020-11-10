@@ -130,6 +130,10 @@ _C.EXTRACT.VIDEOS_BATCH_SIZE = 1 # at moment only 1 is supported
 # The extension of results files.
 _C.EXTRACT.FEATURES_EXT = "pt"
 
+# If True, feature extraction will re extract the features even if the file exists
+# If False, if features file exist, the extraction for this video will be skipped
+_C.EXTRACT.FORCE_REWRITE = False
+
 # -----------------------------------------------------------------------------
 # Backbone options
 # -----------------------------------------------------------------------------

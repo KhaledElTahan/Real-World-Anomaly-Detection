@@ -350,10 +350,24 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 items = [normal_items, anomaly_items]
                 labels = [normal_label, anomaly_label]
                 annotations = [normal_annotations, anomaly_annotations]
-            else: 
-                items = [self._get_frames_or_features(self._path_to_videos[index])]
-                labels = [self._labels[index]]
-                annotations = [self._temporal_annotations[index]]
+            else:
+                features_path = utils.video_path_to_features_path(
+                    self.cfg, self.get_video_path(index)
+                )
+
+                skip_reading = self.cfg.EXTRACT.ENABLE and \
+                    not self.cfg.DATA.READ_FEATURES and \
+                    not self.cfg.EXTRACT.FORCE_REWRITE and \
+                    features_path.exists()
+
+                if skip_reading:
+                    items = None
+                    labels = None
+                    annotations = None
+                else:
+                    items = [self._get_frames_or_features(self._path_to_videos[index])]
+                    labels = [self._labels[index]]
+                    annotations = [self._temporal_annotations[index]]
 
             if items is None or items[0] is None:
                 index = random.randint(0, len(self._path_to_videos) - 1)
