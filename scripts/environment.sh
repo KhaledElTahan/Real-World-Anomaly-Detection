@@ -69,3 +69,6 @@ conda install -c conda-forge simplejson
 conda install -c conda-forge av
 
 # If run_net.py prints error "ImportError: libopenh264.so.5: cannot open shared object file: No such file or directory"
+# based on this https://stackoverflow.com/questions/62213783/ffmpeg-error-while-loading-shared-libraries-libopenh264-so-5
+ln -s ~/anaconda3/lib/libopenh264.so ~/anaconda3/lib/libopenh264.so.5
+
