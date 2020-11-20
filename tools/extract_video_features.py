@@ -1,10 +1,10 @@
 """Extract video features from the dataset using the backbone model."""
 
 import gc
+import time
 import torch
 from tabulate import tabulate
 from tqdm import tqdm
-import time
 
 from src.models import backbone_helper
 from src.datasets import utils

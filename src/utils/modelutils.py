@@ -31,8 +31,10 @@ def get_features_length(cfg, backbone_model):
         inputs = [torch.rand(size = (batch_size, channels, frames_inner_batch, height, width))]
     elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
         alpha = backbone_cfg.SLOWFAST.ALPHA
-        inputs = [torch.rand(size = (batch_size, channels, frames_inner_batch//alpha, height, width)),
-                torch.rand(size = (batch_size, channels, frames_inner_batch, height, width))]
+        inputs = [
+                torch.rand(size = (batch_size, channels, frames_inner_batch//alpha, height, width)),
+                torch.rand(size = (batch_size, channels, frames_inner_batch, height, width))
+            ]
     else:
         raise NotImplementedError(
             "Model arch {} is not in {}".format(
