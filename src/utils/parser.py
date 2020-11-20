@@ -49,6 +49,12 @@ def parse_args():
         type=str,
     )
     parser.add_argument(
+        "--shard_id",
+        help="The shard id of current node, Starts from 0 to num_shards - 1",
+        default=0,
+        type=int,
+    )
+    parser.add_argument(
         "opts",
         help="See src/config/defaults.py for all options",
         default=None,

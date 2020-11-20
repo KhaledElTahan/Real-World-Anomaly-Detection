@@ -349,6 +349,9 @@ _C.NUM_GPUS = 1
 # Number of machine to use for the job.
 _C.NUM_SHARDS = 1
 
+# The index of the current machine.
+_C.SHARD_ID = 0
+
 # Output basedir.
 _C.OUTPUT_DIR = "./tmp"
 
@@ -361,6 +364,9 @@ _C.LOG_PERIOD = 10
 
 # If True, log the model info.
 _C.LOG_MODEL_INFO = True
+
+# Distributed backend.
+_C.DIST_BACKEND = "nccl"
 
 
 # ---------------------------------------------------------------------------- #
