@@ -16,7 +16,8 @@ def launch_job(cfg, init_method, func, daemon=False):
         daemon (bool): The spawned processes’ daemon flag. If set to True,
             daemonic processes will be created
     """
-    if cfg.NUM_GPUS > 1:
+    if cfg.NUM_GPUS < 0:
+        cfg.NUM_GPUS = -1 * cfg.NUM_GPUS
         torch.multiprocessing.spawn(
             mpu.run,
             nprocs=cfg.NUM_GPUS,

@@ -6,7 +6,7 @@ import sys
 from src.config.defaults import get_cfg
 
 
-def parse_args():
+def parse_args(): # needs an update
     """
     Parse the following arguments for a default parser for users.
     Args:
