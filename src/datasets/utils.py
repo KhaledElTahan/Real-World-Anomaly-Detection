@@ -116,7 +116,7 @@ def frames_to_frames_batches(cfg, frames):
     backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
 
     if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.SINGLE_PATHWAY_ARCH:
-        frames_batches, num_batches = _frames_to_frames_batches_native(frames,
+        frames_batches, num_batches = _frames_to_frames_batches_native(frames[0],
             cfg.EXTRACT.FRAMES_BATCH_SIZE)
     elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
         slow_batches, num_slow_batches = _frames_to_frames_batches_native(

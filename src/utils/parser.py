@@ -43,18 +43,6 @@ def parse_args(): # needs an update
         type=str,
     )
     parser.add_argument(
-        "--init_method",
-        help="Initialization method, includes TCP or shared file-system",
-        default="tcp://localhost:9999",
-        type=str,
-    )
-    parser.add_argument(
-        "--shard_id",
-        help="The shard id of current node, Starts from 0 to num_shards - 1",
-        default=0,
-        type=int,
-    )
-    parser.add_argument(
         "opts",
         help="See src/config/defaults.py for all options",
         default=None,
