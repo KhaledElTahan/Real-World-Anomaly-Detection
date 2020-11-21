@@ -144,11 +144,11 @@ _C.BACKBONE.NAME = "Kinetics_c2_SLOWFAST_8x8_R50"
 
 # Path to the configuration of the backbone model.
 # Path root should be "configs"
-_C.BACKBONE.CONFIG_FILE_PATH = "slowfast-configs/Kinetics/c2/SLOWFAST_8x8_R50.yaml"
+_C.BACKBONE.CONFIG_FILE_PATH = "backbone-configs/Kinetics/c2/SLOWFAST_8x8_R50.yaml"
 
 # Path to the checkpoint to load the initial weight.
 # Path root should be "checkpoints"
-_C.BACKBONE.CHECKPOINT_FILE_PATH = "slowfast-checkpoints/Kinetics/c2/SLOWFAST_8x8_R50.pkl"
+_C.BACKBONE.CHECKPOINT_FILE_PATH = "backbone-checkpoints/Kinetics/c2/SLOWFAST_8x8_R50.pkl"
 
 # If False -> Backbone will be part of the overall model
 # If True -> Backbone will only be a feature extractor
@@ -164,7 +164,6 @@ _C.BACKBONE.TRAINABLE = False
 # The backbone_cfg will set those attibutes with the mode cfg values 
 _C.BACKBONE.MERGE_CFG_LIST = [
     "NUM_GPUS",
-    "NUM_SHARDS",
 ] 
 
 # -----------------------------------------------------------------------------
@@ -232,15 +231,6 @@ _C.DATA.PATH_LABEL_SEPARATOR_TESTING = "  " # two spaces
 # Video path prefix if any.
 _C.DATA.PATH_PREFIX = ""
 
-# The spatial crop size of the input clip.
-_C.DATA.CROP_SIZE = 224
-
-# The number of frames of the input clip.
-_C.DATA.NUM_FRAMES = 8
-
-# The video sampling rate of the input clip.
-_C.DATA.SAMPLING_RATE = 8
-
 # The mean value of the video raw pixels across the R G B channels.
 _C.DATA.MEAN = [0.45, 0.45, 0.45]
 
@@ -253,26 +243,12 @@ _C.DATA.STD = [0.225, 0.225, 0.225]
 # The spatial scales.
 _C.DATA.SCALES = [240, 320]
 
-# The spatial crop size for training.
-_C.DATA.TRAIN_CROP_SIZE = 224
-
-# The spatial crop size for testing.
-_C.DATA.TEST_CROP_SIZE = 256
-
 # Input videos may has different fps, convert it to the target video fps before
 # frame sampling.
 _C.DATA.TARGET_FPS = 30
 
 # Decoding backend, options include `pyav` or `torchvision`
 _C.DATA.DECODING_BACKEND = "pyav"
-
-# if True, sample uniformly in [1 / max_scale, 1 / min_scale] and take a
-# reciprocal to get the scale. If False, take a uniform sample from
-# [min_scale, max_scale].
-_C.DATA.INV_UNIFORM_SAMPLE = False
-
-# If True, perform random horizontal flip on the video frames during training.
-_C.DATA.RANDOM_FLIP = True
 
 # If True, calculdate the map as metric.
 _C.DATA.MULTI_LABEL = False
@@ -353,27 +329,12 @@ _C.SOLVER.OPTIMIZING_METHOD = "sgd"
 # Number of GPUs to use (applies to both training and testing).
 _C.NUM_GPUS = 1
 
-# Number of machine to use for the job.
-_C.NUM_SHARDS = 1
-
-# The index of the current machine.
-_C.SHARD_ID = 0
-
-# Output basedir.
-_C.OUTPUT_DIR = "./tmp"
-
 # Note that non-determinism may still be present due to non-deterministic
 # operator implementations in GPU operator libraries.
 _C.RNG_SEED = 1
 
-# Log period in iters.
-_C.LOG_PERIOD = 10
-
 # If True, log the model info.
 _C.LOG_MODEL_INFO = True
-
-# Distributed backend.
-_C.DIST_BACKEND = "nccl"
 
 
 # ---------------------------------------------------------------------------- #
