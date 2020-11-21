@@ -46,6 +46,8 @@ def build_model(cfg, gpu_id=None):
         model = model.cuda(device=cur_device)
     # Use multi-process data parallel model in the multi-gpu setting
     if cfg.NUM_GPUS > 1:
-        model = torch.nn.DataParallel(module=model, device_ids=[cur_device])
+        model = torch.nn.DataParallel(
+            module=model, device_ids=[i for i in range(torch.cuda.device_count())]
+        )
 
     return model
