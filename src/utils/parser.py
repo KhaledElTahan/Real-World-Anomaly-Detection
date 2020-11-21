@@ -4,18 +4,15 @@ import argparse
 import sys
 
 from src.config.defaults import get_cfg
+from src.utils import pathutils
 
-
-def parse_args(): # needs an update
+def parse_args(): 
     """
     Parse the following arguments for a default parser for users.
     Args:
-        gpus (int): number of used gpus, if 0 then use cpu
-        cfg (str): path to the config file.
-        init_method (str): initialization method to launch the job with multiple
-            devices. Options includes TCP or shared file-system for
-            initialization. details can be find in
-            https://pytorch.org/docs/stable/distributed.html#tcp-initialization
+        gpus (int): Number of used gpus, if 0 then use cpu.
+        extract: Whether to extract features or not.
+        cfg_extract (str): path to the feature extraction config file.
         opts (argument): provide addtional options from the command line, it
             overwrites the config loaded from file.
         """
@@ -25,7 +22,7 @@ def parse_args(): # needs an update
     parser.add_argument(
         "--gpus",
         help="Number of GPUs using by the job",
-        default=0,
+        default=-1,
         type=int,
     )
     parser.add_argument(
@@ -36,10 +33,10 @@ def parse_args(): # needs an update
     )
     parser.set_defaults(extract=False)
     parser.add_argument(
-        "--cfg",
-        dest="cfg_file",
+        "--cfg_extract",
+        dest="extraction_cfg_file",
         help="Path to the config file",
-        # default="configs/Kinetics/SLOWFAST_4x16_R50.yaml",
+        default="features-configs/UCFAnomalyDetection/Kinetics_c2_SLOWFAST_8x8_R50_NONE_32x32.yaml",
         type=str,
     )
     parser.add_argument(
@@ -67,22 +64,21 @@ def load_config(args):
     # Setup cfg.
     cfg = get_cfg()
 
-    # Load config from cfg.
-    if args.cfg_file is not None:
-        cfg.merge_from_file(args.cfg_file)
+    # Check whether we have to extract features
+    if hasattr(args, "extract"):
+        cfg.EXTRACT.ENABLE = args.extract
+
+    # Load extraction config into cfg.
+    if cfg.EXTRACT.ENABLE and args.extraction_cfg_file is not None:
+        extraction_cfg_file_path = pathutils.get_configs_path() / args.extraction_cfg_file
+        cfg.merge_from_file(str(extraction_cfg_file_path))
+
+    # Set number of GPUs
+    if hasattr(args, "gpus") and args.gpus != -1:
+        cfg.NUM_GPUS = args.gpus
 
     # Load config from command line, overwrite config from opts.
     if args.opts is not None:
         cfg.merge_from_list(args.opts)
-
-    # Inherit parameters from args.
-    if hasattr(args, "gpus") :
-        cfg.NUM_GPUS = args.gpus
-    if hasattr(args, "rng_seed"):
-        cfg.RNG_SEED = args.rng_seed
-    if hasattr(args, "output_dir"):
-        cfg.OUTPUT_DIR = args.output_dir
-    if hasattr(args, "extract"):
-        cfg.EXTRACT.ENABLE = args.extract
 
     return cfg
