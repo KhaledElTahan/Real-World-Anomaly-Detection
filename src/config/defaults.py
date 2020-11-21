@@ -382,10 +382,6 @@ _C.TENSORBOARD = CfgNode()
 _C.DEMO = CfgNode()
 
 
-# Add custom config with default values.
-custom_config.add_custom_config(_C)
-
-
 def _assert_and_infer_cfg(cfg):
     # TRAIN assertions.
     assert cfg.TRAIN.CHECKPOINT_TYPE in ["pytorch", "caffe2"]

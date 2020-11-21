@@ -5,6 +5,8 @@ import sys
 
 from src.config.defaults import get_cfg
 from src.utils import pathutils
+from src.config import custom_config
+
 
 def parse_args(): 
     """
@@ -80,5 +82,8 @@ def load_config(args):
     # Load config from command line, overwrite config from opts.
     if args.opts is not None:
         cfg.merge_from_list(args.opts)
+
+    # Final Step, add custom config with default values.
+    custom_config.add_custom_config(cfg)
 
     return cfg
