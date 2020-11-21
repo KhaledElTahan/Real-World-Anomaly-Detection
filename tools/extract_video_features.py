@@ -46,7 +46,7 @@ def extract(cfg):
         for _, (frames, _, annotation, video_index) in enumerate(dataset):
 
             features_path = utils.video_path_to_features_path(
-                cfg, dataset.get_video_path(video_index)
+                cfg, dataset.get_file_path(video_index)
             )
             if not cfg.EXTRACT.FORCE_REWRITE and features_path.exists():
                 progress_bar.update(n=1)

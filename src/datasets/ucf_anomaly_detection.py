@@ -11,6 +11,7 @@ from src.datasets import video_container as container
 from src.datasets.build import DATASET_REGISTRY
 from src.datasets import transform_helper
 from src.utils import funcutils
+from src.utils import misc
 from src.models import backbone_helper
 from src.datasets import transform
 
@@ -132,6 +133,13 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
                 if not self._check_file_exists(video_path):
                     continue
+                
+                original_video_path = video_path
+                if self.cfg.DATA.READ_FEATURES:
+                    original_video_path = utils.features_path_to_video_path(self.cfg, original_video_path)
+
+                if self.cfg.DATA.SKIP_LARGE_VIDEOS and original_video_path.stat().st_size > self.cfg.DATA.MAX_VIDEO_SIZE:
+                    continue
 
                 self._path_to_videos.append(video_path)
                 self._labels.append(video_label)
@@ -176,6 +184,10 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         dataset_action = "Extract Features" if self.cfg.EXTRACT.ENABLE else "Video Model"
         current_files_output_classes = sorted(list(set(self._labels)))
         backbone_cfg = backbone_helper.get_backbone_merged_cfg(self.cfg)
+        max_size = "Unlimited"
+
+        if self.cfg.DATA.SKIP_LARGE_VIDEOS:
+            max_size = misc.sizeof_fmt(self.cfg.DATA.MAX_VIDEO_SIZE)
 
         print("Dataset Summary:")
 
@@ -196,6 +208,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             ["Loaded Output Classes", current_files_output_classes[:7]],
             ["Cont....", current_files_output_classes[7:]] if len(current_files_output_classes) > 7 else None,
             ["Loading Files Type", self.cfg.DATA.USE_FILES],
+            ["Maximum Video Size", max_size],
             ["N. Loaded Videos", len(self._path_to_videos)],
             ["N. Loaded Anomaly Videos", len(self._path_to_anomaly_videos)],
             ["N. Loaded Normal Videos", len(self._path_to_normal_videos)],
@@ -353,7 +366,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 annotations = [normal_annotations, anomaly_annotations]
             else:
                 features_path = utils.video_path_to_features_path(
-                    self.cfg, self.get_video_path(index)
+                    self.cfg, self.get_file_path(index)
                 )
 
                 skip_reading = self.cfg.EXTRACT.ENABLE and \
@@ -387,17 +400,17 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         return items, labels, annotations, index
 
 
-    def get_video_path(self, index, all_videos=True):
+    def get_file_path(self, index, all_files=True):
         """
-        Given the video index, return the video path
+        Given the video index, return the video or features path
         Args:
             index (int): the video index
-            all_videos (Bool): Wether to use the all videos list index,
+            all_files (Bool): Whether to use the all files list index,
                 or use the normal and anomaly indices
         Return:
-            video_path (Path): The absolute path of the video
+            file_path (Path): The absolute path of the video or features file
         """
-        if all_videos:
+        if all_files:
             return self._path_to_videos[index]
 
         min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)

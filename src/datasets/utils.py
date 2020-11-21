@@ -525,3 +525,16 @@ def video_path_to_features_path(cfg, video_path :Path):
     """
     parent_directory = pathutils.get_specific_dataset_path(cfg, features=True) / video_path.parent.name
     return parent_directory / change_extension(str(video_path.name), cfg.DATA.EXT, cfg.EXTRACT.FEATURES_EXT)
+
+
+def features_path_to_video_path(cfg, features_path :Path):
+    """
+    Convert video path to its features file path
+    Args:
+        cfg (cfgNode): Video model configurations node
+        features_path (pathlib.Path): Path of the features file
+    Returns:
+        video_path (pathlib.Path): Path of the video
+    """
+    parent_directory = pathutils.get_specific_dataset_path(cfg, features=False) / features_path.parent.name
+    return parent_directory / change_extension(str(features_path.name), cfg.EXTRACT.FEATURES_EXT, cfg.DATA.EXT)

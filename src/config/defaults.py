@@ -210,6 +210,13 @@ _C.DATA.READ_FEATURES = False
 # If "ignore", will not check whether files exist or not
 _C.DATA.USE_FILES = "available"
 
+# If true, skip videos with size larger than DATA.MAX_VIDEO_SIZE
+_C.DATA.SKIP_LARGE_VIDEOS = True
+
+# Maximimum of Video size in bytes
+# Only enforced when DATA.SKIP_LARGE_VIDEOS = True
+_C.DATA.MAX_VIDEO_SIZE = 500 * 1024 * 1024
+
 # The general separator used between path and label.
 _C.DATA.PATH_LABEL_SEPARATOR = " "
 
