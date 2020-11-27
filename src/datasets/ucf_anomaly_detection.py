@@ -26,17 +26,17 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Construct the UCF Anomaly Detection video loader with a given two txt files.
         The format of the training file is:
             ```
-            label_1/video_name_1
-            label_2/video_name_2
+            label_1/video_name_1/video_size_1
+            label_2/video_name_2/video_size_2
             ...
-            label_N/video_name_N
+            label_N/video_name_N/video_size_N
             ```
         The format of the testing file is:
             ```
-            video_name_1 label_1 1st_anomaly_s_idx_1 1st_anomaly_e_idx_1 2nd_anomaly_s_idx_1 2nd_anomaly_e_idx_1
-            video_name_2 label_2 1st_anomaly_s_idx_2 1st_anomaly_e_idx_2 2nd_anomaly_s_idx_2 2nd_anomaly_e_idx_2
+            video_name_1 label_1 1st_anomaly_s_idx_1 1st_anomaly_e_idx_1 2nd_anomaly_s_idx_1 2nd_anomaly_e_idx_1 video_size_1
+            video_name_2 label_2 1st_anomaly_s_idx_2 1st_anomaly_e_idx_2 2nd_anomaly_s_idx_2 2nd_anomaly_e_idx_2 video_size_2
             ...
-            video_name_N label_N 1st_anomaly_s_idx_N 1st_anomaly_e_idx_N 2nd_anomaly_s_idx_N 2nd_anomaly_e_idx_N
+            video_name_N label_N 1st_anomaly_s_idx_N 1st_anomaly_e_idx_N 2nd_anomaly_s_idx_N 2nd_anomaly_e_idx_N video_size_N
             ```
             Notes:
                 Each video might have zero, one, or two anomalies
@@ -108,17 +108,20 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                     line = utils.change_extension(line, self.cfg.DATA.EXT, self.cfg.EXTRACT.FEATURES_EXT)
 
                 if self.mode == "train":
-                    assert len(line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)) == 2
+                    line_splitted = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)
 
-                    video_path = self._dataset_directory / line
-                    video_label = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)[0]
+                    assert len(line_splitted) == 3
+
+                    video_path = self._dataset_directory / line_splitted[0] / line_splitted[1]
+                    video_label = line_splitted[0]
                     video_label = "Normal" if video_label == "Training_Normal_Videos_Anomaly" else video_label
                     temporal_annotation = (-1, -1, -1, -1)
+                    video_size = int(line_splitted[-1])
 
                 elif self.mode == "test":
-                    assert len(line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TESTING)) == 6
-
                     line_splitted = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TESTING)
+
+                    assert len(line_splitted) == 7
 
                     label_in_path = line_splitted[1] if line_splitted[1] != "Normal" else "Testing_Normal_Videos_Anomaly"
                     video_path = self._dataset_directory / label_in_path / line_splitted[0]
@@ -128,17 +131,14 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                         int(line_splitted[3]),
                         int(line_splitted[4]),
                         int(line_splitted[5]))
+                    video_size = int(line_splitted[-1])
 
                 labels_set.add(video_label)
 
                 if not self._check_file_exists(video_path):
                     continue
-                
-                original_video_path = video_path
-                if self.cfg.DATA.READ_FEATURES:
-                    original_video_path = utils.features_path_to_video_path(self.cfg, original_video_path)
 
-                if self.cfg.DATA.SKIP_LARGE_VIDEOS and original_video_path.stat().st_size > self.cfg.DATA.MAX_VIDEO_SIZE:
+                if self.cfg.DATA.SKIP_LARGE_VIDEOS and video_size > self.cfg.DATA.MAX_VIDEO_SIZE:
                     continue
 
                 self._path_to_videos.append(video_path)
