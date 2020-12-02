@@ -275,11 +275,11 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         # np tensor
         frames = np.stack(frames)
-        frames = transform_helper.apply_transformations_np_frames(self.cfg, frames)
+        frames = transform_helper.apply_transformations_np_frames(self.cfg, frames) # Type=uint8
 
         # torch tensor
-        frames = torch.as_tensor(frames)
-        frames = transform_helper.apply_transformations_THWC_torch_frames(self.cfg, frames)
+        frames = torch.as_tensor(frames) # Type=torch.uint8
+        frames = transform_helper.apply_transformations_THWC_torch_frames(self.cfg, frames) # Type=torch.float32
 
         # T H W C -> C T H W.
         frames = frames.permute(3, 0, 1, 2)

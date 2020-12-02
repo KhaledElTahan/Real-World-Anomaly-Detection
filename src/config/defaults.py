@@ -271,6 +271,13 @@ _C.TRANSFORM = CfgNode()
 # A Code to distinguish the features extracted after applying the transformations
 _C.TRANSFORM.CODE = "NONE"
 
+# Control whether to subtract backround or not
+_C.TRANSFORM.BG_SUBTRACTION_ENABLED = True
+
+# IF Background subtraction is enabled
+# Currently Supported Algorithms are KNN & MOG2
+_C.TRANSFORM.BG_SUBTRACTION_ALGORITHM = "MOG2"
+
 # ---------------------------------------------------------------------------- #
 # Optimizer options
 # ---------------------------------------------------------------------------- #

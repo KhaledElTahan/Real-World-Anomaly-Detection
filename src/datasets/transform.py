@@ -2,6 +2,7 @@
 import torch
 import cv2 as cv
 
+
 def spatial_resize(images, new_height, new_width):
     """
     Resizes frames's spatial height and width
@@ -20,3 +21,27 @@ def spatial_resize(images, new_height, new_width):
         mode="bilinear",
         align_corners=False,
     )
+
+
+def background_subtration(frames, algorithm):
+    """
+    Apply Backgroung subtraction on the frames
+    Args:
+        frames (list(np.ndarray)): List of np frames, each frame on HWC format
+        algorithm (Str): BG Subtraction Algorithm, either 'MOG2' or 'KNN'
+    Returns"
+        frames (list(np.ndarray)): List of np frames, with background subtracted
+    """
+    assert algorithm in ['MOG2', 'KNN']
+
+    if algorithm == 'MOG2':
+        back_sub = cv.createBackgroundSubtractorMOG2()
+    else:
+        back_sub = cv.createBackgroundSubtractorKNN()
+
+    for idx, frame in enumerate(frames):
+        fg_mask = back_sub.apply(frame)
+        res_frame = cv.bitwise_and(frame, frame, mask = fg_mask)
+        frames[idx] = res_frame
+
+    return frames

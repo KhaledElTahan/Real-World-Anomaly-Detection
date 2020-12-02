@@ -1,7 +1,10 @@
 """Apply set of transformations using the configurations object"""
 import src.datasets.transform as transform
 from src.datasets import utils
+from src.utils import funcutils
 
+
+@funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
 def apply_transformations_list_np_frames(cfg, frames):
     """
     Apply a list of transformations on the list of np HWC frames according
@@ -10,9 +13,17 @@ def apply_transformations_list_np_frames(cfg, frames):
         cfg (CfgNode): Video model configurations file
         frames (list(np.ndarray)): List of np frames, each frame on HWC format
     """
+
+    # Perform Background Subtraction
+    if cfg.TRANSFORM.BG_SUBTRACTION_ENABLED:
+        frames = transform.background_subtration(
+            frames, cfg.TRANSFORM.BG_SUBTRACTION_ALGORITHM
+        )
+
     return frames
 
 
+@funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
 def apply_transformations_np_frames(cfg, frames):
     """
     Apply a list of transformations on the THWC np frames according to the configurations file
@@ -23,6 +34,7 @@ def apply_transformations_np_frames(cfg, frames):
     return frames
 
 
+@funcutils.debug(apply=False, sign=False, ret=True, sign_beautify=True, ret_beautify=True)
 def apply_transformations_THWC_torch_frames(cfg, frames):
     """
     Apply a list of transformations on the THWC Torch frames according to the configurations file
@@ -36,6 +48,7 @@ def apply_transformations_THWC_torch_frames(cfg, frames):
     return frames
 
 
+@funcutils.debug(apply=False, sign=False, ret=True, sign_beautify=True, ret_beautify=True)
 def apply_transformations_CTHW_torch_frames(cfg, frames):
     """
     Apply a list of transformations on the CTHW Torch frames according to the configurations file
