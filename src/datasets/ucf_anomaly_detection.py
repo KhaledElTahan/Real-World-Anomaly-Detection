@@ -2,6 +2,7 @@
 import random
 import torch
 import torch.utils.data
+import numpy as np
 from tabulate import tabulate
 
 from src.datasets import decoder
@@ -13,7 +14,6 @@ from src.datasets import transform_helper
 from src.utils import funcutils
 from src.utils import misc
 from src.models import backbone_helper
-from src.datasets import transform
 
 @DATASET_REGISTRY.register()
 class UCFAnomalyDetection(torch.utils.data.Dataset):
@@ -261,7 +261,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         if video_container is None:
             return None
 
-        # Decode video. 
+        # Decode video.
         frames = decoder.decode(video_container)
 
         # If decoding failed (wrong format, video is too short, and etc),
@@ -269,21 +269,23 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         if frames is None:
             return None
 
-        # Perform color normalization.
-        frames = utils.tensor_normalize(
-            frames, self.cfg.DATA.MEAN, self.cfg.DATA.STD
-        )
+        # list of np frames
+        frames = [frame.to_rgb().to_ndarray() for frame in frames]
+        frames = transform_helper.apply_transformations_list_np_frames(self.cfg, frames)
+
+        # np tensor
+        frames = np.stack(frames)
+        frames = transform_helper.apply_transformations_np_frames(self.cfg, frames)
+
+        # torch tensor
+        frames = torch.as_tensor(frames)
+        frames = transform_helper.apply_transformations_THWC_torch_frames(self.cfg, frames)
 
         # T H W C -> C T H W.
         frames = frames.permute(3, 0, 1, 2)
+        frames = transform_helper.apply_transformations_CTHW_torch_frames(self.cfg, frames)
 
-        # Spatial Scaling
-        if frames.shape[2] != self.cfg.DATA.SCALES[0] or frames.shape[3] != self.cfg.DATA.SCALES[1]:
-            frames = transform.spatial_resize(frames, self.cfg.DATA.SCALES[0], self.cfg.DATA.SCALES[1])
-
-        # Apply a list of transformations according to configurations
-        frames = transform_helper.apply_transformations(frames, self.cfg)
-
+        # Prepare data for multipathway backbone models
         frames = utils.pack_pathway_output(self.cfg, frames)
         return frames
 

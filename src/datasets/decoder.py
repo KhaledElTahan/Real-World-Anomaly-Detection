@@ -1,9 +1,6 @@
 """Decode video into frames"""
 import math
-import random
-import numpy as np
 import torch
-import torchvision.io as io
 
 from src.utils import funcutils
 
@@ -94,9 +91,7 @@ def pyav_decode(container):
     )
     container.close()
 
-    frames = torch.as_tensor(np.stack([frame.to_rgb().to_ndarray() for frame in video_frames]))
-
-    return frames, fps
+    return video_frames, fps
 
 
 def decode(container, backend="pyav"):
@@ -119,7 +114,7 @@ def decode(container, backend="pyav"):
         return None
 
     # Return None if the frames was not decoded successfully.
-    if frames is None or frames.size(0) == 0:
+    if frames is None or len(frames) == 0:
         return None
 
     return frames
