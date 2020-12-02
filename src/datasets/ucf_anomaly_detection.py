@@ -183,7 +183,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
         dataset_action = "Extract Features" if self.cfg.EXTRACT.ENABLE else "Video Model"
         current_files_output_classes = sorted(list(set(self._labels)))
-        backbone_cfg = backbone_helper.get_backbone_merged_cfg(self.cfg)
         max_size = "Unlimited"
 
         if self.cfg.DATA.SKIP_LARGE_VIDEOS:
@@ -197,9 +196,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             ["Mode", self.mode],
             ["Type", dataset_type],
             ["Action", dataset_action],
-            ["Backbone", self.cfg.BACKBONE.NAME],
-            ["SlowFast.Alpha", backbone_cfg.SLOWFAST.ALPHA]
-                if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH else None,
             ["Directory", self._dataset_directory],
             ["N. Output Classes", len(self.output_classes)],
             ["Output Classes", self.output_classes[:7]],

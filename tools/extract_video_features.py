@@ -110,17 +110,30 @@ def _print_extract_stats(cfg, features_length, videos_num):
         features_length (Int): Length of extracted features dimension
         videos_num (Int): Number of videos that will be processed
     """
+    backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
+
+    features_name = cfg.BACKBONE.NAME + "_" + cfg.TRANSFORM.CODE + "_" + \
+        str(cfg.EXTRACT.FRAMES_BATCH_SIZE) + "x" + str(cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS)
+
     print("Extraction Summary:")
 
     headers = ["Attribute", "Value"]
     table = [
+        ["Features Name", features_name],
         ["Frames inner batch size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
         ["Frames stack batch size", cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE],
+        ["Backbone", cfg.BACKBONE.NAME],
+        ["SlowFast.Alpha", backbone_cfg.SLOWFAST.ALPHA]
+            if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH else None,
         ["Machine Type", "CPU" if cfg.NUM_GPUS == 0 else "GPU"],
         ["No. GPUs", cfg.NUM_GPUS],
         ["CFG. Features Length", cfg.BACKBONE.FEATURES_LENGTH],
         ["Actual Features Length", features_length],
         ["Number of datasets' videos", videos_num],
+        ["Background Subtraction", str(cfg.TRANSFORM.BG_SUBTRACTION_ENABLED)],
+        ["BG_Sub Algorithm", cfg.TRANSFORM.BG_SUBTRACTION_ALGORITHM]
+            if cfg.TRANSFORM.BG_SUBTRACTION_ENABLED else None,
+        ["Transformation Code", cfg.TRANSFORM.CODE],
     ]
 
     table = [x for x in table if x is not None]
