@@ -4,7 +4,7 @@ from src.datasets import utils
 from src.utils import funcutils
 
 
-@funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+@funcutils.debug(apply=False, sign=False, ret=False, sign_beautify=True, ret_beautify=True)
 def apply_transformations_list_np_frames(cfg, frames):
     """
     Apply a list of transformations on the list of np HWC frames according

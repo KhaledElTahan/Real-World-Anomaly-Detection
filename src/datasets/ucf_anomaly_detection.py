@@ -236,11 +236,15 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
     @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
     @funcutils.force_garbage_collection(before=True, after=True)
-    def _decode_video(self, video_path):
+    def _get_video(self, video_path):
         """"
-        Load the video and decode it
+        Loads the video, decodes it, applies video transformations then packs the output frames
+        for backbone pathway input
         Args:
             video_path (Path): The absolute path of the video
+        Returns:
+            frames (list(Torch.Tensor)): List of frames tensors, each tensor represents transformed
+                video frames for backbone input pathway
         """
         video_container = None
         try:
@@ -304,7 +308,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             # print( loaded['b'] == tensor_b )
             return random.randint(0, 5)
         else:
-            return self._decode_video(item_path)
+            return self._get_video(item_path)
 
 
     @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
