@@ -1,8 +1,6 @@
 """Configs."""
 from fvcore.common.config import CfgNode
 
-from . import custom_config
-
 # ---------------------------------------------------------------------------- #
 # Config definition
 # ---------------------------------------------------------------------------- #
@@ -161,11 +159,11 @@ _C.BACKBONE.FEATURES_LENGTH = 2304
 _C.BACKBONE.TRAINABLE = False
 
 # Use those attributes to inject them into the backbone cfg
-# The backbone_cfg will set those attibutes with the mode cfg values 
+# The backbone_cfg will set those attibutes with the mode cfg values
 _C.BACKBONE.MERGE_CFG_LIST = [
     "NUM_GPUS",
     "BACKBONE.TRAINABLE",
-] 
+]
 
 # -----------------------------------------------------------------------------
 # Model options
@@ -393,7 +391,7 @@ _C.DEMO = CfgNode()
 def _assert_and_infer_cfg(cfg):
     # TRAIN assertions.
     assert cfg.TRAIN.CHECKPOINT_TYPE in ["pytorch", "caffe2"]
-    
+
     if cfg.NUM_GPUS:
         assert cfg.TRAIN.BATCH_SIZE % cfg.NUM_GPUS == 0
 
