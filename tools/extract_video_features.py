@@ -126,6 +126,7 @@ def _print_extract_stats(cfg, features_length, videos_num):
         ["Backbone", cfg.BACKBONE.NAME],
         ["SlowFast.Alpha", backbone_cfg.SLOWFAST.ALPHA]
             if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH else None,
+        ["Backbone Trainable", cfg.BACKBONE.TRAINABLE],
         ["Machine Type", "CPU" if cfg.NUM_GPUS == 0 else "GPU"],
         ["No. GPUs", cfg.NUM_GPUS],
         ["CFG. Features Length", cfg.BACKBONE.FEATURES_LENGTH],

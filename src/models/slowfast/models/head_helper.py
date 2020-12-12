@@ -5,7 +5,7 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from slowfast.models import features_helper
 from slowfast.models.roi_align import ROIAlign
 
 
@@ -16,6 +16,7 @@ class ResNetRoIHead(nn.Module):
 
     def __init__(
         self,
+        cfg,
         dim_in,
         num_classes,
         pool_size,
@@ -31,6 +32,7 @@ class ResNetRoIHead(nn.Module):
         ResNetRoIHead takes p pathways as input where p in [1, infty].
 
         Args:
+            cfg (cfgNode): configuration node
             dim_in (list): the list of channel dimensions of the p inputs to the
                 ResNetHead.
             num_classes (int): the channel dimensions of the p outputs to the
@@ -66,6 +68,7 @@ class ResNetRoIHead(nn.Module):
         assert (
             len({len(pool_size), len(dim_in)}) == 1
         ), "pathway dimensions are not consistent."
+        self.cfg = cfg
         self.num_pathways = len(pool_size)
         for pathway in range(self.num_pathways):
             temporal_pool = nn.AvgPool3d(
@@ -142,6 +145,7 @@ class ResNetBasicHead(nn.Module):
 
     def __init__(
         self,
+        cfg,
         dim_in,
         num_classes,
         pool_size,
@@ -154,6 +158,7 @@ class ResNetBasicHead(nn.Module):
         ResNetBasicHead takes p pathways as input where p in [1, infty].
 
         Args:
+            cfg (cfgNode): configuration node
             dim_in (list): the list of channel dimensions of the p inputs to the
                 ResNetHead.
             num_classes (int): the channel dimensions of the p outputs to the
@@ -170,6 +175,7 @@ class ResNetBasicHead(nn.Module):
         assert (
             len({len(pool_size), len(dim_in)}) == 1
         ), "pathway dimensions are not consistent."
+        self.cfg = cfg
         self.num_pathways = len(pool_size)
 
         for pathway in range(self.num_pathways):
@@ -197,22 +203,6 @@ class ResNetBasicHead(nn.Module):
             )
 
 
-    def create_features(self, inputs):
-        """
-        Creates a copy from the features and normalizes it
-        Args:
-            inputs (torch.Tensor): Output from pathways
-        """
-        # save features
-        features = inputs.clone().detach()
-        # flatten the features tensor
-        features = features.mean(3).mean(2).reshape(features.shape[0], -1)
-        # apply l2 normalization on features
-        F.normalize(features)
-
-        return features
-
-
     def forward(self, inputs):
         assert (
             len(inputs) == self.num_pathways
@@ -225,7 +215,7 @@ class ResNetBasicHead(nn.Module):
         # (N, C, T, H, W) -> (N, T, H, W, C).
         x = x.permute((0, 2, 3, 4, 1))
 
-        features = self.create_features(x)
+        features = features_helper.create_features(x, not self.cfg.BACKBONE.TRAINABLE)
 
         # Perform dropout.
         if hasattr(self, "dropout"):
@@ -252,6 +242,7 @@ class X3DHead(nn.Module):
 
     def __init__(
         self,
+        cfg,
         dim_in,
         dim_inner,
         dim_out,
@@ -271,6 +262,7 @@ class X3DHead(nn.Module):
         X3DHead takes a 5-dim feature tensor (BxCxTxHxW) as input.
 
         Args:
+            cfg (cfgNode): configurations node
             dim_in (float): the channel dimension C of the input.
             num_classes (int): the channel dimensions of the output.
             pool_size (float): a single entry list of kernel size for
@@ -290,6 +282,7 @@ class X3DHead(nn.Module):
                 before the classifier.
         """
         super(X3DHead, self).__init__()
+        self.cfg = cfg
         self.pool_size = pool_size
         self.dropout_rate = dropout_rate
         self.num_classes = num_classes
@@ -367,6 +360,9 @@ class X3DHead(nn.Module):
 
         # (N, C, T, H, W) -> (N, T, H, W, C).
         x = x.permute((0, 2, 3, 4, 1))
+
+        features = features_helper.create_features(x, not self.cfg.BACKBONE.TRAINABLE)
+
         # Perform dropout.
         if hasattr(self, "dropout"):
             x = self.dropout(x)
@@ -378,4 +374,4 @@ class X3DHead(nn.Module):
             x = x.mean([1, 2, 3])
 
         x = x.view(x.shape[0], -1)
-        return x
+        return x, features

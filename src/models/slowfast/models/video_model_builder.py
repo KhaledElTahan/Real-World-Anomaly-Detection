@@ -337,6 +337,7 @@ class SlowFast(nn.Module):
 
         if cfg.DETECTION.ENABLE:
             self.head = head_helper.ResNetRoIHead(
+                cfg,
                 dim_in=[
                     width_per_group * 32,
                     width_per_group * 32 // cfg.SLOWFAST.BETA_INV,
@@ -360,6 +361,7 @@ class SlowFast(nn.Module):
             )
         else:
             self.head = head_helper.ResNetBasicHead(
+                cfg,
                 dim_in=[
                     width_per_group * 32,
                     width_per_group * 32 // cfg.SLOWFAST.BETA_INV,
@@ -559,6 +561,7 @@ class ResNet(nn.Module):
 
         if self.enable_detection:
             self.head = head_helper.ResNetRoIHead(
+                cfg,
                 dim_in=[width_per_group * 32],
                 num_classes=cfg.MODEL.NUM_CLASSES,
                 pool_size=[[cfg.DATA.NUM_FRAMES // pool_size[0][0], 1, 1]],
@@ -570,6 +573,7 @@ class ResNet(nn.Module):
             )
         else:
             self.head = head_helper.ResNetBasicHead(
+                cfg,
                 dim_in=[width_per_group * 32],
                 num_classes=cfg.MODEL.NUM_CLASSES,
                 pool_size=[None, None]
@@ -746,6 +750,7 @@ class X3D(nn.Module):
         else:
             spat_sz = int(math.ceil(cfg.DATA.TRAIN_CROP_SIZE / 32.0))
             self.head = head_helper.X3DHead(
+                cfg,
                 dim_in=dim_out,
                 dim_inner=dim_inner,
                 dim_out=cfg.X3D.DIM_C5,

@@ -1,18 +1,47 @@
 """Helper to reuse the backbone model"""
 import torch
 import operator
+from fvcore.common.config import CfgNode
 import src.utils.pathutils as pathutils
 from src.models.slowfast.config.defaults import get_cfg as get_backbone_default_cfg
 from src.models.slowfast.models import build_model
 import src.models.slowfast.utils.checkpoint as cu
 
+
+def _set_cfg_val(cfg, attrib, attrib_val):
+    """
+    Sets value of configuration attribute recursivly,
+    If attribute exists, then its value is changed, if it doesn't exist,
+    The attribute is created recursivly then set to attrib_val
+    Args:
+        cfg (cfgNode): Any configuration node
+        attrib (String): Attribute name
+        attrib_val: Attribute value
+    Example:
+        attrib: cfg.TRAIN.GPUS.NUMBER
+        attrib_value: 15
+    """
+    if '.' in attrib:
+        first_attrib = attrib.split('.')[0]
+
+        if hasattr(cfg, first_attrib):
+            inner_cfg_node = getattr(cfg, first_attrib)
+        else:
+            inner_cfg_node = CfgNode()
+
+        _set_cfg_val(inner_cfg_node, attrib.replace(first_attrib + '.', '', 1), attrib_val)
+        setattr(cfg, first_attrib, inner_cfg_node)
+    else:
+        setattr(cfg, attrib, attrib_val)
+
+
 def _merge_configurations(backbone_cfg, cfg):
     """
-    Merge the configurations from cfg into backbone_cfg
-    Supports only two levels of inner attributes.
+    Merge the configurations from cfg into backbone_cfg based on list
+    of attributes names stored in cfg.BACKBONE.MERGE_CFG_LIST
     Args:
-        backbone_cfg: The backbone model configuration file
-        cfg: The video model configuration file
+        backbone_cfg (cfgNode): The backbone model configuration file
+        cfg (cfgNode): The video model configuration file
     Example:
         cfg.BACKBONE.MERGE_CFG_LIST = [
             "NUM_GPUS",
@@ -20,18 +49,9 @@ def _merge_configurations(backbone_cfg, cfg):
             "MODEL.ARCH",
         ]
     """
-
-    for attrib in cfg.BACKBONE.MERGE_CFG_LIST :
+    for attrib in cfg.BACKBONE.MERGE_CFG_LIST:
         attrib_val = operator.attrgetter(attrib)(cfg)
-
-        if '.' in attrib:
-            assert attrib.count('.') == 1
-
-            inner_cfg_file = getattr(backbone_cfg, attrib.split('.')[0])
-            setattr(inner_cfg_file, attrib.split('.')[1], attrib_val)
-            setattr(backbone_cfg, attrib.split('.')[0], inner_cfg_file)
-        else:
-            setattr(backbone_cfg, attrib, attrib_val)
+        _set_cfg_val(backbone_cfg, attrib, attrib_val)
 
     return backbone_cfg
 

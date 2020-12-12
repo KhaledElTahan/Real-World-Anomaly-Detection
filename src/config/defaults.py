@@ -164,6 +164,7 @@ _C.BACKBONE.TRAINABLE = False
 # The backbone_cfg will set those attibutes with the mode cfg values 
 _C.BACKBONE.MERGE_CFG_LIST = [
     "NUM_GPUS",
+    "BACKBONE.TRAINABLE",
 ] 
 
 # -----------------------------------------------------------------------------

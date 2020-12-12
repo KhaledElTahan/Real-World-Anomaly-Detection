@@ -13,6 +13,7 @@ def main():
     args = parse_args()
     cfg = load_config(args)
 
+    # --extract
     # Perform feature extraction
     if cfg.EXTRACT.ENABLE:
         extract(cfg)
