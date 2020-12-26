@@ -5,6 +5,41 @@ import torch
 import numpy as np
 
 
+def _reduce_consec_strings(items):
+    """
+    Reduce consecutive strings inside a list/tuple, to beautify the output
+    Args:
+        items (list/tuple): Nested list of strings
+    Returns:
+        reduced_items (list/tuple): Same as items but with reduced elements
+    Example:
+        items: ('A', 'A', 'B', 'A')
+        reduced_items: ('A x 2', 'B', 'A')
+    """
+    if isinstance(items, list):
+        reduced_items = []
+    elif isinstance(items, tuple):
+        reduced_items = ()
+
+    counter = 1
+    for idx, item in enumerate(items):
+        if isinstance(item, str) and idx + 1 < len(items) and item == items[idx + 1]:
+            counter = counter + 1
+        else:
+            if counter > 1:
+                res = "{} x {}".format(item, counter)
+                counter = 1
+            else:
+                res = item
+
+            if isinstance(items, list):
+                reduced_items = reduced_items + [res]
+            elif isinstance(items, tuple):
+                reduced_items = reduced_items + (res,)
+
+    return reduced_items
+
+
 def _tesnors_to_shapes(tensors):
     """
     Converts a nested list/tuple of torch/np tensors to list of shapes
@@ -32,7 +67,7 @@ def _tesnors_to_shapes(tensors):
         elif isinstance(tensors, tuple):
             shapes = shapes + (res,)
 
-    return shapes
+    return _reduce_consec_strings(shapes)
 
 
 def _tensor_representation(tensor):
