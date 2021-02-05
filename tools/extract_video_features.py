@@ -123,6 +123,7 @@ def _print_extract_stats(cfg, features_length, videos_num):
         ["Frames inner batch size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
         ["Frames stack batch size", cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE],
         ["Number of Output Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
+        ["Video Scales", cfg.DATA.SCALES],
         ["Backbone", cfg.BACKBONE.NAME],
         ["SlowFast.Alpha", backbone_cfg.SLOWFAST.ALPHA]
             if backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH else None,
