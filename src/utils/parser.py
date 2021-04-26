@@ -8,7 +8,7 @@ from src.utils import pathutils
 from src.config import custom_config
 
 
-def parse_args(): 
+def parse_args():
     """
     Parse the following arguments for a default parser for users.
     Args:

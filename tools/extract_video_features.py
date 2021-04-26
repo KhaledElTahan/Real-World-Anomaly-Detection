@@ -10,6 +10,7 @@ from src.models import backbone_helper
 from src.datasets import utils
 from src.datasets import build
 from src.utils import modelutils
+from src.utils import infoutils
 
 
 @torch.no_grad()
@@ -112,14 +113,11 @@ def _print_extract_stats(cfg, features_length, videos_num):
     """
     backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
 
-    features_name = cfg.BACKBONE.NAME + "_" + cfg.TRANSFORM.CODE + "_" + \
-        str(cfg.EXTRACT.FRAMES_BATCH_SIZE) + "x" + str(cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS)
-
     print("Extraction Summary:")
 
     headers = ["Attribute", "Value"]
     table = [
-        ["Features Name", features_name],
+        ["Features Name", infoutils.get_dataset_features_name(cfg)],
         ["Frames inner batch size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
         ["Frames stack batch size", cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE],
         ["Number of Output Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],

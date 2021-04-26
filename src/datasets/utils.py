@@ -300,7 +300,7 @@ def changes_segments_number(tensors_segments, output_segments_num):
         ss_idx = segments_indices[idx]
         ee_idx = segments_indices[idx + 1] - 1
 
-        if idx == len(segments_indices) - 2:
+        if idx == len(segments_indices) - 2: # Include last frame in last segment
             ee_idx = segments_indices[idx + 1]
 
         if ee_idx <= ss_idx:
@@ -320,7 +320,7 @@ def segmentize_features(cfg, features_batch, annotation):
     and tell whether each segment is anomaly or not
     Args:
         cfg (cfgNode): Video model configurations node
-        features_batch (torch.Tensor): Features or a whole video
+        features_batch (torch.Tensor): Features of a whole video
         annotation (Tuple): Frames intervals in which the video is anomalous
     Returns:
         features_segments (torch.Tensor): cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS Segments of frames
@@ -332,7 +332,7 @@ def segmentize_features(cfg, features_batch, annotation):
 
     is_anomaly_segment = torch.zeros(size = (cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS,), dtype=int)
 
-    def _indix_to_frame(index, frames_batch_size, start):
+    def _index_to_frame(index, frames_batch_size, start):
         frame = index * frames_batch_size
         if not start:
             frame += frames_batch_size - 1
@@ -342,8 +342,8 @@ def segmentize_features(cfg, features_batch, annotation):
     for indices in mapping_indices:
         mapping_frames.append(
             [
-                _indix_to_frame(indices[0], cfg.EXTRACT.FRAMES_BATCH_SIZE, True),
-                _indix_to_frame(indices[1], cfg.EXTRACT.FRAMES_BATCH_SIZE, False)
+                _index_to_frame(indices[0], cfg.EXTRACT.FRAMES_BATCH_SIZE, True),
+                _index_to_frame(indices[1], cfg.EXTRACT.FRAMES_BATCH_SIZE, False)
             ]
         )
 

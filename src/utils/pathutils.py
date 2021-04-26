@@ -1,5 +1,6 @@
 """Utility used to handle absoule paths"""
 from pathlib import Path
+from src.utils import infoutils
 
 def get_app_path():
     """Retrieve the absolute Path object of the app directory"""
@@ -34,9 +35,8 @@ def get_specific_dataset_path(cfg, features=False):
     dataset_directory = get_datasets_path() / cfg.DATA.PATH_TO_DATA_DIR
 
     if features: # Read features
-        features_name = cfg.BACKBONE.NAME + "_" + cfg.TRANSFORM.CODE + "_" + \
-            str(cfg.EXTRACT.FRAMES_BATCH_SIZE) + "x" + str(cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS)
-        dataset_directory = dataset_directory / "features" / features_name
+        dataset_directory = dataset_directory / "features" / \
+            infoutils.get_dataset_features_name(cfg)
     else: # Read videos
         dataset_directory = dataset_directory / "videos"
 
