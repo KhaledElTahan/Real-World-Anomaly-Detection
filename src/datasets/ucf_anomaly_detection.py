@@ -13,7 +13,6 @@ from src.datasets.build import DATASET_REGISTRY
 from src.datasets import transform_helper
 from src.utils import funcutils
 from src.utils import misc
-from src.models import backbone_helper
 
 @DATASET_REGISTRY.register()
 class UCFAnomalyDetection(torch.utils.data.Dataset):
@@ -105,7 +104,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 line = line.strip()
                 
                 if self.cfg.DATA.READ_FEATURES:
-                    line = utils.change_extension(line, self.cfg.DATA.EXT, self.cfg.EXTRACT.FEATURES_EXT)
+                    line = pathutils.change_extension(line, self.cfg.DATA.EXT, self.cfg.EXTRACT.FEATURES_EXT)
 
                 if self.mode == "train":
                     line_splitted = line.split(self.cfg.DATA.PATH_LABEL_SEPARATOR_TRAINING)
@@ -367,7 +366,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 labels = [normal_label, anomaly_label]
                 annotations = [normal_annotations, anomaly_annotations]
             else:
-                features_path = utils.video_path_to_features_path(
+                features_path = pathutils.video_path_to_features_path(
                     self.cfg, self.get_file_path(index)
                 )
 

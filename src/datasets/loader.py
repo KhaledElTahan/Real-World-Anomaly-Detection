@@ -2,7 +2,8 @@
 
 import torch
 
-from src.datasets import utils
+from src.datasets import loader_helper
+from src.datasets import sampler_helper
 from src.datasets.build import build_dataset
 
 
@@ -38,7 +39,7 @@ def construct_loader(cfg, split):
     dataset = build_dataset(dataset_name, cfg, split)
 
     # Create a sampler for multi-process training
-    sampler = utils.create_sampler(dataset, shuffle, cfg)
+    sampler = sampler_helper.create_sampler(dataset, shuffle, cfg)
 
     # Create a loader
     loader = torch.utils.data.DataLoader(
@@ -50,7 +51,7 @@ def construct_loader(cfg, split):
         pin_memory=cfg.DATA_LOADER.PIN_MEMORY,
         drop_last=drop_last,
         collate_fn=None,
-        worker_init_fn=utils.loader_worker_init_fn(dataset),
+        worker_init_fn=loader_helper.loader_worker_init_fn(dataset),
     )
 
     return loader

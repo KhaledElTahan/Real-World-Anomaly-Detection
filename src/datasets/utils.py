@@ -1,12 +1,10 @@
 """Dataset Utils"""
 
-from pathlib import Path
 import numpy as np
 import torch
 
-from src.datasets import transform
 from src.models import backbone_helper
-from src.utils import funcutils, pathutils
+from src.utils import funcutils
 
 
 def pack_pathway_output(cfg, frames):
@@ -69,9 +67,10 @@ def _frames_to_frames_batches_native(frames :torch.Tensor, batch_size):
             torch.Tensor(3, 16, 240, 320),
             torch.Tensor(3, 16, 240, 320),
             torch.Tensor(3, 16, 240, 320),
+            torch.Tensor(3, 16, 240, 320),
             torch.Tensor(3, 1, 240, 320),
         ],
-        4
+        5
     """
     frames_batches = list(torch.split(frames, batch_size, dim = 1))
 
@@ -223,7 +222,7 @@ def frames_to_batches_of_frames_batches(cfg, frames, drop_last=True):
             frames, cfg.EXTRACT.FRAMES_BATCHES_BATCH_SIZE)
 
         frames_batches = []
-        for idx, batch in enumerate(general_frames_batches):
+        for _, batch in enumerate(general_frames_batches):
             frames_batches.append([batch])
 
     elif backbone_cfg.MODEL.ARCH in backbone_cfg.MODEL.MULTI_PATHWAY_ARCH:
@@ -254,6 +253,8 @@ def frames_to_batches_of_frames_batches(cfg, frames, drop_last=True):
 def changes_segments_number(tensors_segments, output_segments_num):
     """
     Changes number of input tensors segments
+    NOTE: Each new segment will be the mean of many the old segments,
+        mapping_indices is used to us which old segments are mapped to the new one
     Args:
         tensors_segments (Torch.Tensor): Tensor with two or more dimensions
         output_segments_num (Int): Number of output segments
@@ -371,60 +372,6 @@ def segmentize_features(cfg, features_batch, annotation):
     return features_segments, is_anomaly_segment
 
 
-def spatial_sampling(
-    frames,
-    spatial_idx=-1,
-    min_scale=256,
-    max_scale=320,
-    crop_size=224,
-    random_horizontal_flip=True,
-    inverse_uniform_sampling=False,
-):
-    """
-    Perform spatial sampling on the given video frames. If spatial_idx is
-    -1, perform random scale, random crop, and random flip on the given
-    frames. If spatial_idx is 0, 1, or 2, perform spatial uniform sampling
-    with the given spatial_idx.
-    Args:
-        frames (tensor): frames of images sampled from the video. The
-            dimension is `num frames` x `height` x `width` x `channel`.
-        spatial_idx (int): if -1, perform random spatial sampling. If 0, 1,
-            or 2, perform left, center, right crop if width is larger than
-            height, and perform top, center, buttom crop if height is larger
-            than width.
-        min_scale (int): the minimal size of scaling.
-        max_scale (int): the maximal size of scaling.
-        crop_size (int): the size of height and width used to crop the
-            frames.
-        inverse_uniform_sampling (bool): if True, sample uniformly in
-            [1 / max_scale, 1 / min_scale] and take a reciprocal to get the
-            scale. If False, take a uniform sample from [min_scale,
-            max_scale].
-    Returns:
-        frames (tensor): spatially sampled frames.
-    """
-    assert spatial_idx in [-1, 0, 1, 2]
-    if spatial_idx == -1:
-        frames, _ = transform.random_short_side_scale_jitter(
-            images=frames,
-            min_size=min_scale,
-            max_size=max_scale,
-            inverse_uniform_sampling=inverse_uniform_sampling,
-        )
-        frames, _ = transform.random_crop(frames, crop_size)
-        if random_horizontal_flip:
-            frames, _ = transform.horizontal_flip(0.5, frames)
-    else:
-        # The testing is deterministic and no jitter should be performed.
-        # min_scale, max_scale, and crop_size are expect to be the same.
-        assert len({min_scale, max_scale, crop_size}) == 1
-        frames, _ = transform.random_short_side_scale_jitter(
-            frames, min_scale, max_scale
-        )
-        frames, _ = transform.uniform_crop(frames, crop_size, spatial_idx)
-    return frames
-
-
 def as_binary_vector(labels, num_classes):
     """
     Construct binary label vector given a list of label indices.
@@ -439,102 +386,3 @@ def as_binary_vector(labels, num_classes):
     for lbl in set(labels):
         label_arr[lbl] = 1.0
     return label_arr
-
-
-def tensor_normalize(tensor, mean, std):
-    """
-    Normalize a given tensor by subtracting the mean and dividing the std.
-    Args:
-        tensor (tensor): tensor to normalize.
-        mean (tensor or list): mean value to subtract.
-        std (tensor or list): std to divide.
-    """
-    if tensor.dtype == torch.uint8:
-        tensor = tensor.float()
-        tensor /= 255.0
-    if type(mean) == list:
-        mean = torch.tensor(mean)
-    if type(std) == list:
-        std = torch.tensor(std)
-    tensor -= mean
-    tensor /= std
-    return tensor
-
-
-def revert_tensor_normalize(tensor, mean, std):
-    """
-    Revert normalization for a given tensor by multiplying by the std and adding the mean.
-    Args:
-        tensor (tensor): tensor to revert normalization.
-        mean (tensor or list): mean value to add.
-        std (tensor or list): std to multiply.
-    """
-    if type(mean) == list:
-        mean = torch.tensor(mean)
-    if type(std) == list:
-        std = torch.tensor(std)
-    tensor = tensor * std
-    tensor = tensor + mean
-    return tensor
-
-
-def create_sampler(dataset, shuffle, cfg):
-    """
-    Create sampler for the given dataset.
-    Args:
-        dataset (torch.utils.data.Dataset): the given dataset.
-        shuffle (bool): set to ``True`` to have the data reshuffled
-            at every epoch.
-        cfg (CfgNode): configs. Details can be found in
-            slowfast/config/defaults.py
-    Returns:
-        sampler (Sampler): the created sampler.
-    """
-    return None
-
-
-def loader_worker_init_fn(dataset):
-    """
-    Create init function passed to pytorch data loader.
-    Args:
-        dataset (torch.utils.data.Dataset): the given dataset.
-    """
-    return None
-
-
-def change_extension(video_name, old_ext, new_ext):
-    """
-    Changes the file name's extension
-    Args:
-        old_ext (String): The old extension of the file
-        new_ext (String): The new extension of the file
-    Examples:
-        change_extension("video.mp4 label 1 1", "mp4", "rar") -> "video.rar label 1 1"
-    """
-    return video_name.replace(old_ext, new_ext)
-
-
-def video_path_to_features_path(cfg, video_path :Path):
-    """
-    Convert video path to its features file path
-    Args:
-        cfg (cfgNode): Video model configurations node
-        video_path (pathlib.Path): Path of the video
-    Returns:
-        features_path (pathlib.Path): Path of the features file
-    """
-    parent_directory = pathutils.get_specific_dataset_path(cfg, features=True) / video_path.parent.name
-    return parent_directory / change_extension(str(video_path.name), cfg.DATA.EXT, cfg.EXTRACT.FEATURES_EXT)
-
-
-def features_path_to_video_path(cfg, features_path :Path):
-    """
-    Convert video path to its features file path
-    Args:
-        cfg (cfgNode): Video model configurations node
-        features_path (pathlib.Path): Path of the features file
-    Returns:
-        video_path (pathlib.Path): Path of the video
-    """
-    parent_directory = pathutils.get_specific_dataset_path(cfg, features=False) / features_path.parent.name
-    return parent_directory / change_extension(str(features_path.name), cfg.EXTRACT.FEATURES_EXT, cfg.DATA.EXT)

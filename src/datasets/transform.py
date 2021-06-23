@@ -45,3 +45,60 @@ def background_subtration(frames, algorithm):
         frames[idx] = res_frame
 
     return frames
+
+
+def tensor_color_scale_down(tensor):
+    """
+    Changes range or colors from [0, 255] to [0, 1]
+    NOTE: Changes tensor type from torch.uint8 to torch.float32
+    Args:
+        tensor (Tensor(torch.uint8)): tensor to scale down
+    Returns:
+        tensor (Tensor(torch.float32)): scaled down tensor
+    """
+    assert tensor.dtype == torch.uint8
+
+    tensor = tensor.float()
+    tensor /= 255.0
+
+    return tensor
+
+
+def tensor_normalize(tensor, mean, std):
+    """
+    Normalize a given tensor by subtracting the mean and dividing the std.
+    Args:
+        tensor (tensor): tensor to normalize.
+        mean (tensor or list): mean value to subtract.
+        std (tensor or list): std to divide.
+    """
+    assert tensor.dtype == torch.float32
+
+    if isinstance(mean, list):
+        mean = torch.tensor(mean)
+    if isinstance(std, list):
+        std = torch.tensor(std)
+
+    tensor -= mean
+    tensor /= std
+    return tensor
+
+
+def revert_tensor_normalize(tensor, mean, std):
+    """
+    Revert normalization for a given tensor by multiplying by the std and adding the mean.
+    Args:
+        tensor (tensor): tensor to revert normalization.
+        mean (tensor or list): mean value to add.
+        std (tensor or list): std to multiply.
+    """
+    assert tensor.dtype == torch.float32
+
+    if isinstance(mean, list):
+        mean = torch.tensor(mean)
+    if isinstance(std, list):
+        std = torch.tensor(std)
+
+    tensor = tensor * std
+    tensor = tensor + mean
+    return tensor

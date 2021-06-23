@@ -53,6 +53,9 @@ conda install -c conda-forge ffmpeg
 # Install fvcore
 conda install -c conda-forge fvcore 
 
+# Install iopath
+conda install -c iopath iopath
+
 # Install Open-CV
 pip install opencv-python
 

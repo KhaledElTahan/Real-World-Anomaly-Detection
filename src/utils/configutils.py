@@ -47,6 +47,9 @@ def unify_config_attributes(src_cfg, dst_cfg, attributes_list):
     """
     for attrib in attributes_list:
         attrib_val = operator.attrgetter(attrib)(src_cfg)
+
+        assert attrib_val is not None
+
         set_cfg_val(dst_cfg, attrib, attrib_val)
 
     return dst_cfg

@@ -42,8 +42,13 @@ def apply_transformations_THWC_torch_frames(cfg, frames):
         cfg (CfgNode): Video model configurations file
         frames (Torch.Tensor): Torch frames with THWC format
     """
+
+    # Scale color down from [0, 255] to [0, 1].
+    # Change frames type from torch.uint8 to torch.float32
+    frames = transform.tensor_color_scale_down(frames)
+
     # Perform color normalization.
-    frames = utils.tensor_normalize(frames, cfg.DATA.MEAN, cfg.DATA.STD)
+    frames = transform.tensor_normalize(frames, cfg.DATA.MEAN, cfg.DATA.STD)
 
     return frames
 

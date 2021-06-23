@@ -7,6 +7,7 @@ def get_dataset_features_name(cfg):
         cfg: The video model configuration file
     Returns:
         features_name (String): represents the dataset features name
+            BackboneName_TransformationCode_InternalFramesBatchSize_NumberOfOutputSegments
     Example:
         get_dataset_features_name(cfg) => "Kinetics_c2_I3D_NLN_8x8_R50_BG-KNN_32x32"
     """

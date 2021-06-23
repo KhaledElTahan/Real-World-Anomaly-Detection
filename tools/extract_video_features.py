@@ -11,6 +11,7 @@ from src.datasets import utils
 from src.datasets import build
 from src.utils import modelutils
 from src.utils import infoutils
+from src.utils import pathutils
 
 
 @torch.no_grad()
@@ -46,7 +47,7 @@ def extract(cfg):
     for dataset in datasets:
         for _, (frames, _, annotation, video_index) in enumerate(dataset):
 
-            features_path = utils.video_path_to_features_path(
+            features_path = pathutils.video_path_to_features_path(
                 cfg, dataset.get_file_path(video_index)
             )
             if not cfg.EXTRACT.FORCE_REWRITE and features_path.exists():
