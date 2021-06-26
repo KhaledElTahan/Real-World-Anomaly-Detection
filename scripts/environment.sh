@@ -56,6 +56,9 @@ conda install -c conda-forge fvcore
 # Install iopath
 conda install -c iopath iopath
 
+# Install pytorch video
+pip install pytorchvideo
+
 # Install Open-CV
 pip install opencv-python
 

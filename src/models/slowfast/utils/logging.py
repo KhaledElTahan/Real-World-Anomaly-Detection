@@ -11,7 +11,7 @@ import logging
 import os
 import sys
 import simplejson
-from fvcore.common.file_io import PathManager
+from iopath.common.file_io import g_pathmgr
 
 import slowfast.utils.distributed as du
 
@@ -29,7 +29,10 @@ def _suppress_print():
 
 @functools.lru_cache(maxsize=None)
 def _cached_log_stream(filename):
-    io = PathManager.open(filename, "a", buffering=1024)
+    # Use 1K buffer if writing to cloud storage.
+    io = g_pathmgr.open(
+        filename, "a", buffering=1024 if "://" in filename else -1
+    )
     atexit.register(io.close)
     return io
 

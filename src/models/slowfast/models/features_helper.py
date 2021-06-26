@@ -12,11 +12,13 @@ def create_features(features, detach=True):
     # save features
     features = features.clone()
 
+    # detach features from computational graph
     if detach:
         features = features.detach()
 
     # flatten the features tensor
-    features = features.mean(3).mean(2).reshape(features.shape[0], -1)
+    while len(features.shape) > 2:
+        features = features.mean(len(features.shape) - 2)
 
     # apply l2 normalization on features
     F.normalize(features)

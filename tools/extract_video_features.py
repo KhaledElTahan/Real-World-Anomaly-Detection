@@ -22,10 +22,13 @@ def extract(cfg):
         cfg (cfgNode): Video Model Configurations
     """
     temp_read_features = cfg.DATA.READ_FEATURES
-    temo_extract_enabled = cfg.EXTRACT.ENABLE
+    temp_extract_enabled = cfg.EXTRACT.ENABLE
+    temp_backbone_trainable = cfg.BACKBONE.TRAINABLE
+
 
     cfg.EXTRACT.ENABLE = True # Force train dataset to get items without respect to anomalies
     cfg.DATA.READ_FEATURES = False # Force read videos
+    cfg.BACKBONE.TRAINABLE = False # Force backbone to detach features
 
     datasets = []
     for split in cfg.EXTRACT.DATASET_SPLITS:
@@ -101,7 +104,8 @@ def extract(cfg):
     print("SUCCESS: Feature Extraction Completed.")
 
     cfg.DATA.READ_FEATURES = temp_read_features
-    cfg.EXTRACT.ENABLE = temo_extract_enabled
+    cfg.EXTRACT.ENABLE = temp_extract_enabled
+    cfg.BACKBONE.TRAINABLE = temp_backbone_trainable
 
 
 def _print_extract_stats(cfg, features_length, videos_num):
