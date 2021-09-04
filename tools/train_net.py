@@ -28,7 +28,7 @@ def train(cfg):
 
     datasets = []
     for split in cfg.EXTRACT.DATASET_SPLITS:
-        datasets.append(build.build_dataset(cfg.EXTRACT.DATASET, cfg, split))
+        datasets.append(build.build_dataset(cfg.EXTRACT.DATASET, cfg, split, cfg.DATA.READ_FEATURES))
 
 
     for dataset in [datasets[1]]:

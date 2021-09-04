@@ -10,7 +10,7 @@ The call should return a `torch.utils.data.Dataset` object.
 """
 
 
-def build_dataset(dataset_name, cfg, split):
+def build_dataset(dataset_name, cfg, split, is_features=False):
     """
     Build a dataset, defined by `dataset_name`.
     Args:
@@ -19,7 +19,8 @@ def build_dataset(dataset_name, cfg, split):
             slowfast/config/defaults.py
         split (str): the split of the data loader. Options include `train`,
             `val`, and `test`.
+        is_features (Bool): Whether to load features or videos
     Returns:
         Dataset: a constructed dataset specified by dataset_name.
     """
-    return DATASET_REGISTRY.get(dataset_name)(cfg, split)
+    return DATASET_REGISTRY.get(dataset_name)(cfg, split, is_features)

@@ -20,7 +20,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
     UCFAnomalyDetection video loader.
     """
 
-    def __init__(self, cfg, mode):
+    def __init__(self, cfg, mode, is_features=False):
         """
         Construct the UCF Anomaly Detection video loader with a given two txt files.
         The format of the training file is:
@@ -51,6 +51,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Args:
             cfg (CfgNode): configs.
             mode (string): Options includes `train`, or `test` mode.
+            is_features (Bool): Whether to load features or videos
         """
         # Only support train, and test mode.
         assert mode in [
@@ -59,7 +60,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         ], "Split '{}' not supported for UCF Anomaly Detection".format(mode)
         self.mode = mode
         self.cfg = cfg
-        self.is_features = cfg.DATA.READ_FEATURES
+        self.is_features = is_features
 
         self._video_meta = {}
 
@@ -332,13 +333,12 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                     if True: Retrieve only anomalies
                     if False: Retrieve only notmal videos
         Returns:
-            item (Torch.Tensor): frames or features depending on cfg.DATA.READ_FEATURES at dataset creation
+            item (Torch.Tensor): frames or features depending on self.is_features
             label (Str): label of the dataset item
             one_hot (Torch.Tensor): label encoded as one hot vector
             annotation (Tuple or Tensor): tuple representing anomaleous frames or tensor of segments
-                depending on cfg.DATA.READ_FEATURES at dataset creation
-            item_path (Path): video or features file path depending on
-                cfg.DATA.READ_FEATURES at dataset creation
+                depending on self.is_features
+            item_path (Path): video or features file path depending on self.is_features
         """
         assert isinstance(index, (int, tuple))
 
