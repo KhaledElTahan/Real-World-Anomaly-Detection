@@ -20,6 +20,8 @@ def _reduce_consec_strings(items):
         reduced_items = []
     elif isinstance(items, tuple):
         reduced_items = ()
+    else:
+        return items
 
     counter = 1
     for idx, item in enumerate(items):
@@ -42,30 +44,36 @@ def _reduce_consec_strings(items):
 
 def _tesnors_to_shapes(tensors):
     """
-    Converts a nested list/tuple of torch/np tensors to list of shapes
+    Converts a nested list/tuple/dict of torch/np tensors to list of shapes
     Args:
-        tensors (list/tuple): Nested list of torch/np tensors
+        tensors (list/tuple/dict): Nested list of torch/np tensors
     Returns:
-        shapes (list/tuple): List of same format as tensors_list
+        shapes (list/tuple/dict): List of same format as tensors_list
             but every tensor is replaced by its str(tensor.shape)
     """
     if isinstance(tensors, list):
         shapes = []
     elif isinstance(tensors, tuple):
         shapes = ()
+    elif isinstance(tensors, dict):
+        shapes = {}
+        keys = list(tensors.keys())
+        tensors = list(tensors.values())
 
-    for item in tensors:
-        if isinstance(item, (list, tuple)):
+    for idx, item in enumerate(tensors):
+        if isinstance(item, (list, tuple, dict)):
             res = _tesnors_to_shapes(item)
         elif isinstance(item, (torch.Tensor, np.ndarray)):
             res = _tensor_representation(item)
         else:
             res = item
 
-        if isinstance(tensors, list):
+        if isinstance(shapes, list):
             shapes = shapes + [res]
-        elif isinstance(tensors, tuple):
+        elif isinstance(shapes, tuple):
             shapes = shapes + (res,)
+        elif isinstance(shapes, dict):
+            shapes[keys[idx]] = res
 
     return _reduce_consec_strings(shapes)
 
@@ -106,7 +114,7 @@ def tensors_to_shapes(tensors):
     """
     if isinstance(tensors, (torch.Tensor, np.ndarray)):
         return _tensor_representation(tensors)
-    elif isinstance(tensors, (list, tuple)):
+    elif isinstance(tensors, (list, tuple, dict)):
         return _tesnors_to_shapes(tensors)
 
     # undefinted, just ignore

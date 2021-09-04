@@ -9,9 +9,9 @@ from tqdm import tqdm
 from src.models import backbone_helper
 from src.datasets import utils
 from src.datasets import build
-from src.utils import modelutils
 from src.utils import infoutils
 from src.utils import pathutils
+from src.datasets import loader
 
 
 def train(cfg):
@@ -21,19 +21,23 @@ def train(cfg):
         cfg (cfgNode): Video Model Configurations
     """
     temp_read_features = cfg.DATA.READ_FEATURES
-    temp_extract_enabled = cfg.EXTRACT.ENABLE
+    temp_training_enabled = cfg.TRAIN.ENABLE
 
-    cfg.EXTRACT.ENABLE = False # Force train dataset to get items without respect to anomalies
-    cfg.DATA.READ_FEATURES = True # Force read videos
+    cfg.TRAIN.ENABLE = True 
+    cfg.DATA.READ_FEATURES = True # Force read features
 
-    datasets = []
+    dataset_loaders = []
     for split in cfg.EXTRACT.DATASET_SPLITS:
-        datasets.append(build.build_dataset(cfg.EXTRACT.DATASET, cfg, split, cfg.DATA.READ_FEATURES))
+        dataset_loaders.append(loader.DatasetLoader(cfg, split, cfg.DATA.READ_FEATURES, "Shuffle with Replacement", 32))
 
+    for dataset_batch in dataset_loaders[0]:
+        exit()
 
-    for dataset in [datasets[1]]:
-        for i in range(len(dataset)):
-            frames, label, one_hot, annotation, video_index = dataset[i, True]
+    exit()
+
+    for dataset_loader in [dataset_loaders[1]]:
+        for i in range(len(dataset_loader)):
+            frames, label, one_hot, annotation, video_index = dataset_loader[i, True]
             print("COMPLETE!!!!")
             exit()
 
@@ -105,7 +109,7 @@ def train(cfg):
     print("SUCCESS: Training Completed.")
 
     cfg.DATA.READ_FEATURES = temp_read_features
-    cfg.EXTRACT.ENABLE = temp_extract_enabled
+    cfg.TRAIN.ENABLE = temp_training_enabled
 
 
 def _print_train_stats(cfg):

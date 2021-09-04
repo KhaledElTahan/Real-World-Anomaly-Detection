@@ -37,8 +37,11 @@ _C.TRAIN = CfgNode()
 # If True Train the model, else skip training.
 _C.TRAIN.ENABLE = True
 
-# Dataset.
+# Dataset for training.
 _C.TRAIN.DATASET = "UCFAnomalyDetection"
+
+# Available split for the dataset.
+_C.TRAIN.DATASET_SPLITS = ["train", "test"]
 
 # Total mini-batch size.
 _C.TRAIN.BATCH_SIZE = 64
@@ -69,9 +72,8 @@ _C.TRAIN.CURRENT_EPOCH = 0
 _C.TRAIN.SHIFT_INDEX = True
 
 # If "Sequential", then read dataset sequentially until min(normal, anomaly)
-# if "Shift Index", each epoch we shift the mapping between one normal and one anomaly video
-# if "Shuffle with replacement", we will shuffle both normal and anomaly each batch selection
-# if "Shuffle without replacement", we will shuffle both normal and anomaly each epoch
+# if "Shuffle", we will shuffle both normal and anomaly each epoch
+# if "Shuffle with Replacement", we will shuffle both normal and anomaly each batch selection
 _C.TRAIN.DATA_READ_ORDER = "Sequential"
 
 # ---------------------------------------------------------------------------- #
@@ -83,7 +85,10 @@ _C.TEST = CfgNode()
 _C.TEST.ENABLE = True
 
 # Dataset for testing.
-_C.TEST.DATASET = "kinetics"
+_C.TEST.DATASET = "UCFAnomalyDetection"
+
+# Available split for the dataset.
+_C.TEST.DATASET_SPLITS = ["train", "test"]
 
 # Total mini-batch size
 _C.TEST.BATCH_SIZE = 8

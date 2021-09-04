@@ -66,12 +66,12 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         print("Constructing UCF Anomaly Detection {}...".format(mode))
 
-        self._construct_loader()
+        self._construct_dataset()
 
 
-    def _construct_loader(self):
+    def _construct_dataset(self):
         """
-        Construct the video loader.
+        Construct the dataset.
         """
 
         dataset_parent_directory = pathutils.get_datasets_path() / self.cfg.DATA.PATH_TO_DATA_DIR
@@ -357,8 +357,8 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             temporal_annotations_list = self._anomaly_temporal_annotations
         elif anomaly is False:
             paths_list = self._path_to_normal_videos
-            labels_list = ["Normal"] * self.len_normal
-            temporal_annotations_list = [(-1, -1, -1, -1)] * self.len_normal
+            labels_list = ["Normal"] * self.len_normal()
+            temporal_annotations_list = [(-1, -1, -1, -1)] * self.len_normal()
 
         skip_reading = False
 

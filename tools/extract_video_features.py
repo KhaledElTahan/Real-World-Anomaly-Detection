@@ -26,7 +26,7 @@ def extract(cfg):
     temp_backbone_trainable = cfg.BACKBONE.TRAINABLE
 
 
-    cfg.EXTRACT.ENABLE = True # Force train dataset to get items without respect to anomalies
+    cfg.EXTRACT.ENABLE = True
     cfg.DATA.READ_FEATURES = False # Force read videos
     cfg.BACKBONE.TRAINABLE = False # Force backbone to detach features
 

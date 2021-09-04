@@ -1,57 +1,101 @@
-"""Data loader."""
+"""Dataset loader."""
 
-import torch
+import random
 
+from torch.utils.data import dataset
 from src.datasets import loader_helper
-from src.datasets import sampler_helper
 from src.datasets.build import build_dataset
+from src.utils import funcutils
 
 
-def construct_loader(cfg, split):
+class DatasetLoader():
+    """"
+    Custom Loader for Datasets
     """
-    Constructs the data loader for the given dataset.
-    Args:
-        cfg (CfgNode): configs. Details can be found in
-            slowfast/config/defaults.py
-        split (str): the split of the data loader. Options include `train`,
-            `val`, and `test`.
-    """
-    assert split in ["train", "val", "test"]
-    if split in ["train"]:
-        dataset_name = cfg.TRAIN.DATASET
-        batch_size = int(cfg.TRAIN.BATCH_SIZE / max(1, cfg.NUM_GPUS))
-        shuffle = True
-        drop_last = False
-    elif split in ["val"]:
-        dataset_name = cfg.VAL.DATASET
-        batch_size = int(cfg.VAL.BATCH_SIZE / max(1, cfg.NUM_GPUS))
-        shuffle = False
-        drop_last = False
-    elif split in ["test"]:
-        dataset_name = cfg.TEST.DATASET
-        batch_size = int(cfg.TEST.BATCH_SIZE / max(1, cfg.NUM_GPUS))
-        shuffle = False
-        drop_last = False
 
-    assert not cfg.EXTRACT.ENABLE
+    def __init__(self, cfg, dataset_split, reading_features, reading_order, batch_size):
+        """
+        Construct the dataset Loader
+        Args:
+            cfg (CfgNode): Video model configurations
+            dataset_split (str): train or test
+            reading_features (bool): True to read features, False for videos
+            reading_order (str): "Sequential", "Shuffle", or "Shuffle with Replacement"
+            batch_size (int): Batch size of anomalies and normal items (videos or features)
+                i.e. will return batch_size x 2 items
+        """
+        assert dataset_split in ["train", "test"]
+        assert reading_order in ["Sequential", "Shuffle", "Shuffle with Replacement"]
+        assert reading_features is True # Currently DatasetLoader supports this only
 
-    # Construct the dataset
-    dataset = build_dataset(dataset_name, cfg, split)
+        self.cfg = cfg
+        self.split = dataset_split
+        self.is_features = reading_features
+        self.reading_order = reading_order
+        self.batch_size = batch_size
 
-    # Create a sampler for multi-process training
-    sampler = sampler_helper.create_sampler(dataset, shuffle, cfg)
+        self._construct_dataset()
+        self._construct_indices()
 
-    # Create a loader
-    loader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=(False if sampler else shuffle),
-        sampler=sampler,
-        num_workers=cfg.DATA_LOADER.NUM_WORKERS,
-        pin_memory=cfg.DATA_LOADER.PIN_MEMORY,
-        drop_last=drop_last,
-        collate_fn=None,
-        worker_init_fn=loader_helper.loader_worker_init_fn(dataset),
-    )
 
-    return loader
+    def _construct_dataset(self):
+        """
+        Construct the dataset.
+        """
+        dataset_name = self.cfg.TRAIN.DATASET if self.split == 'train' else self.cfg.TEST.DATASET
+        self.dataset = build_dataset(dataset_name, self.cfg, self.split, self.is_features)
+
+        assert self.batch_size <= len(self)
+
+
+    def _construct_indices(self):
+        """"
+        Construct the indices used in reading order
+        """
+        self.indices = list(range(len(self) * self.batch_size))
+
+        if self.reading_order == "Shuffle":
+            random.shuffle(self.indices)
+
+
+    @funcutils.debug(apply=True, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+    def __getitem__(self, index):
+        """
+        Gets two batches of dataset with respect to batch_size
+        One normal batch, and one anomaleous batch
+        Args
+            index (int): batch index
+        Returns
+            normal_batch (dict):
+                see loader_helper.features_dataset_results_list_to_batch for more details
+            anomaleous_batch (dict):
+                see loader_helper.features_dataset_results_list_to_batch for more details
+        """
+        if index >= len(self):
+            raise StopIteration
+
+        if self.reading_order in ["Sequential", "Shuffle"]:
+            dataset_index = index * self.batch_size
+            indices = self.indices[dataset_index:dataset_index + self.batch_size]
+        elif self.reading_order == "Shuffle with Replacement":
+            random.shuffle(self.indices)
+            indices = self.indices[0:self.batch_size]
+
+        normal_results = []
+        anomaleous_results = []
+
+        for idx in indices:
+            normal_results.append(self.dataset[idx, False])
+            anomaleous_results.append(self.dataset[idx, True])
+
+        normal_batch = loader_helper.features_dataset_results_list_to_batch(normal_results)
+        anomaleous_batch = loader_helper.features_dataset_results_list_to_batch(anomaleous_results)
+
+        return normal_batch, anomaleous_batch
+
+
+    def __len__(self):
+        """
+        Returns the length of dataset loader with respect to batch size
+        """
+        return min(self.dataset.len_normal(), self.dataset.len_anomalies()) // self.batch_size
