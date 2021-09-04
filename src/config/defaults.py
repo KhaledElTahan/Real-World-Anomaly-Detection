@@ -44,7 +44,7 @@ _C.TRAIN.DATASET = "UCFAnomalyDetection"
 _C.TRAIN.DATASET_SPLITS = ["train", "test"]
 
 # Total mini-batch size.
-_C.TRAIN.BATCH_SIZE = 64
+_C.TRAIN.BATCH_SIZE = 32
 
 # Evaluate model on test data every eval period epochs.
 _C.TRAIN.EVAL_PERIOD = 1
@@ -74,7 +74,7 @@ _C.TRAIN.SHIFT_INDEX = True
 # If "Sequential", then read dataset sequentially until min(normal, anomaly)
 # if "Shuffle", we will shuffle both normal and anomaly each epoch
 # if "Shuffle with Replacement", we will shuffle both normal and anomaly each batch selection
-_C.TRAIN.DATA_READ_ORDER = "Sequential"
+_C.TRAIN.DATA_READ_ORDER = "Shuffle with Replacement"
 
 # ---------------------------------------------------------------------------- #
 # Testing options

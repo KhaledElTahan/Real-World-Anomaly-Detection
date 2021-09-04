@@ -26,11 +26,20 @@ def train(cfg):
     cfg.TRAIN.ENABLE = True 
     cfg.DATA.READ_FEATURES = True # Force read features
 
-    dataset_loaders = []
-    for split in cfg.EXTRACT.DATASET_SPLITS:
-        dataset_loaders.append(loader.DatasetLoader(cfg, split, cfg.DATA.READ_FEATURES, "Shuffle with Replacement", 32))
+    train_dataloader = loader.DatasetLoader(cfg, "train", cfg.DATA.READ_FEATURES, cfg.TRAIN.DATA_READ_ORDER, cfg.TRAIN.BATCH_SIZE, True)
+    train_dataloader_2 = loader.DatasetLoader(cfg, "train", cfg.DATA.READ_FEATURES, cfg.TRAIN.DATA_READ_ORDER, cfg.TRAIN.BATCH_SIZE, False)
+    test_dataloader = loader.DatasetLoader(cfg, "test", cfg.DATA.READ_FEATURES, "Sequential", cfg.TRAIN.BATCH_SIZE * 2, True)
+    test_dataloader_2 = loader.DatasetLoader(cfg, "test", cfg.DATA.READ_FEATURES, "Sequential", cfg.TRAIN.BATCH_SIZE * 2, False)
 
-    for dataset_batch in dataset_loaders[0]:
+    print(len(train_dataloader))
+    print(len(train_dataloader_2))
+    print(len(test_dataloader))
+    print(len(test_dataloader_2))
+
+    train_dataloader_2[24]
+
+    exit()
+    for test_batch in test_dataloader:
         exit()
 
     exit()
