@@ -5,10 +5,13 @@ app_directory = Path(__file__).absolute().parents[1]
 sys.path.insert(0, str(app_directory))
 from src.utils.parser import load_config, parse_args
 from tools.extract_video_features import extract
+from tools.train_net import train
+from tools.test_net import test
+
 
 def main():
     """
-    Main function to spawn the train and test process.
+    Main function runner tool
     """
     args = parse_args()
     cfg = load_config(args)
@@ -17,6 +20,17 @@ def main():
     # Perform feature extraction
     if cfg.EXTRACT.ENABLE:
         extract(cfg)
+
+    # --train
+    # Train the model
+    if cfg.TRAIN.ENABLE:
+        train(cfg)
+
+
+    # --test
+    # Test the model
+    if cfg.TEST.ENABLE:
+        test(cfg)
 
     print()
     print("Execution completed.")

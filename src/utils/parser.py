@@ -33,6 +33,18 @@ def parse_args():
         help="Select this option to extract the features",
         action='store_true',
     )
+    parser.add_argument(
+        "--train",
+        dest="train",
+        help="Select this option to train the model",
+        action='store_true',
+    )
+    parser.add_argument(
+        "--test",
+        dest="test",
+        help="Select this option to test and evaluate the model",
+        action='store_true',
+    )
     parser.set_defaults(extract=False)
     parser.add_argument(
         "--cfg_extract",
@@ -69,6 +81,14 @@ def load_config(args):
     # Check whether we have to extract features
     if hasattr(args, "extract"):
         cfg.EXTRACT.ENABLE = args.extract
+
+    # Check whether we have to train model
+    if hasattr(args, "train"):
+        cfg.TRAIN.ENABLE = args.train
+
+    # Check whether we have to test model
+    if hasattr(args, "test"):
+        cfg.TEST.ENABLE = args.test
 
     # Load extraction config into cfg.
     if cfg.EXTRACT.ENABLE and args.extraction_cfg_file is not None:

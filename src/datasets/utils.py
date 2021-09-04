@@ -386,3 +386,18 @@ def as_binary_vector(labels, num_classes):
     for lbl in set(labels):
         label_arr[lbl] = 1.0
     return label_arr
+
+
+def label_to_one_hot(label, sorted_classes_list):
+    """
+    Construct ont hot vector given a label
+    Args:
+        label (str): The input label.
+        sorted_classes_list (List): Sorted list of all classes in dataset
+    Returns:
+        one_hot (Torch.Tesnor): One hot encoding of the label
+    """
+    one_hot = torch.zeros(len(sorted_classes_list), dtype=torch.int64)
+    one_hot[sorted_classes_list.index(label)] = 1
+
+    return one_hot

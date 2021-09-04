@@ -38,7 +38,7 @@ _C.TRAIN = CfgNode()
 _C.TRAIN.ENABLE = True
 
 # Dataset.
-_C.TRAIN.DATASET = ""
+_C.TRAIN.DATASET = "UCFAnomalyDetection"
 
 # Total mini-batch size.
 _C.TRAIN.BATCH_SIZE = 64
@@ -67,6 +67,12 @@ _C.TRAIN.CURRENT_EPOCH = 0
 # If true, each epoch we shift the mapping between one normal and one anomaly video
 # If false, training for all epochs happens with the same pair of (normal, anomaly)
 _C.TRAIN.SHIFT_INDEX = True
+
+# If "Sequential", then read dataset sequentially until min(normal, anomaly)
+# if "Shift Index", each epoch we shift the mapping between one normal and one anomaly video
+# if "Shuffle with replacement", we will shuffle both normal and anomaly each batch selection
+# if "Shuffle without replacement", we will shuffle both normal and anomaly each epoch
+_C.TRAIN.DATA_READ_ORDER = "Sequential"
 
 # ---------------------------------------------------------------------------- #
 # Testing options
@@ -155,7 +161,7 @@ _C.BACKBONE.FEATURE_EXTRACTION = True
 # Use it in building the classifier
 _C.BACKBONE.FEATURES_LENGTH = 2304
 
-# If true fine tune the mode, else require no gradient.
+# If true fine tune the backbone model, else require no gradient.
 _C.BACKBONE.TRAINABLE = False
 
 # Use those attributes to inject them into the backbone cfg

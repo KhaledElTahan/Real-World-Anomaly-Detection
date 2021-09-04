@@ -48,17 +48,15 @@ def extract(cfg):
 
     progress_bar = tqdm(total=total_len, desc="Feature Extraction Progress")
     for dataset in datasets:
-        for _, (frames, _, annotation, video_index) in enumerate(dataset):
+        for _, (frames, _, _, annotation, video_path) in enumerate(dataset):
 
-            features_path = pathutils.video_path_to_features_path(
-                cfg, dataset.get_file_path(video_index)
-            )
+            features_path = pathutils.video_path_to_features_path(cfg, video_path)
             if not cfg.EXTRACT.FORCE_REWRITE and features_path.exists():
                 progress_bar.update(n=1)
                 time.sleep(0.05)
                 continue
 
-            frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames[0])
+            frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames)
             del frames
 
             features_batches = []
@@ -83,7 +81,7 @@ def extract(cfg):
                 features_batches[i] = features_batches[i].detach()
 
             new_segments, is_anomaly_segment = utils.segmentize_features(
-                cfg, torch.cat(features_batches), annotation[0]
+                cfg, torch.cat(features_batches), annotation
             )
             del features_batches
 

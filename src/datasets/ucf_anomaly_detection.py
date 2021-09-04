@@ -20,7 +20,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
     UCFAnomalyDetection video loader.
     """
 
-    def __init__(self, cfg, mode, num_retries=10):
+    def __init__(self, cfg, mode):
         """
         Construct the UCF Anomaly Detection video loader with a given two txt files.
         The format of the training file is:
@@ -51,7 +51,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Args:
             cfg (CfgNode): configs.
             mode (string): Options includes `train`, or `test` mode.
-            num_retries (int): number of retries.
         """
         # Only support train, and test mode.
         assert mode in [
@@ -60,9 +59,9 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         ], "Split '{}' not supported for UCF Anomaly Detection".format(mode)
         self.mode = mode
         self.cfg = cfg
+        self.is_features = cfg.DATA.READ_FEATURES
 
         self._video_meta = {}
-        self._num_retries = num_retries
 
         print("Constructing UCF Anomaly Detection {}...".format(mode))
 
@@ -96,14 +95,14 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         self._path_to_normal_videos = []
 
-        self._dataset_directory = pathutils.get_specific_dataset_path(self.cfg, self.cfg.DATA.READ_FEATURES)
+        self._dataset_directory = pathutils.get_specific_dataset_path(self.cfg, self.is_features)
 
         labels_set = set()
         with path_to_file.open("r") as file_ptr:
             for index, line in enumerate(file_ptr.read().splitlines()):
                 line = line.strip()
                 
-                if self.cfg.DATA.READ_FEATURES:
+                if self.is_features:
                     line = pathutils.change_extension(line, self.cfg.DATA.EXT, self.cfg.EXTRACT.FEATURES_EXT)
 
                 if self.mode == "train":
@@ -179,8 +178,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         """
         Prints a statistical summary of the dataset
         """
-        dataset_type = "Videos" if not self.cfg.DATA.READ_FEATURES else "Features"
-        dataset_action = "Extract Features" if self.cfg.EXTRACT.ENABLE else "Video Model"
+        dataset_type = "Videos" if not self.is_features else "Features"
         current_files_output_classes = sorted(list(set(self._labels)))
         max_size = "Unlimited"
 
@@ -194,7 +192,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             ["Name", "UFC Anomaly Detection"],
             ["Mode", self.mode],
             ["Type", dataset_type],
-            ["Action", dataset_action],
             ["Directory", self._dataset_directory],
             ["N. Output Classes", len(self.output_classes)],
             ["Output Classes", self.output_classes[:7]],
@@ -288,24 +285,35 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         frames = utils.pack_pathway_output(self.cfg, frames)
         return frames
 
+    
+    @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+    @funcutils.force_garbage_collection(before=True, after=True)
+    def _get_features(self, features_path):
+        """"
+        Loads the features produced by the backbone
+        Args:
+            features_path (Path): The absolute path of the features
+        Returns:
+            features_segments (Torch.Tensor): feature representation of video segments
+            is_anomaly_segment (Torch.Tensor): boolean vector, each cell represents whether
+                the coresponding video segment is anomaly (True) or normal (False)
+        """
+        loaded = torch.load(features_path)
+
+        features_segments = loaded['features_segments']
+        is_anomaly_segment = loaded['is_anomaly_segment']
+
+        return features_segments, is_anomaly_segment
+
 
     def _get_frames_or_features(self, item_path):
         """
-        Gets the frames of the item or the features based on self.cfg.DATA.READ_FEATURES
+        Gets the frames of the item or the features based on self.is_features
         Args:
             item_path (pathlib.Path): path for video or features file
         """
-        if self.cfg.DATA.READ_FEATURES:
-            # tensor_a = torch.rand(2,3)
-            # tensor_b = torch.rand(1,3)
-
-            # db = {'a': tensor_a, 'b': tensor_b}
-
-            # torch.save(db, path/'torch_db')
-            # loaded = torch.load(path/'torch_db')
-            # print( loaded['a'] == tensor_a )
-            # print( loaded['b'] == tensor_b )
-            return random.randint(0, 5)
+        if self.is_features:
+            return self._get_features(item_path)
         else:
             return self._get_video(item_path)
 
@@ -317,113 +325,69 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         index if the video can be fetched and decoded successfully, otherwise
         repeatly find a random video that can be decoded as a replacement.
         Args:
-            index (int): the video index provided by the pytorch sampler.
+            index (int or tupe(int, bool)):
+                index (int): the video index provided by the pytorch sampler.
+                anomaly (bool):
+                    if None: retrieve all dataset
+                    if True: Retrieve only anomalies
+                    if False: Retrieve only notmal videos
         Returns:
-            items (list(list(torch.Tensors))): the frames or features from the video.
-                The dimension of torch.Tensor is `channel` x `num frames` x `height` x `width`.
-                The first list is used for anomaly and normal distinction, i.e.
-                    it will be on form of [normal_items, anomaly_items] or [items]
-                The second list is used only incase if items is frames for pathway distinction
-                    i.e. it will be on form of [slow_frames, slow_frames] or [frames]
-                Thus, all possible formats for one or two videos are:
-                    1) [normal_features, anomaly_features]
-                    2) [features]
-                    3) [normal_frames: [frames], anomaly_frames: [frames]]
-                    4) [frames: [frames]]
-                    5) [normal_frames: [slow_frames, fast_frames], anomaly_frames: [slow_frames, fast_frames]]
-                    6) [frames: : [slow_frames, fast_frames]] -> In case of feature extraction
-            label (list(int)): the label of the current one or two videos,
-                on the form of [label] or ["Normal", label]
-            annotation (list(tuples)): the annotations of current one or two videos,
-                on the form of [tuple] or [normal tuple, anomaly tuple]
+            item (Torch.Tensor): frames or features depending on cfg.DATA.READ_FEATURES at dataset creation
+            label (Str): label of the dataset item
+            one_hot (Torch.Tensor): label encoded as one hot vector
+            annotation (Tuple or Tensor): tuple representing anomaleous frames or tensor of segments
+                depending on cfg.DATA.READ_FEATURES at dataset creation
+            item_path (Path): video or features file path depending on
+                cfg.DATA.READ_FEATURES at dataset creation
         """
-        # 1) Extra work could be done here incase of different reading order.
+        assert isinstance(index, (int, tuple))
 
-        # If the video can not be decoded, 
-        # repeatly find a random video replacement that can be decoded.
+        if isinstance(index, tuple):
+            index, anomaly = index
+        else:
+            anomaly = None
+
+        if anomaly is None:
+            paths_list = self._path_to_videos
+            labels_list = self._labels
+            temporal_annotations_list = self._temporal_annotations
+        elif anomaly is True:
+            paths_list = self._path_to_anomaly_videos
+            labels_list = self._anomaly_videos_labels
+            temporal_annotations_list = self._anomaly_temporal_annotations
+        elif anomaly is False:
+            paths_list = self._path_to_normal_videos
+            labels_list = ["Normal"] * self.len_normal
+            temporal_annotations_list = [(-1, -1, -1, -1)] * self.len_normal
+
         skip_reading = False
-        for _ in range(self._num_retries):
-            if self.mode == "train" and not self.cfg.EXTRACT.ENABLE:
-                min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)
-                max_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
 
-                normal_idx = index % min_len
-                anomaly_idx = index % max_len
+        if not self.is_features:
+            features_path = pathutils.video_path_to_features_path(self.cfg, paths_list[index])
 
-                if self.cfg.TRAIN.SHIFT_INDEX:
-                    anomaly_idx = (index + self.cfg.TRAIN.CURRENT_EPOCH) % max_len
+            skip_reading = self.cfg.EXTRACT.ENABLE and \
+                not self.cfg.EXTRACT.FORCE_REWRITE and \
+                features_path.exists()
 
-                normal_items = self._get_frames_or_features(self._path_to_normal_videos[normal_idx])
-                anomaly_items = self._get_frames_or_features(self._path_to_anomaly_videos[anomaly_idx])
+        if skip_reading:
+            item = None
+            label = None
+            one_hot = None
+            annotation = None
+        else:
+            item = self._get_frames_or_features(paths_list[index])
+            label = labels_list[index]
+            one_hot = utils.label_to_one_hot(label, self.output_classes)
 
-                normal_label = "Normal"
-                anomaly_label = self._anomaly_videos_labels[anomaly_idx]
-
-                normal_annotations = (-1, -1, -1, -1)
-                anomaly_annotations = self._anomaly_temporal_annotations[anomaly_idx]
-
-                items = [normal_items, anomaly_items]
-                labels = [normal_label, anomaly_label]
-                annotations = [normal_annotations, anomaly_annotations]
+            if self.is_features:
+                item, annotation = item
             else:
-                features_path = pathutils.video_path_to_features_path(
-                    self.cfg, self.get_file_path(index)
-                )
+                annotation = temporal_annotations_list[index]
 
-                skip_reading = self.cfg.EXTRACT.ENABLE and \
-                    not self.cfg.DATA.READ_FEATURES and \
-                    not self.cfg.EXTRACT.FORCE_REWRITE and \
-                    features_path.exists()
+        if not skip_reading and item is None:
+            raise RuntimeError("Failed to fetch video.")
 
-                if skip_reading:
-                    items = [None]
-                    labels = [None]
-                    annotations = [None]
-                else:
-                    items = [self._get_frames_or_features(self._path_to_videos[index])]
-                    labels = [self._labels[index]]
-                    annotations = [self._temporal_annotations[index]]
-
-            if not skip_reading and (items is None or items[0] is None):
-                index = random.randint(0, len(self._path_to_videos) - 1)
-            else:
-                break
-
-        if not skip_reading and (items is None or items[0] is None):
-            raise RuntimeError(
-                "Failed to fetch video after {} retries.".format(
-                    self._num_retries
-                )
-            )
-
-        # Do I need to construct label as one hot vector or as an idx here?
-
-        return items, labels, annotations, index
-
-
-    def get_file_path(self, index, all_files=True):
-        """
-        Given the video index, return the video or features path
-        Args:
-            index (int): the video index
-            all_files (Bool): Whether to use the all files list index,
-                or use the normal and anomaly indices
-        Return:
-            file_path (Path): The absolute path of the video or features file
-        """
-        if all_files:
-            return self._path_to_videos[index]
-
-        min_len = min(self._path_to_anomaly_videos, self._path_to_normal_videos)
-        max_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
-
-        normal_idx = index % min_len
-        anomaly_idx = index % max_len
-
-        if self.cfg.TRAIN.SHIFT_INDEX:
-            anomaly_idx = (index + self.cfg.TRAIN.CURRENT_EPOCH) % max_len
-
-        return self._path_to_normal_videos[normal_idx], self._path_to_anomaly_videos[anomaly_idx]
+        return item, label, one_hot, annotation, paths_list[index]
 
 
     def __len__(self):
@@ -431,13 +395,21 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         Returns:
             (int): the number of videos in the dataset.
         """
-        # 1) Extra work could be done here incase of different reading order.
+        return len(self._path_to_videos)
 
-        if self.mode == "train" and not self.cfg.EXTRACT.ENABLE:
-            # Make sure on __getitem__ to index using
-            # idx % min(_path_to_anomaly_videos, _path_to_normal_videos)
-            dataset_len = max(self._path_to_anomaly_videos, self._path_to_normal_videos)
-        else:
-            dataset_len = len(self._path_to_videos)
 
-        return dataset_len
+    def len_anomalies(self):
+        """
+        Returns:
+            (int): the number of anomaly videos in the dataset.
+        """
+        return len(self._path_to_anomaly_videos)
+
+
+    def len_normal(self):
+        """
+        Returns:
+            (int): the number of normal videos in the dataset.
+        """
+        return len(self._path_to_normal_videos)
+
