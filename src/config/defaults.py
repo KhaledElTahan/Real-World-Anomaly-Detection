@@ -182,19 +182,19 @@ _C.BACKBONE.MERGE_CFG_LIST = [
 _C.MODEL = CfgNode()
 
 # Model architecture.
-_C.MODEL.ARCH = ""
+_C.MODEL.ARCH = "FC"
 
 # Model name
-_C.MODEL.MODEL_NAME = ""
+_C.MODEL.MODEL_NAME = "SultaniBaseline"
 
 # The number of classes to predict for the model.
-_C.MODEL.NUM_CLASSES = 0
+_C.MODEL.NUM_CLASSES = 2
 
 # Loss function.
-_C.MODEL.LOSS_FUNC = ""
+_C.MODEL.LOSS_FUNC = "SultaniLoss"
 
 # Dropout rate.
-_C.MODEL.DROPOUT_RATE = 0.5
+_C.MODEL.DROPOUT_RATE = 0.6
 
 # The std to initialize the fc layer(s).
 _C.MODEL.FC_INIT_STD = 0.01

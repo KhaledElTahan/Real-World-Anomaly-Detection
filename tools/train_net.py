@@ -8,11 +8,10 @@ from tqdm import tqdm
 
 from src.models import backbone_helper
 from src.datasets import utils
-from src.datasets import build
 from src.utils import infoutils
 from src.utils import pathutils
 from src.datasets import loader
-
+from src.models.build import build_model
 
 def train(cfg):
     """
@@ -26,21 +25,18 @@ def train(cfg):
     cfg.TRAIN.ENABLE = True 
     cfg.DATA.READ_FEATURES = True # Force read features
 
-    train_dataloader = loader.DatasetLoader(cfg, "train", cfg.DATA.READ_FEATURES, cfg.TRAIN.DATA_READ_ORDER, cfg.TRAIN.BATCH_SIZE, True)
-    train_dataloader_2 = loader.DatasetLoader(cfg, "train", cfg.DATA.READ_FEATURES, cfg.TRAIN.DATA_READ_ORDER, cfg.TRAIN.BATCH_SIZE, False)
-    test_dataloader = loader.DatasetLoader(cfg, "test", cfg.DATA.READ_FEATURES, "Sequential", cfg.TRAIN.BATCH_SIZE * 2, True)
-    test_dataloader_2 = loader.DatasetLoader(cfg, "test", cfg.DATA.READ_FEATURES, "Sequential", cfg.TRAIN.BATCH_SIZE * 2, False)
+    train_dataloader = loader.DatasetLoader(cfg, "train", cfg.DATA.READ_FEATURES, cfg.TRAIN.DATA_READ_ORDER, cfg.TRAIN.BATCH_SIZE, False)
+    test_dataloader = loader.DatasetLoader(cfg, "test", cfg.DATA.READ_FEATURES, "Sequential", cfg.TRAIN.BATCH_SIZE * 2, False)
 
-    print(len(train_dataloader))
-    print(len(train_dataloader_2))
-    print(len(test_dataloader))
-    print(len(test_dataloader_2))
+    test_batch = test_dataloader[0]
 
-    train_dataloader_2[24]
+    model = build_model(cfg)
 
-    exit()
-    for test_batch in test_dataloader:
-        exit()
+    model.eval()
+    output = model(test_batch["features_batched"])
+
+    print(output)
+    print(output.shape)
 
     exit()
 

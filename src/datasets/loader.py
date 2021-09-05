@@ -104,12 +104,17 @@ class DatasetLoader():
         Returns
             if split == "train"
                 normal_batch (dict):
-                    see loader_helper.features_dataset_results_list_to_batch for more details
                 anomaleous_batch (dict):
-                    see loader_helper.features_dataset_results_list_to_batch for more details
             if split == "test"
                 batch (dict):
-                    see loader_helper.features_dataset_results_list_to_batch for more details
+            each batch is of the format (dict):
+            {
+                features_batched: Tensor(Torch) features batched,
+                labels: List(str) labels batched,
+                one_hots: Tensor(Torch) one hot vectors batched,
+                annotations: Tensor(Torch) segments annotations batched,
+                paths: List(Path) features paths batched
+            }
         """
         if index >= len(self):
             raise StopIteration
