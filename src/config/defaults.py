@@ -54,7 +54,7 @@ _C.TRAIN.DATASET = "UCFAnomalyDetection"
 _C.TRAIN.DATASET_SPLITS = "train"
 
 # Total mini-batch size.
-_C.TRAIN.BATCH_SIZE = 32
+_C.TRAIN.BATCH_SIZE = 64
 
 # Evaluate model on test data every eval period epochs.
 _C.TRAIN.EVAL_PERIOD = 1
@@ -95,7 +95,7 @@ _C.TEST.DATASET = "UCFAnomalyDetection"
 _C.TEST.DATASET_SPLITS = "test"
 
 # Total mini-batch size
-_C.TEST.BATCH_SIZE = 64
+_C.TEST.BATCH_SIZE = 128
 
 # Path to the checkpoint to load the initial weight.
 _C.TEST.CHECKPOINT_FILE_PATH = ""
@@ -278,7 +278,7 @@ _C.TRANSFORM = CfgNode()
 _C.TRANSFORM.CODE = "NONE"
 
 # Control whether to subtract backround or not
-_C.TRANSFORM.BG_SUBTRACTION_ENABLED = True
+_C.TRANSFORM.BG_SUBTRACTION_ENABLED = False
 
 # IF Background subtraction is enabled
 # Currently Supported Algorithms are KNN & MOG2

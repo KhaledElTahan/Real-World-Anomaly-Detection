@@ -35,7 +35,7 @@ def test(model, dataloader, print_stats=False):
 
         preds_list.append(preds.detach())
         gt_list.append(ground_truth.detach())
-        
+
         if print_stats:
             progress_bar.update(n=1)
 

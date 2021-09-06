@@ -78,22 +78,28 @@ def load_config(args):
     # Setup cfg.
     cfg = get_cfg()
 
+    # Load extraction config into cfg.
+    if args.extraction_cfg_file is not None:
+        extraction_cfg_file_path = pathutils.get_configs_path() / args.extraction_cfg_file
+        cfg.merge_from_file(str(extraction_cfg_file_path))
+
     # Check whether we have to extract features
     if hasattr(args, "extract"):
         cfg.EXTRACT.ENABLE = args.extract
+    else:
+        cfg.EXTRACT.ENABLE = False
 
     # Check whether we have to train model
     if hasattr(args, "train"):
         cfg.TRAIN.ENABLE = args.train
+    else:
+        cfg.TRAIN.ENABLE = False
 
     # Check whether we have to test model
     if hasattr(args, "test"):
         cfg.TEST.ENABLE = args.test
-
-    # Load extraction config into cfg.
-    if cfg.EXTRACT.ENABLE and args.extraction_cfg_file is not None:
-        extraction_cfg_file_path = pathutils.get_configs_path() / args.extraction_cfg_file
-        cfg.merge_from_file(str(extraction_cfg_file_path))
+    else:
+        cfg.TEST.ENABLE = False
 
     # Set number of GPUs
     if hasattr(args, "gpus") and args.gpus != -1:

@@ -28,5 +28,5 @@ def get_full_model_name(cfg):
         get_full_model_name(cfg) =>
             "Kinetics_c2_I3D_NLN_8x8_R50_BG-KNN_32x32_SultaniBaseline_SultaniLoss_MIL_Baseline"
     """
-    return get_dataset_features_name(cfg) + "_" + cfg.MODEL.NAME + \
-        "_" + cfg.MODEL.LOSS + "_" + cfg.TRAIN.TYPE + "_" + cfg.MODEL.SIGN
+    return get_dataset_features_name(cfg) + "_" + cfg.MODEL.MODEL_NAME + \
+        "_" + cfg.MODEL.LOSS_FUNC + "_" + cfg.TRAIN.TYPE + "_" + cfg.MODEL.SIGN

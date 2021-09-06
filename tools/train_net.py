@@ -13,7 +13,7 @@ from src.utils import pathutils
 from src.datasets import loader
 from src.models.build import build_model
 from src.models import losses
-from src.engine import test_engine
+from src.engine import test_engine, train_engine
 
 def train(cfg):
     """
@@ -39,23 +39,14 @@ def train(cfg):
     _print_train_stats(cfg)
 
     model = build_model(cfg)
+    optimizer = torch.optim.Adagrad(model.parameters(), lr=0.01, eps=1e-8, weight_decay=8e-5)
 
-
-    test_engine.test(model, test_dataloader, True)
-
-    exit()
-
+    best_auc = 0.0
     for epoch in range(100):
-        model.train()
-
-        for normal_batch, anomaly_batch in train_dataloader:
-            normal_output = model(normal_batch["features_batched"])
-            anomaly_output = model(anomaly_batch["features_batched"])
-
-            loss = losses.SultaniLoss(normal_output, anomaly_output)
-            our_loss = loss()
-
-
+        train_engine.train(model, losses.SultaniLoss, optimizer, train_dataloader, epoch + 1, True)
+        auc, _, _, _ = test_engine.test(model, test_dataloader, True)
+        best_auc = max(best_auc, auc)
+        print("Best AUC so far ", best_auc)
         gc.collect()
 
     print()
@@ -71,13 +62,26 @@ def _print_train_stats(cfg):
     Args:
         cfg (cfgNode): Video model configurations
     """
-    backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
 
     print("Training Summary:")
 
     headers = ["Attribute", "Value"]
     table = [
+        ["Model Name", cfg.MODEL.MODEL_NAME],
+        ["Full Model Name", infoutils.get_full_model_name(cfg)],
+        ["Loss Name", cfg.MODEL.LOSS_FUNC],
+        ["Dataset", cfg.TRAIN.DATASET],
+        ["Training Type", cfg.TRAIN.TYPE],
         ["Features Name", infoutils.get_dataset_features_name(cfg)],
+        ["Backbone", cfg.BACKBONE.NAME],
+        ["Backbone Trainable", cfg.BACKBONE.TRAINABLE],
+        ["Machine Type", "CPU" if cfg.NUM_GPUS == 0 else "GPU"],
+        ["No. GPUs", cfg.NUM_GPUS],
+        ["CFG. Features Length", cfg.BACKBONE.FEATURES_LENGTH],
+        ["Background Subtraction", str(cfg.TRANSFORM.BG_SUBTRACTION_ENABLED)],
+        ["BG_Sub Algorithm", cfg.TRANSFORM.BG_SUBTRACTION_ALGORITHM]
+            if cfg.TRANSFORM.BG_SUBTRACTION_ENABLED else None,
+        ["Transformation Code", cfg.TRANSFORM.CODE],
     ]
 
     table = [x for x in table if x is not None]
