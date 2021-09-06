@@ -7,6 +7,7 @@ from src.utils.parser import load_config, parse_args
 from tools.extract_video_features import extract
 from tools.train_net import train
 from tools.test_net import test
+from tools.demo_net import demo
 
 
 def main():
@@ -26,11 +27,15 @@ def main():
     if cfg.TRAIN.ENABLE:
         train(cfg)
 
-
     # --test
     # Test the model
     if cfg.TEST.ENABLE:
         test(cfg)
+
+    # --demo
+    # Make a demo
+    if cfg.DEMO.ENABLE:
+        demo(cfg)
 
     print()
     print("Execution completed.")

@@ -6,28 +6,35 @@ from fvcore.common.config import CfgNode
 # ---------------------------------------------------------------------------- #
 _C = CfgNode()
 
-# ---------------------------------------------------------------------------- #
-# Evaluation options.
-# ---------------------------------------------------------------------------- #
-_C.EVAL = CfgNode()
 
-# If True evaluate the model, else skip evaluation.
-_C.EVAL.ENABLE = True
+# -----------------------------------------------------------------------------
+# Model options
+# -----------------------------------------------------------------------------
+_C.MODEL = CfgNode()
 
-# Dataset.
-_C.EVAL.DATASET = ""
+# Model architecture.
+_C.MODEL.ARCH = "FC"
 
-# Total mini-batch size.
-_C.EVAL.BATCH_SIZE = 64
+# Model name
+_C.MODEL.MODEL_NAME = "SultaniBaseline"
 
-# Path to the checkpoint to load the initial weight.
-_C.EVAL.CHECKPOINT_FILE_PATH = ""
+# The number of classes to predict for the model.
+_C.MODEL.NUM_CLASSES = 2
 
-# Checkpoint types include `caffe2` or `pytorch`.
-_C.EVAL.CHECKPOINT_TYPE = "pytorch"
+# Loss function.
+_C.MODEL.LOSS_FUNC = "SultaniLoss"
 
-# If True, perform inflation when loading checkpoint.
-_C.EVAL.CHECKPOINT_INFLATE = False
+# Dropout rate.
+_C.MODEL.DROPOUT_RATE = 0.6
+
+# The std to initialize the fc layer(s).
+_C.MODEL.FC_INIT_STD = 0.01
+
+# Activation layer for the output head.
+_C.MODEL.HEAD_ACT = "sigmoid"
+
+# Model Signature
+_C.MODEL.SIGN = "Baseline"
 
 # ---------------------------------------------------------------------------- #
 # Training options.
@@ -36,6 +43,9 @@ _C.TRAIN = CfgNode()
 
 # If True Train the model, else skip training.
 _C.TRAIN.ENABLE = True
+
+# The type of the training
+_C.TRAIN.TYPE = "MIL"
 
 # Dataset for training.
 _C.TRAIN.DATASET = "UCFAnomalyDetection"
@@ -56,25 +66,19 @@ _C.TRAIN.CHECKPOINT_PERIOD = 1
 _C.TRAIN.AUTO_RESUME = True
 
 # Path to the checkpoint to load the initial weight.
-_C.TRAIN.CHECKPOINT_FILE_PATH = ""
+_C.TRAIN.CHECKPOINT_PARENT_DIRECTORY_PATH = "model-checkpoints"
 
 # Checkpoint types include `caffe2` or `pytorch`.
 _C.TRAIN.CHECKPOINT_TYPE = "pytorch"
 
-# If True, perform inflation when loading checkpoint.
-_C.TRAIN.CHECKPOINT_INFLATE = False
-
 # Set it during the training, used in index shifting
 _C.TRAIN.CURRENT_EPOCH = 0
-
-# If true, each epoch we shift the mapping between one normal and one anomaly video
-# If false, training for all epochs happens with the same pair of (normal, anomaly)
-_C.TRAIN.SHIFT_INDEX = True
 
 # If "Sequential", then read dataset sequentially until min(normal, anomaly)
 # if "Shuffle", we will shuffle both normal and anomaly each epoch
 # if "Shuffle with Replacement", we will shuffle both normal and anomaly each batch selection
 _C.TRAIN.DATA_READ_ORDER = "Shuffle with Replacement"
+
 
 # ---------------------------------------------------------------------------- #
 # Testing options
@@ -96,19 +100,36 @@ _C.TEST.BATCH_SIZE = 64
 # Path to the checkpoint to load the initial weight.
 _C.TEST.CHECKPOINT_FILE_PATH = ""
 
-# Number of clips to sample from a video uniformly for aggregating the
-# prediction results.
-_C.TEST.NUM_ENSEMBLE_VIEWS = 10
-
-# Number of crops to sample from a frame spatially for aggregating the
-# prediction results.
-_C.TEST.NUM_SPATIAL_CROPS = 3
-
 # Checkpoint types include `caffe2` or `pytorch`.
 _C.TEST.CHECKPOINT_TYPE = "pytorch"
 
 # Path to saving prediction results file.
 _C.TEST.SAVE_RESULTS_PATH = ""
+
+
+# ---------------------------------------------------------------------------- #
+# Inference options.
+# ---------------------------------------------------------------------------- #
+_C.INFER = CfgNode()
+
+# If True evaluate the model, else skip evaluation.
+_C.INFER.ENABLE = True
+
+# Dataset.
+_C.INFER.DATASET = ""
+
+# Total mini-batch size.
+_C.INFER.BATCH_SIZE = 64
+
+# Path to the checkpoint to load the initial weight.
+_C.INFER.CHECKPOINT_FILE_PATH = ""
+
+# Checkpoint types include `caffe2` or `pytorch`.
+_C.INFER.CHECKPOINT_TYPE = "pytorch"
+
+# If True, perform inflation when loading checkpoint.
+_C.INFER.CHECKPOINT_INFLATE = False
+
 
 # ---------------------------------------------------------------------------- #
 # Feature Extraction options
@@ -176,31 +197,6 @@ _C.BACKBONE.MERGE_CFG_LIST = [
     "BACKBONE.TRAINABLE",
 ]
 
-# -----------------------------------------------------------------------------
-# Model options
-# -----------------------------------------------------------------------------
-_C.MODEL = CfgNode()
-
-# Model architecture.
-_C.MODEL.ARCH = "FC"
-
-# Model name
-_C.MODEL.MODEL_NAME = "SultaniBaseline"
-
-# The number of classes to predict for the model.
-_C.MODEL.NUM_CLASSES = 2
-
-# Loss function.
-_C.MODEL.LOSS_FUNC = "SultaniLoss"
-
-# Dropout rate.
-_C.MODEL.DROPOUT_RATE = 0.6
-
-# The std to initialize the fc layer(s).
-_C.MODEL.FC_INIT_STD = 0.01
-
-# Activation layer for the output head.
-_C.MODEL.HEAD_ACT = ""
 
 # -----------------------------------------------------------------------------
 # Data options
@@ -361,39 +357,6 @@ _C.BENCHMARK = CfgNode()
 
 
 # ---------------------------------------------------------------------------- #
-# Common train/test data loader options
-# ---------------------------------------------------------------------------- #
-_C.DATA_LOADER = CfgNode()
-
-# Number of data loader workers per training process.
-_C.DATA_LOADER.NUM_WORKERS = 8
-
-# Load data to pinned host memory.
-_C.DATA_LOADER.PIN_MEMORY = True
-
-# Enable multi thread decoding.
-_C.DATA_LOADER.ENABLE_MULTI_THREAD_DECODE = False
-
-
-# ---------------------------------------------------------------------------- #
-# Detection options.
-# ---------------------------------------------------------------------------- #
-_C.DETECTION = CfgNode()
-
-
-# ---------------------------------------------------------------------------- #
-# Multigrid training options
-# See https://arxiv.org/abs/1912.00998 for details about multigrid training.
-# ---------------------------------------------------------------------------- #
-_C.MULTIGRID = CfgNode()
-
-# ---------------------------------------------------------------------------- #
-# Tensorboard Visualization Options
-# ---------------------------------------------------------------------------- #
-_C.TENSORBOARD = CfgNode()
-
-
-# ---------------------------------------------------------------------------- #
 # Demo options
 # ---------------------------------------------------------------------------- #
 _C.DEMO = CfgNode()
@@ -405,11 +368,6 @@ def _assert_and_infer_cfg(cfg):
 
     if cfg.NUM_GPUS:
         assert cfg.TRAIN.BATCH_SIZE % cfg.NUM_GPUS == 0
-
-    # TEST assertions.
-    assert cfg.TEST.CHECKPOINT_TYPE in ["pytorch", "caffe2"]
-    assert cfg.TEST.BATCH_SIZE % cfg.NUM_GPUS == 0
-    assert cfg.TEST.NUM_SPATIAL_CROPS == 3
 
     return cfg
 

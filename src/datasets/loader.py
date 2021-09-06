@@ -84,14 +84,15 @@ class DatasetLoader():
             elif self.split == "train":
                 length = min(self.dataset.len_normal(), self.dataset.len_anomalies())
 
+            # An example to illustrate the idea:
             # length is 20
             # batch_size is 7
             # We need last 6
-            # 20 % 7 = 20 - x * 7 = 6
+            # 20 % 7 = 20 - 2 * 7 = 6
             return length % self.batch_size
 
 
-    @funcutils.debug(apply=True, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+    @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
     def __getitem__(self, index):
         """
         if split == "train"

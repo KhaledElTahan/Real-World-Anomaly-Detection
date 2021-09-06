@@ -41,7 +41,6 @@ def train(cfg):
     model.eval()
     output = model(test_batch["features_batched"])
 
-    print(output)
     print(output.shape)
 
     exit()
