@@ -41,7 +41,7 @@ _C.TRAIN.ENABLE = True
 _C.TRAIN.DATASET = "UCFAnomalyDetection"
 
 # Available split for the dataset.
-_C.TRAIN.DATASET_SPLITS = ["train", "test"]
+_C.TRAIN.DATASET_SPLITS = "train"
 
 # Total mini-batch size.
 _C.TRAIN.BATCH_SIZE = 32
@@ -88,10 +88,10 @@ _C.TEST.ENABLE = True
 _C.TEST.DATASET = "UCFAnomalyDetection"
 
 # Available split for the dataset.
-_C.TEST.DATASET_SPLITS = ["train", "test"]
+_C.TEST.DATASET_SPLITS = "test"
 
 # Total mini-batch size
-_C.TEST.BATCH_SIZE = 8
+_C.TEST.BATCH_SIZE = 64
 
 # Path to the checkpoint to load the initial weight.
 _C.TEST.CHECKPOINT_FILE_PATH = ""

@@ -25,8 +25,14 @@ def train(cfg):
     cfg.TRAIN.ENABLE = True 
     cfg.DATA.READ_FEATURES = True # Force read features
 
-    train_dataloader = loader.DatasetLoader(cfg, "train", cfg.DATA.READ_FEATURES, cfg.TRAIN.DATA_READ_ORDER, cfg.TRAIN.BATCH_SIZE, False)
-    test_dataloader = loader.DatasetLoader(cfg, "test", cfg.DATA.READ_FEATURES, "Sequential", cfg.TRAIN.BATCH_SIZE * 2, False)
+    train_dataloader = loader.DatasetLoader(
+        cfg, "train", cfg.DATA.READ_FEATURES,
+        cfg.TRAIN.DATA_READ_ORDER, cfg.TRAIN.BATCH_SIZE, False
+    )
+    test_dataloader = loader.DatasetLoader(
+        cfg, "test", cfg.DATA.READ_FEATURES,
+        "Sequential", cfg.TEST.BATCH_SIZE * 2, False
+    )
 
     test_batch = test_dataloader[0]
 

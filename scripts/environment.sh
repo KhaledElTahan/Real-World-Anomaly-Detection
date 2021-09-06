@@ -35,6 +35,9 @@ echo "export PATH=~/anaconda3/bin:$PATH" >> ~/.bashrc
 # Reload environment variables
 source ~/.bashrc
 
+# Install Sckikit-Learn
+conda install -c anaconda scikit-learn 
+
 # Install PyTorch
 conda install -c pytorch pytorch
 

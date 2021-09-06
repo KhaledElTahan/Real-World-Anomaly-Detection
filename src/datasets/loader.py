@@ -121,6 +121,17 @@ class DatasetLoader():
 
         current_batch_size = self._get_batch_size(index)
 
+        def _get_indices(reading_order, batch_size, indices_list):
+            if reading_order in ["Sequential", "Shuffle"]:
+                dataset_index = index * self.batch_size # not current_batch_size
+                indices = indices_list[dataset_index:dataset_index + batch_size]
+            elif self.reading_order == "Shuffle with Replacement":
+                random.shuffle(indices_list)
+                indices = indices_list[0:batch_size]
+
+            return indices
+
+
         def _indices_to_batch(indices, is_anomaly):
             results = []
 
@@ -132,16 +143,6 @@ class DatasetLoader():
 
             return loader_helper.features_dataset_results_list_to_batch(results)
 
-
-        def _get_indices(reading_order, batch_size, indices_list):
-            if reading_order in ["Sequential", "Shuffle"]:
-                dataset_index = index * self.batch_size # not current_batch_size
-                indices = indices_list[dataset_index:dataset_index + batch_size]
-            elif self.reading_order == "Shuffle with Replacement":
-                random.shuffle(indices_list)
-                indices = indices_list[0:batch_size]
-
-            return indices
 
         if self.split == "train":
             indices_normal = _get_indices(self.reading_order, current_batch_size, self.indices_normal)
