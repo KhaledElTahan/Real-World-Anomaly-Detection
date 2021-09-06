@@ -1,9 +1,7 @@
 """Dataset loader."""
 
 import random
-from torch._C import default_generator
 
-from torch.utils.data import dataset
 from src.datasets import loader_helper
 from src.datasets.build import build_dataset
 from src.utils import funcutils
