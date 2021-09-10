@@ -1,6 +1,24 @@
 """Define the model losses"""
 import torch
 
+from src.models.build import MODEL_REGISTRY
+
+
+def get_loss_class(cfg):
+    """
+    Returns the loss class based on cfg.MODEL.LOSS_FUNC
+    Args:
+        cfg (cfgNode): Model Configurations
+    Returns:
+        loss_class (LossClass): The required loss class
+    """
+    loss_class = cfg.MODEL.LOSS_FUNC
+    assert loss_class in MODEL_REGISTRY
+
+    return MODEL_REGISTRY.get(loss_class)
+
+
+@MODEL_REGISTRY.register()
 class SultaniLoss():
     """
     Loss exactly as in sultani paper https://arxiv.org/abs/1801.04264v3

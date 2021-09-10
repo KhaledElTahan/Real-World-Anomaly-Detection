@@ -3,8 +3,6 @@
 import torch
 from tqdm import tqdm
 
-from src.models import metrics
-from src.utils import funcutils
 
 @torch.enable_grad()
 def train(model, loss_class, optimizer, dataloader, current_epoch, print_stats=False):

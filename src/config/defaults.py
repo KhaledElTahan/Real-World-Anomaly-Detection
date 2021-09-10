@@ -361,6 +361,9 @@ _C.BENCHMARK = CfgNode()
 # ---------------------------------------------------------------------------- #
 _C.DEMO = CfgNode()
 
+# If True run the demo, otherwise skip
+_C.DEMO.ENABLE = True
+
 
 def _assert_and_infer_cfg(cfg):
     # TRAIN assertions.

@@ -1,15 +1,10 @@
 """Extract video features from the dataset using the backbone model."""
 
 import gc
-import time
 import torch
 from tabulate import tabulate
-from tqdm import tqdm
 
-from src.models import backbone_helper
-from src.datasets import utils
 from src.utils import infoutils
-from src.utils import pathutils
 from src.datasets import loader
 from src.models.build import build_model
 from src.models import losses
@@ -43,7 +38,7 @@ def train(cfg):
 
     best_auc = 0.0
     for epoch in range(100):
-        train_engine.train(model, losses.SultaniLoss, optimizer, train_dataloader, epoch + 1, True)
+        train_engine.train(model, losses.get_loss_class(cfg), optimizer, train_dataloader, epoch + 1, True)
         auc, _, _, _ = test_engine.test(model, test_dataloader, True)
         best_auc = max(best_auc, auc)
         print("Best AUC so far ", best_auc)
@@ -67,10 +62,14 @@ def _print_train_stats(cfg):
 
     headers = ["Attribute", "Value"]
     table = [
-        ["Model Name", cfg.MODEL.MODEL_NAME],
         ["Full Model Name", infoutils.get_full_model_name(cfg)],
+        ["Classifier Name", cfg.MODEL.MODEL_NAME],
         ["Loss Name", cfg.MODEL.LOSS_FUNC],
         ["Dataset", cfg.TRAIN.DATASET],
+        ["Train Dataset Reading Order", cfg.TRAIN.DATA_READ_ORDER],
+        ["Train Batch Size", cfg.TRAIN.BATCH_SIZE],
+        ["Test Batch Size", cfg.TEST.BATCH_SIZE],
+        ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
         ["Training Type", cfg.TRAIN.TYPE],
         ["Features Name", infoutils.get_dataset_features_name(cfg)],
         ["Backbone", cfg.BACKBONE.NAME],
