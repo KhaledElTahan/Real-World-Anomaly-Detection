@@ -305,52 +305,19 @@ _C.TRANSFORM.BG_SUBTRACTION_ALGORITHM = "MOG2"
 # ---------------------------------------------------------------------------- #
 # Optimizer options
 # ---------------------------------------------------------------------------- #
-_C.SOLVER = CfgNode()
+_C.OPTIMIZER = CfgNode()
+
+# Optimizer Name
+_C.OPTIMIZER.NAME = "Adagrad"
 
 # Base learning rate.
-_C.SOLVER.BASE_LR = 0.1
-
-# Learning rate policy (see utils/lr_policy.py for options and examples).
-_C.SOLVER.LR_POLICY = "cosine"
-
-# Exponential decay factor.
-_C.SOLVER.GAMMA = 0.1
-
-# Step size for 'exp' and 'cos' policies (in epochs).
-_C.SOLVER.STEP_SIZE = 1
-
-# Steps for 'steps_' policies (in epochs).
-_C.SOLVER.STEPS = []
-
-# Learning rates for 'steps_' policies.
-_C.SOLVER.LRS = []
-
-# Maximal number of epochs.
-_C.SOLVER.MAX_EPOCH = 300
-
-# Momentum.
-_C.SOLVER.MOMENTUM = 0.9
-
-# Momentum dampening.
-_C.SOLVER.DAMPENING = 0.0
-
-# Nesterov momentum.
-_C.SOLVER.NESTEROV = True
+_C.OPTIMIZER.BASE_LR = 0.01
 
 # L2 regularization.
-_C.SOLVER.WEIGHT_DECAY = 1e-4
+_C.OPTIMIZER.WEIGHT_DECAY = 8e-5
 
-# Start the warm up from SOLVER.BASE_LR * SOLVER.WARMUP_FACTOR.
-_C.SOLVER.WARMUP_FACTOR = 0.1
-
-# Gradually warm up the SOLVER.BASE_LR over this number of epochs.
-_C.SOLVER.WARMUP_EPOCHS = 0.0
-
-# The start learning rate of the warm up.
-_C.SOLVER.WARMUP_START_LR = 0.01
-
-# Optimization method.
-_C.SOLVER.OPTIMIZING_METHOD = "sgd"
+# Optimizer EPS
+_C.OPTIMIZER.EPS = 1e-8
 
 
 # ---------------------------------------------------------------------------- #
