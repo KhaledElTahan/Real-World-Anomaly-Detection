@@ -40,7 +40,7 @@ def extract(cfg):
     features_length = modelutils.get_features_length(cfg, backbone_model)
 
     if features_length != cfg.BACKBONE.FEATURES_LENGTH:
-        print("Warning: Set cfg.BACKBONE.FEATURES_LENGTH with value {}", features_length)
+        print("Warning: Set cfg.BACKBONE.FEATURES_LENGTH with value ", features_length)
 
     total_len = sum([len(dataset) for dataset in datasets])
 

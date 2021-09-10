@@ -245,10 +245,12 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         """
         video_container = None
         try:
+            assert video_path.exists()
+
             video_container = container.get_video_container(
                 video_path,
-                self.cfg.DATA_LOADER.ENABLE_MULTI_THREAD_DECODE,
-                self.cfg.DATA.DECODING_BACKEND,
+                self.cfg.VIDEO_DECODER.ENABLE_MULTI_THREAD_DECODE,
+                self.cfg.VIDEO_DECODER.DECODING_BACKEND,
             )
         except Exception as e:
             print("Failed to load video from {} with error {}".format(video_path, e))

@@ -60,7 +60,7 @@ conda install -c conda-forge fvcore
 conda install -c iopath iopath
 
 # Install pytorch video
-pip install pytorchvideo
+pip install "git+https://github.com/facebookresearch/pytorchvideo.git"
 
 # Install Open-CV
 pip install opencv-python
@@ -76,6 +76,9 @@ conda install -c conda-forge simplejson
 
 # Install AV
 conda install -c conda-forge av
+
+# Install Update YACS, since the conda version is outdated
+pip install yacs -U
 
 # If run_net.py prints error "ImportError: libopenh264.so.5: cannot open shared object file: No such file or directory"
 # based on this https://stackoverflow.com/questions/62213783/ffmpeg-error-while-loading-shared-libraries-libopenh264-so-5

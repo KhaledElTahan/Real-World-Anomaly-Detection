@@ -778,6 +778,7 @@ class MViT(nn.Module):
         # Get parameters.
         assert cfg.DATA.TRAIN_CROP_SIZE == cfg.DATA.TEST_CROP_SIZE
         self.cfg = cfg
+        pool_first = cfg.MVIT.POOL_FIRST
         # Prepare input.
         spatial_size = cfg.DATA.TRAIN_CROP_SIZE
         temporal_size = cfg.DATA.NUM_FRAMES
@@ -839,7 +840,10 @@ class MViT(nn.Module):
             self.pos_embed_temporal = nn.Parameter(
                 torch.zeros(1, self.patch_dims[0], embed_dim)
             )
-            self.pos_embed_class = nn.Parameter(torch.zeros(1, 1, embed_dim))
+            if self.cls_embed_on:
+                self.pos_embed_class = nn.Parameter(
+                    torch.zeros(1, 1, embed_dim)
+                )
         else:
             self.pos_embed = nn.Parameter(
                 torch.zeros(1, pos_embed_dim, embed_dim)
@@ -847,6 +851,12 @@ class MViT(nn.Module):
 
         if self.drop_rate > 0.0:
             self.pos_drop = nn.Dropout(p=self.drop_rate)
+
+        dim_mul, head_mul = torch.ones(depth + 1), torch.ones(depth + 1)
+        for i in range(len(cfg.MVIT.DIM_MUL)):
+            dim_mul[cfg.MVIT.DIM_MUL[i][0]] = cfg.MVIT.DIM_MUL[i][1]
+        for i in range(len(cfg.MVIT.HEAD_MUL)):
+            head_mul[cfg.MVIT.HEAD_MUL[i][0]] = cfg.MVIT.HEAD_MUL[i][1]
 
         pool_q = [[] for i in range(cfg.MVIT.DEPTH)]
         pool_kv = [[] for i in range(cfg.MVIT.DEPTH)]
@@ -858,13 +868,24 @@ class MViT(nn.Module):
                 1:
             ]
             if cfg.MVIT.POOL_KVQ_KERNEL is not None:
-                pool_q[
-                    cfg.MVIT.POOL_Q_STRIDE[i][0]
-                ] = cfg.MVIT.POOL_KVQ_KERNEL
+                pool_q[cfg.MVIT.POOL_Q_STRIDE[i][0]] = cfg.MVIT.POOL_KVQ_KERNEL
             else:
                 pool_q[cfg.MVIT.POOL_Q_STRIDE[i][0]] = [
                     s + 1 if s > 1 else s for s in cfg.MVIT.POOL_Q_STRIDE[i][1:]
                 ]
+
+        # If POOL_KV_STRIDE_ADAPTIVE is not None, initialize POOL_KV_STRIDE.
+        if cfg.MVIT.POOL_KV_STRIDE_ADAPTIVE is not None:
+            _stride_kv = cfg.MVIT.POOL_KV_STRIDE_ADAPTIVE
+            cfg.MVIT.POOL_KV_STRIDE = []
+            for i in range(cfg.MVIT.DEPTH):
+                if len(stride_q[i]) > 0:
+                    _stride_kv = [
+                        max(_stride_kv[d] // stride_q[i][d], 1)
+                        for d in range(len(_stride_kv))
+                    ]
+                cfg.MVIT.POOL_KV_STRIDE.append([i] + _stride_kv)
+
         for i in range(len(cfg.MVIT.POOL_KV_STRIDE)):
             stride_kv[cfg.MVIT.POOL_KV_STRIDE[i][0]] = cfg.MVIT.POOL_KV_STRIDE[
                 i
@@ -878,12 +899,6 @@ class MViT(nn.Module):
                     s + 1 if s > 1 else s
                     for s in cfg.MVIT.POOL_KV_STRIDE[i][1:]
                 ]
-
-        dim_mul, head_mul = torch.ones(depth + 1), torch.ones(depth + 1)
-        for i in range(len(cfg.MVIT.DIM_MUL)):
-            dim_mul[cfg.MVIT.DIM_MUL[i][0]] = cfg.MVIT.DIM_MUL[i][1]
-        for i in range(len(cfg.MVIT.HEAD_MUL)):
-            head_mul[cfg.MVIT.HEAD_MUL[i][0]] = cfg.MVIT.HEAD_MUL[i][1]
 
         self.norm_stem = norm_layer(embed_dim) if cfg.MVIT.NORM_STEM else None
 
@@ -913,6 +928,7 @@ class MViT(nn.Module):
                     stride_kv=stride_kv[i] if len(stride_kv) > i else [],
                     mode=mode,
                     has_cls_embed=self.cls_embed_on,
+                    pool_first=pool_first,
                 )
             )
 
@@ -929,7 +945,8 @@ class MViT(nn.Module):
         if self.sep_pos_embed:
             trunc_normal_(self.pos_embed_spatial, std=0.02)
             trunc_normal_(self.pos_embed_temporal, std=0.02)
-            trunc_normal_(self.pos_embed_class, std=0.02)
+            if self.cls_embed_on:
+                trunc_normal_(self.pos_embed_class, std=0.02)
         else:
             trunc_normal_(self.pos_embed, std=0.02)
         if self.cls_embed_on:
@@ -993,8 +1010,9 @@ class MViT(nn.Module):
                 self.patch_dims[1] * self.patch_dims[2],
                 dim=1,
             )
-            pos_embed_cls = torch.cat([self.pos_embed_class, pos_embed], 1)
-            x = x + pos_embed_cls
+            if self.cls_embed_on:
+                pos_embed = torch.cat([self.pos_embed_class, pos_embed], 1)
+            x = x + pos_embed
         else:
             x = x + self.pos_embed
 

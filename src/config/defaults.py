@@ -269,6 +269,24 @@ _C.DATA.REVERSE_INPUT_CHANNEL = False
 _C.DATA.EXT = "mp4"
 
 
+# ---------------------------------------------------------------------------- #
+# Video decoding options
+# ---------------------------------------------------------------------------- #
+_C.VIDEO_DECODER = CfgNode()
+
+# Decoding backend, options include `pyav` or `torchvision`
+_C.VIDEO_DECODER.DECODING_BACKEND = "pyav"
+
+# Enable multi thread decoding.
+_C.VIDEO_DECODER.ENABLE_MULTI_THREAD_DECODE = False
+
+
+# ---------------------------------------------------------------------------- #
+# Common train/test data loader options
+# ---------------------------------------------------------------------------- #
+_C.DATA_LOADER = CfgNode()
+
+
 # -----------------------------------------------------------------------------
 # Data Transformations options
 # -----------------------------------------------------------------------------
