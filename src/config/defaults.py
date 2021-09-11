@@ -36,6 +36,9 @@ _C.MODEL.HEAD_ACT = "sigmoid"
 # Model Signature
 _C.MODEL.SIGN = "Baseline"
 
+# Path to the checkpoint directory to load weights.
+_C.MODEL.CHECKPOINTS_DIRECTORY = "model-checkpoints"
+
 # ---------------------------------------------------------------------------- #
 # Training options.
 # ---------------------------------------------------------------------------- #
@@ -64,9 +67,6 @@ _C.TRAIN.CHECKPOINT_PERIOD = 1
 
 # Resume training from the latest checkpoint in the output directory.
 _C.TRAIN.AUTO_RESUME = True
-
-# Path to the checkpoint to load the initial weight.
-_C.TRAIN.CHECKPOINT_PARENT_DIRECTORY_PATH = "model-checkpoints"
 
 # Checkpoint types include `caffe2` or `pytorch`.
 _C.TRAIN.CHECKPOINT_TYPE = "pytorch"

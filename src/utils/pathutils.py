@@ -22,24 +22,16 @@ def get_checkpoints_path():
     return get_app_path() / "checkpoints"
 
 
-def get_model_checkpoint_path(cfg, best_cp=True, epoch=None):
+def get_model_checkpoint_path(cfg):
     """
     Retrieve the absolute Path object of the checkpoint of the whole model
     Args
         cfg (CfgNode): Model Configurations
-        best_cp (Bool): Retrieve checkpoint path with best results
-        epoch (int): if best_cp is False, then retrieve checkpoint path of epoch
     Returns
         cp_path (Path): Path of the checkpoint
     """
-    cp_path = get_checkpoints_path() / cfg.TRAIN.CHECKPOINT_PARENT_DIRECTORY_PATH
-    cp_path = cp_path / infoutils.get_full_model_name(cfg)
-
-    if best_cp:
-        cp_path = cp_path / 'best.pt'
-    else:
-        assert isinstance(epoch, int)
-        cp_path = cp_path / str(epoch) + '.pt'
+    cp_path = get_checkpoints_path() / cfg.MODEL.CHECKPOINTS_DIRECTORY
+    cp_path = cp_path / (infoutils.get_full_model_name(cfg) + '.pt')
 
     return cp_path
 

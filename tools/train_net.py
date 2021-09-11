@@ -1,7 +1,6 @@
 """Extract video features from the dataset using the backbone model."""
 
 import gc
-import torch
 from tabulate import tabulate
 
 from src.utils import infoutils

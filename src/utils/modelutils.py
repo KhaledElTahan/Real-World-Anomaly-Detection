@@ -6,6 +6,25 @@ from src.utils import funcutils
 from src.models import backbone_helper
 
 
+def create_state_dictionary(cfg, model):
+    """
+    Creates a cpu located model state dictionary without affecting the model
+    Args:
+        cfg (cfgNode): The video model configurations
+        model (torch.nn.Module): the model
+    Returns:
+        model_state_dictionary (dict): The model state dictionary of model
+    """
+    model = model.clone().detach()
+
+    if cfg.NUM_GPUS > 1:
+        model = model.module
+
+    model = model.cpu()
+
+    return model.state_dict()
+
+
 @funcutils.force_garbage_collection(before=True, after=True)
 @torch.no_grad()
 def get_features_length(cfg, backbone_model):

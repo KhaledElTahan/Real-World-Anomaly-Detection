@@ -12,13 +12,15 @@ The call should return a `torch.nn.Module` object.
 """
 
 
-def build_model(cfg, gpu_id=None):
+def build_model(cfg, model_state_dict=None):
     """
     Builds the video model.
     Args:
         cfg (configs): configs that contains the hyper-parameters to build the
         backbone. Details can be seen in slowfast/config/defaults.py.
-        gpu_id (Optional[int]): specify the gpu index to build model.
+        model_state_dict (Optional[dict]): to load model weights
+    Returns:
+        model: The required torch model
     """
     if torch.cuda.is_available():
         assert (
@@ -33,12 +35,12 @@ def build_model(cfg, gpu_id=None):
     name = cfg.MODEL.MODEL_NAME
     model = MODEL_REGISTRY.get(name)(cfg)
 
+    if model_state_dict is not None:
+        model.load_state_dict(model_state_dict)
+
     if cfg.NUM_GPUS:
-        if gpu_id is None:
-            # Determine the GPU used by the current process
-            cur_device = torch.cuda.current_device()
-        else:
-            cur_device = gpu_id
+        # Determine the GPU used by the current process
+        cur_device = torch.cuda.current_device()
         # Transfer the model to the current GPU device
         model = model.cuda(device=cur_device)
     # Use multi-process data parallel model in the multi-gpu setting
