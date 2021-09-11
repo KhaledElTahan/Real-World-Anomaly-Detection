@@ -1,4 +1,4 @@
-"""Extract video features from the dataset using the backbone model."""
+"""Train the whole model."""
 
 import gc
 from tabulate import tabulate

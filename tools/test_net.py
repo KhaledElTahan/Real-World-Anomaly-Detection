@@ -1,121 +1,84 @@
-"""Extract video features from the dataset using the backbone model."""
+"""Test the whole model."""
 
-import gc
-import time
-import torch
 from tabulate import tabulate
-from tqdm import tqdm
 
-from src.models import backbone_helper
-from src.datasets import utils
-from src.datasets import build
-from src.utils import modelutils
-from src.utils import infoutils
-from src.utils import pathutils
+from src.utils import infoutils, checkpoint
+from src.datasets import loader
+from src.models.build import build_model
+from src.engine import test_engine
+from src.visualization import roc_auc
 
 
 def test(cfg):
     """
-    Main tool for overall model teating
+    Main tool for model testing
     Args:
         cfg (cfgNode): Video Model Configurations
     """
     temp_read_features = cfg.DATA.READ_FEATURES
-    temp_extract_enabled = cfg.EXTRACT.ENABLE
-    temp_backbone_trainable = cfg.BACKBONE.TRAINABLE
+    temp_testing_enabled = cfg.TEST.ENABLE
 
+    cfg.TEST.ENABLE = True
+    cfg.DATA.READ_FEATURES = True # Force read features
 
-    cfg.EXTRACT.ENABLE = True # Force train dataset to get items without respect to anomalies
-    cfg.DATA.READ_FEATURES = True # Force read videos
-    cfg.BACKBONE.TRAINABLE = False # Force backbone to detach features
+    test_dataloader = loader.DatasetLoader(
+        cfg, "test", cfg.DATA.READ_FEATURES,
+        "Sequential", cfg.TEST.BATCH_SIZE, False
+    )
 
-    datasets = []
-    for split in cfg.EXTRACT.DATASET_SPLITS:
-        datasets.append(build.build_dataset(cfg.EXTRACT.DATASET, cfg, split))
+    assert checkpoint.checkpoint_exists(cfg), "Checkpoint is needed for Testing!"
 
-    full_model = None ## Load Model
-    full_model.train() ## Model.train
+    _, _, _, completed_epochs, best_model_state_dict, best_auc, _ = checkpoint.load_checkpoint(cfg)
+    model = build_model(cfg, best_model_state_dict)
 
+    _print_test_stats(cfg, completed_epochs, best_auc)
 
-    total_len = sum([len(dataset) for dataset in datasets])
-
-    _print_test_stats(cfg)
-
-    progress_bar = tqdm(total=total_len, desc="Feature Extraction Progress")
-    for dataset in datasets:
-        for _, (frames, _, annotation, video_index) in enumerate(dataset):
-
-            features_path = pathutils.video_path_to_features_path(
-                cfg, dataset.get_file_path(video_index)
-            )
-            if not cfg.EXTRACT.FORCE_REWRITE and features_path.exists():
-                progress_bar.update(n=1)
-                time.sleep(0.05)
-                continue
-
-            frames_batches = utils.frames_to_batches_of_frames_batches(cfg, frames[0])
-            del frames
-
-            features_batches = []
-            for frames_batch in frames_batches:
-
-                if cfg.NUM_GPUS > 0:
-                    for i, _ in enumerate(frames_batch):
-                        frames_batch[i] = frames_batch[i].cuda()
-
-                _, features = backbone_model(frames_batch)
-
-                if cfg.NUM_GPUS > 0:
-                    for i, _ in enumerate(frames_batch):
-                        frames_batch[i] = frames_batch[i].cpu()
-
-                features_batches.append(
-                    features.cpu() if cfg.NUM_GPUS > 0 else features
-                )
-            del frames_batches
-
-            for i, _ in enumerate(features_batches):
-                features_batches[i] = features_batches[i].detach()
-
-            new_segments, is_anomaly_segment = utils.segmentize_features(
-                cfg, torch.cat(features_batches), annotation[0]
-            )
-            del features_batches
-
-            features_path.parent.mkdir(parents=True, exist_ok=True)
-
-            torch.save(
-                {"features_segments": new_segments, "is_anomaly_segment":is_anomaly_segment},
-                features_path
-            )
-            del new_segments, is_anomaly_segment
-
-            gc.collect() # Force Garbage Collection
-
-            progress_bar.update(n=1)
-    progress_bar.close()
+    auc, fpr, tpr, _ = test_engine.test(model, test_dataloader, True)
+    roc_auc.plot_signle_roc_auc(cfg, auc, fpr, tpr)
 
     print()
-    print("SUCCESS: Feature Extraction Completed.")
+    print("SUCCESS: Testing Completed.")
 
     cfg.DATA.READ_FEATURES = temp_read_features
-    cfg.EXTRACT.ENABLE = temp_extract_enabled
-    cfg.BACKBONE.TRAINABLE = temp_backbone_trainable
+    cfg.TRAIN.ENABLE = temp_testing_enabled
 
 
-def _print_test_stats(cfg):
+def _print_test_stats(cfg, completed_epochs, best_auc):
     """
-    Prints a summary of the training process
+    Prints a summary of the testing process
     Args:
         cfg (cfgNode): Video model configurations
+        training_from_checkpoint (Bool): Whether the training is to continue
+            from a checkpoint or not
+        completed_epochs (int): Number of completed epochs if training_from_checkpoint
+        best_auc (float): Best achieved AUC if training_from_checkpoint
     """
-    backbone_cfg = backbone_helper.get_backbone_merged_cfg(cfg)
 
-    print("Training Summary:")
+    print("Testing Summary:")
 
     headers = ["Attribute", "Value"]
     table = [
+        ["Full Model Name", infoutils.get_full_model_name(cfg)],
+        ["Classifier Name", cfg.MODEL.MODEL_NAME],
+        ["Loss Name", cfg.MODEL.LOSS_FUNC],
+        ["Dataset", cfg.TRAIN.DATASET],
+        ["Test Batch Size", cfg.TEST.BATCH_SIZE],
+        ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
+        ["Training Type", cfg.TRAIN.TYPE],
+        ["Completed Epochs", completed_epochs],
+        ["Best AUC", best_auc],
         ["Features Name", infoutils.get_dataset_features_name(cfg)],
+        ["Backbone", cfg.BACKBONE.NAME],
+        ["Backbone Trainable", cfg.BACKBONE.TRAINABLE],
+        ["Optimizer", cfg.OPTIMIZER.NAME],
+        ["Base Learning Rate", cfg.OPTIMIZER.BASE_LR],
+        ["Machine Type", "CPU" if cfg.NUM_GPUS == 0 else "GPU"],
+        ["No. GPUs", cfg.NUM_GPUS],
+        ["CFG. Features Length", cfg.BACKBONE.FEATURES_LENGTH],
+        ["Background Subtraction", str(cfg.TRANSFORM.BG_SUBTRACTION_ENABLED)],
+        ["BG_Sub Algorithm", cfg.TRANSFORM.BG_SUBTRACTION_ALGORITHM]
+            if cfg.TRANSFORM.BG_SUBTRACTION_ENABLED else None,
+        ["Transformation Code", cfg.TRANSFORM.CODE],
     ]
 
     table = [x for x in table if x is not None]
