@@ -50,6 +50,7 @@ def train(cfg):
     for epoch in range(completed_epochs + 1, cfg.TRAIN.MAX_EPOCH + 1):
         cfg.TRAIN.CURRENT_EPOCH = epoch
         train_engine.train(
+            cfg,
             model,
             losses.get_loss_class(cfg),
             optimizer,

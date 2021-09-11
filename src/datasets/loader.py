@@ -2,6 +2,8 @@
 
 import random
 
+from scipy.sparse import data
+
 from src.datasets import loader_helper
 from src.datasets.build import build_dataset
 from src.utils import funcutils
@@ -45,7 +47,8 @@ class DatasetLoader():
         dataset_name = self.cfg.TRAIN.DATASET if self.split == 'train' else self.cfg.TEST.DATASET
         self.dataset = build_dataset(dataset_name, self.cfg, self.split, self.is_features)
 
-        assert self.batch_size <= len(self.dataset)
+        if self.batch_size > len(self.dataset):
+            self.batch_size = len(self.dataset)
 
 
     def _construct_indices(self):
