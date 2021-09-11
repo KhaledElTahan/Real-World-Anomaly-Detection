@@ -1,5 +1,6 @@
 """Utils for PyTorch Models"""
 
+import copy
 import torch
 
 from src.utils import funcutils
@@ -15,7 +16,7 @@ def create_state_dictionary(cfg, model):
     Returns:
         model_state_dictionary (dict): The model state dictionary of model
     """
-    model = model.clone().detach()
+    model = copy.deepcopy(model)
 
     if cfg.NUM_GPUS > 1:
         model = model.module

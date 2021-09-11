@@ -60,6 +60,7 @@ _C.TRAIN.DATASET_SPLITS = "train"
 _C.TRAIN.BATCH_SIZE = 64
 
 # Evaluate model on test data every eval period epochs.
+# Better leave it at 1 to avoid missing any rare good local minima
 _C.TRAIN.EVAL_PERIOD = 1
 
 # Save model checkpoint every checkpoint period epochs.
@@ -71,8 +72,11 @@ _C.TRAIN.AUTO_RESUME = True
 # Checkpoint types include `caffe2` or `pytorch`.
 _C.TRAIN.CHECKPOINT_TYPE = "pytorch"
 
-# Set it during the training, used in index shifting
-_C.TRAIN.CURRENT_EPOCH = 0
+# Set it during the training
+_C.TRAIN.CURRENT_EPOCH = 1
+
+# Maximum number of training epochs
+_C.TRAIN.MAX_EPOCH = 8000
 
 # If "Sequential", then read dataset sequentially until min(normal, anomaly)
 # if "Shuffle", we will shuffle both normal and anomaly each epoch

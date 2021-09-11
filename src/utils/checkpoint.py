@@ -1,6 +1,8 @@
 """Checkpoint utilities"""
 
 import torch
+
+from fvcore.common.config import CfgNode
 from src.utils import pathutils, modelutils
 
 
@@ -52,7 +54,7 @@ def _assert_checkpoint(cfg, checkpoint_cfg):
     assert cfg.MODEL.SIGN == checkpoint_cfg.MODEL.SIGN
     assert cfg.TRAIN.TYPE == checkpoint_cfg.TRAIN.TYPE
     assert cfg.EXTRACT.FRAMES_BATCH_SIZE == checkpoint_cfg.EXTRACT.FRAMES_BATCH_SIZE
-    assert cfg.NUMBER_OUTPUT_SEGMENTS == checkpoint_cfg.NUMBER_OUTPUT_SEGMENTS
+    assert cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS == checkpoint_cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS
     assert cfg.BACKBONE.NAME == checkpoint_cfg.BACKBONE.NAME
     assert cfg.TRANSFORM.CODE == checkpoint_cfg.TRANSFORM.CODE
     assert cfg.OPTIMIZER.NAME == checkpoint_cfg.OPTIMIZER.NAME
@@ -80,7 +82,7 @@ def load_checkpoint(cfg):
 
     # Load the checkpoint on CPU to avoid GPU mem spike.
     loaded = torch.load(cp_path, map_location='cpu')
-    _assert_checkpoint(cfg, loaded['cfg'])
+    _assert_checkpoint(cfg, CfgNode.load_cfg(loaded['cfg']))
 
     optimizer_state_dict = loaded['optimizer_state_dict']
     model_state_dict = loaded['model_state_dict']
@@ -92,3 +94,14 @@ def load_checkpoint(cfg):
 
     return optimizer_state_dict, model_state_dict, auc, epoch, \
         best_model_state_dict, best_auc, best_epoch
+
+
+def checkpoint_exists(cfg):
+    """
+    Check whether there's a saved checkpoint
+    Args:
+        cfg (cfgNode): Model configurations
+    Returns:
+        exits (Bool): Whether a checkpoint exists or not
+    """
+    return pathutils.get_model_checkpoint_path(cfg).exists()
