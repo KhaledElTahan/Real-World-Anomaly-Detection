@@ -107,6 +107,7 @@ def _print_train_stats(cfg, training_from_checkpoint, completed_epochs, best_auc
         ["Train Batch Size", cfg.TRAIN.BATCH_SIZE],
         ["Test Batch Size", cfg.TEST.BATCH_SIZE],
         ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
+        ["Extraction Frames Inner Batch Size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
         ["Training Type", cfg.TRAIN.TYPE],
         ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],
         ["Training from Checkpoint", training_from_checkpoint],

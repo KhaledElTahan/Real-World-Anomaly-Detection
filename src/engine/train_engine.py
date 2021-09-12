@@ -64,7 +64,8 @@ def multiple_instance_learning_train(cfg, model, loss_class, optimizer, train_da
         loss_value (float): mean loss per example in this training epoch
     """
     total_loss = 0.0
-
+    auc = None
+    
     for idx, (normal_batch, anomaly_batch) in enumerate(train_dataloader):
         normal_preds = model(normal_batch["features_batched"])
         anomaly_preds = model(anomaly_batch["features_batched"])
@@ -80,12 +81,12 @@ def multiple_instance_learning_train(cfg, model, loss_class, optimizer, train_da
         our_loss.backward()
         optimizer.step()
 
-        _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats)
+        auc = _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, auc, print_stats)
 
     return total_loss / len(train_dataloader)
 
 
-def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats=False):
+def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, auc=None, print_stats=False):
     """
     Utility to update the progress bar inside the training function
     Args:
@@ -95,11 +96,12 @@ def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, 
         total_loss (float): Total loss so far in this training epoch
         idx (int): Index of batch inside the training epoch
         progress_bar (tqdm): if print_status, will be used to print a training progress bar
+        auc (float | None): Value of previous AUC
         print_stats (Bool): Whether to print stats or not
+    Returns:
+        auc (float | None): Area under the ROC Curve
     """
     if print_stats:
-        auc = None
-        
         if cfg.TRAIN.ENABLE_EVAL_BATCH and idx % cfg.TRAIN.EVAL_BATCH_PERIOD == 0:
             auc, _, _, _ = test_engine.test(model, test_dataloader, False)
             model.train()
@@ -109,3 +111,5 @@ def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, 
             progress_bar.set_postfix(loss=total_loss / (idx + 1), AUC=auc)
         else:
             progress_bar.set_postfix(loss=total_loss / (idx + 1))
+
+    return auc
