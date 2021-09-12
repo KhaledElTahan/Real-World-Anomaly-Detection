@@ -61,13 +61,13 @@ _C.TRAIN.BATCH_SIZE = 64
 
 # Evaluate model on test data every eval period epochs.
 # Better leave it at 1 to avoid missing any rare good local minima
-_C.TRAIN.EVAL_PERIOD = 100
+_C.TRAIN.EVAL_PERIOD = 1
 
 # Enable evaluate model inside one training epoch
 _C.TRAIN.ENABLE_EVAL_BATCH = False
 
 # Evaluate model inside one training epoch, every set of batches
-_C.TRAIN.EVAL_BATCH_PERIOD = 5
+_C.TRAIN.EVAL_BATCH_PERIOD = 100
 
 # Save model checkpoint every checkpoint period epochs.
 _C.TRAIN.CHECKPOINT_PERIOD = 1

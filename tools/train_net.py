@@ -112,6 +112,11 @@ def _print_train_stats(cfg, training_from_checkpoint, completed_epochs, best_auc
         ["Training from Checkpoint", training_from_checkpoint],
         ["Completed Epochs", completed_epochs] if training_from_checkpoint else None,
         ["Best AUC", best_auc] if training_from_checkpoint else None,
+        ["Evaluate per epoch period", cfg.TRAIN.EVAL_PERIOD],
+        ["Checkpoint per epoch period", cfg.TRAIN.CHECKPOINT_PERIOD],
+        ["Evaluate inside training epoch", cfg.TRAIN.ENABLE_EVAL_BATCH],
+        ["Evaluate per batch in epoch period", cfg.TRAIN.EVAL_BATCH_PERIOD]
+            if cfg.TRAIN.ENABLE_EVAL_BATCH else None,
         ["Features Name", infoutils.get_dataset_features_name(cfg)],
         ["Backbone", cfg.BACKBONE.NAME],
         ["Backbone Trainable", cfg.BACKBONE.TRAINABLE],
