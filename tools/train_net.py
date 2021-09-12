@@ -49,7 +49,7 @@ def train(cfg):
 
     for epoch in range(completed_epochs + 1, cfg.TRAIN.MAX_EPOCH + 1):
         cfg.TRAIN.CURRENT_EPOCH = epoch
-        train_engine.train(
+        loss_value = train_engine.train(
             cfg,
             model,
             losses.get_loss_class(cfg),
@@ -67,7 +67,8 @@ def train(cfg):
                 best_epoch = epoch
                 best_model_state_dict = modelutils.create_state_dictionary(cfg, model)
 
-            print("Best AUC so far ", best_auc)
+            print("Loss = {0:.6f} --- AUC = {1:.6f} --- Best AUC = {2:.6f} -- Best Epoch = {3}".
+                format(loss_value, auc, best_auc, best_epoch))
 
         if epoch % cfg.TRAIN.CHECKPOINT_PERIOD == 0 and best_auc != 0.0:
             checkpoint.save_checkpoint(
@@ -102,11 +103,11 @@ def _print_train_stats(cfg, training_from_checkpoint, completed_epochs, best_auc
         ["Classifier Name", cfg.MODEL.MODEL_NAME],
         ["Loss Name", cfg.MODEL.LOSS_FUNC],
         ["Dataset", cfg.TRAIN.DATASET],
-        ["Train Dataset Reading Order", cfg.TRAIN.DATA_READ_ORDER],
         ["Train Batch Size", cfg.TRAIN.BATCH_SIZE],
         ["Test Batch Size", cfg.TEST.BATCH_SIZE],
         ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
         ["Training Type", cfg.TRAIN.TYPE],
+        ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],
         ["Training from Checkpoint", training_from_checkpoint],
         ["Completed Epochs", completed_epochs] if training_from_checkpoint else None,
         ["Best AUC", best_auc] if training_from_checkpoint else None,

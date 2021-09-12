@@ -27,7 +27,12 @@ def test(model, dataloader, print_stats=False):
     gt_list = []
 
     if print_stats:
-        progress_bar = tqdm(total=len(dataloader), desc="Model Testing Progress")
+        progress_bar = tqdm(
+            total=len(dataloader),
+            desc="Testing Progress",
+            unit="batch",
+            colour="red"
+        )
 
     for data_batch in dataloader:
         preds = model(data_batch["features_batched"]).squeeze(-1)
@@ -46,8 +51,5 @@ def test(model, dataloader, print_stats=False):
         torch.flatten(torch.cat(gt_list)),
         torch.flatten(torch.cat(preds_list))
     )
-
-    if print_stats:
-        print("Test completed with AUC ", auc)
 
     return auc, fpr, tpr, thresholds

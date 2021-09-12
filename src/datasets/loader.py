@@ -21,12 +21,12 @@ class DatasetLoader():
             cfg (CfgNode): Video model configurations
             dataset_split (str): train or test
             reading_features (bool): True to read features, False for videos
-            reading_order (str): "Sequential", "Shuffle", or "Shuffle with Replacement"
+            reading_order (str): "Sequential", "Shuffle", "Shuffle with Replacement" or "Shuffle Pairs"
             batch_size (int): Batch size of get, see __getitem__ for more details
             drop_last (bool): if True, drops the last batch with size < batch_size
         """
         assert dataset_split in ["train", "test"]
-        assert reading_order in ["Sequential", "Shuffle", "Shuffle with Replacement"]
+        assert reading_order in ["Sequential", "Shuffle", "Shuffle with Replacement", "Shuffle Pairs"]
         assert reading_features is True # Currently DatasetLoader supports this only
 
         self.cfg = cfg
@@ -61,7 +61,12 @@ class DatasetLoader():
             self.indices_normal = list(range(self.dataset.len_normal()))
             self.indices_anomaly = list(range(self.dataset.len_anomalies()))
 
-        if self.reading_order == "Shuffle":
+        self._initial_shuffle()
+
+
+    def _initial_shuffle(self):
+        """Shuffle all lists before initial epoch"""
+        if self.reading_order in ["Shuffle", "Shuffle Pairs"]:
             if self.split == "test":
                 random.shuffle(self.indices)
             elif self.split == "train":
@@ -121,15 +126,20 @@ class DatasetLoader():
         if index >= len(self):
             raise StopIteration
 
+        if index == 0:
+            self._initial_shuffle()
+
         current_batch_size = self._get_batch_size(index)
 
         def _get_indices(reading_order, batch_size, indices_list):
             if reading_order in ["Sequential", "Shuffle"]:
                 dataset_index = index * self.batch_size # not current_batch_size
                 indices = indices_list[dataset_index:dataset_index + batch_size]
-            elif self.reading_order == "Shuffle with Replacement":
+            elif reading_order == "Shuffle with Replacement":
                 random.shuffle(indices_list)
                 indices = indices_list[0:batch_size]
+            elif reading_order == "Shuffle Pairs":
+                pass
 
             return indices
 

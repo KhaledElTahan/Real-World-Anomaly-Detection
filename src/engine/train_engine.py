@@ -16,6 +16,8 @@ def train(cfg, model, loss_class, optimizer, dataloader, current_epoch, print_st
         dataloader (DatasetLoader): testing dataset loader
         current_epoch (int): Current epoch for the training process
         print_stats (Bool): Whether to print stats or not
+    Returns:
+        loss_value (float): The loss of one epoch
     """
     assert cfg.TRAIN.TYPE in ['MIL']
 
@@ -23,8 +25,12 @@ def train(cfg, model, loss_class, optimizer, dataloader, current_epoch, print_st
 
     progress_bar = None
     if print_stats:
-        progress_bar = tqdm(total=len(dataloader),
-            desc="Model Trainging Progress - Epoch (" + str(current_epoch) + ")")
+        progress_bar = tqdm(
+            total=len(dataloader),
+            desc="Trainging Progress - Epoch (" + str(current_epoch) + ")",
+            unit="batch",
+            colour="green"
+        )
 
     if cfg.TRAIN.TYPE == "MIL":
         loss_value = multiple_instance_learning_train(
@@ -34,8 +40,7 @@ def train(cfg, model, loss_class, optimizer, dataloader, current_epoch, print_st
     if print_stats:
         progress_bar.close()
 
-    if print_stats:
-        print("Epoch completed with loss ", loss_value)
+    return loss_value
 
 
 def multiple_instance_learning_train(model, loss_class, optimizer, dataloader, print_stats=False, progress_bar=None):
@@ -55,7 +60,7 @@ def multiple_instance_learning_train(model, loss_class, optimizer, dataloader, p
     """
     total_loss = 0.0
 
-    for normal_batch, anomaly_batch in dataloader:
+    for idx, (normal_batch, anomaly_batch) in enumerate(dataloader):
         normal_preds = model(normal_batch["features_batched"])
         anomaly_preds = model(anomaly_batch["features_batched"])
 
@@ -70,5 +75,6 @@ def multiple_instance_learning_train(model, loss_class, optimizer, dataloader, p
 
         if print_stats:
             progress_bar.update(n=1)
+            progress_bar.set_postfix(loss=total_loss / (idx + 1))
 
     return total_loss / len(dataloader)

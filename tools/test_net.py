@@ -2,7 +2,7 @@
 
 from tabulate import tabulate
 
-from src.utils import infoutils, checkpoint
+from src.utils import infoutils, checkpoint, pathutils
 from src.datasets import loader
 from src.models.build import build_model
 from src.engine import test_engine
@@ -26,7 +26,8 @@ def test(cfg):
         "Sequential", cfg.TEST.BATCH_SIZE, False
     )
 
-    assert checkpoint.checkpoint_exists(cfg), "Checkpoint is needed for Testing!"
+    assert checkpoint.checkpoint_exists(cfg), "Checkpoint is needed for Testing!" + \
+        "\nCheckpoint path: " + str(pathutils.get_model_checkpoint_path(cfg))
 
     _, _, _, completed_epochs, best_model_state_dict, best_auc, _ = checkpoint.load_checkpoint(cfg)
     model = build_model(cfg, best_model_state_dict)
@@ -34,6 +35,8 @@ def test(cfg):
     _print_test_stats(cfg, completed_epochs, best_auc)
 
     auc, fpr, tpr, _ = test_engine.test(model, test_dataloader, True)
+    print("Test completed with AUC ", auc)
+
     roc_auc.plot_signle_roc_auc(cfg, auc, fpr, tpr)
 
     print()
@@ -65,6 +68,7 @@ def _print_test_stats(cfg, completed_epochs, best_auc):
         ["Test Batch Size", cfg.TEST.BATCH_SIZE],
         ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
         ["Training Type", cfg.TRAIN.TYPE],
+        ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],
         ["Completed Epochs", completed_epochs],
         ["Best AUC", best_auc],
         ["Features Name", infoutils.get_dataset_features_name(cfg)],

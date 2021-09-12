@@ -16,7 +16,7 @@ def plot_signle_roc_auc(cfg, auc, fpr, tpr):
     plt.figure()
 
     plt.plot(fpr, tpr, color='darkorange',
-        lw=cfg.VISUALIZE.PLIT_LINEWIDTH, label='ROC curve (area = %0.4f)' % auc)
+        lw=cfg.VISUALIZE.PLIT_LINEWIDTH, label='ROC curve (area = %0.6f)' % auc)
 
     plt.plot([0, 1], [0, 1], color='navy',
         lw=cfg.VISUALIZE.PLIT_LINEWIDTH, label='Random Classifier ROC (area = 0.5)', linestyle='--')
