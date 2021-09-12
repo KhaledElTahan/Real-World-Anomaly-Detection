@@ -2,8 +2,6 @@
 
 import random
 
-from scipy.sparse import data
-
 from src.datasets import loader_helper
 from src.datasets.build import build_dataset
 from src.utils import funcutils
@@ -21,13 +19,18 @@ class DatasetLoader():
             cfg (CfgNode): Video model configurations
             dataset_split (str): train or test
             reading_features (bool): True to read features, False for videos
-            reading_order (str): "Sequential", "Shuffle", "Shuffle with Replacement" or "Shuffle Pairs"
+            reading_order (str):
+                "Sequential", "Shuffle", "Shuffle with Replacement", "All Pairs", or "Shuffle Pairs"
             batch_size (int): Batch size of get, see __getitem__ for more details
             drop_last (bool): if True, drops the last batch with size < batch_size
         """
+        assert reading_features is True, "Currently DatasetLoader supports features only"
         assert dataset_split in ["train", "test"]
-        assert reading_order in ["Sequential", "Shuffle", "Shuffle with Replacement", "Shuffle Pairs"]
-        assert reading_features is True # Currently DatasetLoader supports this only
+        assert reading_order in \
+            ["Sequential", "Shuffle", "Shuffle with Replacement", "All Pairs", "Shuffle Pairs"]
+        
+        if dataset_split == "test":
+            assert reading_order in ["Sequential", "Shuffle", "Shuffle with Replacement"]
 
         self.cfg = cfg
         self.split = dataset_split
@@ -58,20 +61,36 @@ class DatasetLoader():
         if self.split == "test":
             self.indices = list(range(len(self.dataset)))
         elif self.split == "train":
-            self.indices_normal = list(range(self.dataset.len_normal()))
-            self.indices_anomaly = list(range(self.dataset.len_anomalies()))
+            if self.reading_order in ["All Pairs", "Shuffle Pairs"]:
+                # Assume normal len = 3, and anomaly len = 4
+                # normal_indices = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2]
+                self.indices_normal = \
+                    list(range(self.dataset.len_normal())) * self.dataset.len_anomalies()
+                # anomaly_indices = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]
+                self.indices_anomaly = \
+                    sorted(list(range(self.dataset.len_anomalies())) * self.dataset.len_normal())
+            else:
+                self.indices_normal = list(range(self.dataset.len_normal()))
+                self.indices_anomaly = list(range(self.dataset.len_anomalies()))
 
         self._initial_shuffle()
 
 
     def _initial_shuffle(self):
         """Shuffle all lists before initial epoch"""
-        if self.reading_order in ["Shuffle", "Shuffle Pairs"]:
+        if self.reading_order == "Shuffle":
             if self.split == "test":
                 random.shuffle(self.indices)
             elif self.split == "train":
                 random.shuffle(self.indices_normal)
                 random.shuffle(self.indices_anomaly)
+        elif self.reading_order == "Shuffle Pairs":
+            # To keep the one to one mapping
+            temp = list(zip(self.indices_normal, self.indices_anomaly))
+            random.shuffle(temp)
+            temp_normal, temp_anomaly = zip(*temp)
+            self.indices_normal = list(temp_normal)
+            self.indices_anomaly = list(temp_anomaly)
 
 
     def _get_batch_size(self, index):
@@ -86,9 +105,9 @@ class DatasetLoader():
             return self.batch_size
         else: ## index is last element now
             if self.split == "test":
-                length = len(self.dataset)
+                length = len(self.indices)
             elif self.split == "train":
-                length = min(self.dataset.len_normal(), self.dataset.len_anomalies())
+                length = min(len(self.indices_normal), len(self.indices_anomaly))
 
             # An example to illustrate the idea:
             # length is 20
@@ -132,14 +151,12 @@ class DatasetLoader():
         current_batch_size = self._get_batch_size(index)
 
         def _get_indices(reading_order, batch_size, indices_list):
-            if reading_order in ["Sequential", "Shuffle"]:
+            if reading_order in ["Sequential", "Shuffle", "All Pairs", "Shuffle Pairs"]:
                 dataset_index = index * self.batch_size # not current_batch_size
                 indices = indices_list[dataset_index:dataset_index + batch_size]
             elif reading_order == "Shuffle with Replacement":
                 random.shuffle(indices_list)
                 indices = indices_list[0:batch_size]
-            elif reading_order == "Shuffle Pairs":
-                pass
 
             return indices
 
@@ -170,12 +187,11 @@ class DatasetLoader():
         Returns the length of dataset loader with respect to batch size
         """
         if self.split == "test":
-            length = len(self.dataset)
+            length = len(self.indices)
         elif self.split == "train":
-            length = min(self.dataset.len_normal(), self.dataset.len_anomalies())
+            length = min(len(self.indices_normal), len(self.indices_anomaly))
 
         if not self.drop_last and length % self.batch_size != 0:
             length += self.batch_size
 
         return length // self.batch_size
-    

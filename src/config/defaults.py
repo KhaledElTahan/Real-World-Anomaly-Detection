@@ -81,9 +81,10 @@ _C.TRAIN.MAX_EPOCH = 8000
 # If "Sequential", then read dataset sequentially until min(normal, anomaly)
 # if "Shuffle", we will shuffle both normal and anomaly each epoch
 # if "Shuffle with Replacement", we will shuffle both normal and anomaly each batch selection
+# if "All Pairs", will create dataset of all pairs (Normal, Anomaly) ~ O(N^2)
 # if "Shuffle Pairs", will create dataset of all pairs (Normal, Anomaly) ~ O(N^2) and
 #   shuffle each epoch
-_C.TRAIN.DATA_READ_ORDER = "Shuffle with Replacement"
+_C.TRAIN.DATA_READ_ORDER = "Shuffle Pairs"
 
 
 # ---------------------------------------------------------------------------- #

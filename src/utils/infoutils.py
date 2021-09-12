@@ -44,6 +44,7 @@ def get_traing_reading_order_code(cfg):
         "Sequential": "SE",
         "Shuffle": "SH",
         "Shuffle with Replacement": "SHR",
+        "All Pairs": "AP",
         "Shuffle Pairs": "SHP",
     }
 

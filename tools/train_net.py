@@ -67,7 +67,7 @@ def train(cfg):
                 best_epoch = epoch
                 best_model_state_dict = modelutils.create_state_dictionary(cfg, model)
 
-            print("Loss = {0:.6f} --- AUC = {1:.6f} --- Best AUC = {2:.6f} -- Best Epoch = {3}".
+            print("Loss = {0:.6f} --- AUC = {1:.6f} --- Best AUC = {2:.6f} -- Best Epoch = {3}\n".
                 format(loss_value, auc, best_auc, best_epoch))
 
         if epoch % cfg.TRAIN.CHECKPOINT_PERIOD == 0 and best_auc != 0.0:
