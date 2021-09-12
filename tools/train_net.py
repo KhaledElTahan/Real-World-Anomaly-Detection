@@ -55,6 +55,7 @@ def train(cfg):
             losses.get_loss_class(cfg),
             optimizer,
             train_dataloader,
+            test_dataloader,
             epoch,
             True
         )
