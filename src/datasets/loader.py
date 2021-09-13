@@ -28,7 +28,7 @@ class DatasetLoader():
         assert dataset_split in ["train", "test"]
         assert reading_order in \
             ["Sequential", "Shuffle", "Shuffle with Replacement", "All Pairs", "Shuffle Pairs"]
-        
+
         if dataset_split == "test":
             assert reading_order in ["Sequential", "Shuffle", "Shuffle with Replacement"]
 
@@ -104,10 +104,7 @@ class DatasetLoader():
         if self.drop_last or index + 1 < len(self):
             return self.batch_size
         else: ## index is last element now
-            if self.split == "test":
-                length = len(self.indices)
-            elif self.split == "train":
-                length = min(len(self.indices_normal), len(self.indices_anomaly))
+            length = self.examples_len()
 
             # An example to illustrate the idea:
             # length is 20
@@ -182,14 +179,21 @@ class DatasetLoader():
             return _indices_to_batch(indices, None)
 
 
+    def examples_len(self):
+        """
+        Returns the number of examples in the dataloader
+        """
+        if self.split == "test":
+            return len(self.indices)
+        elif self.split == "train":
+            return min(len(self.indices_normal), len(self.indices_anomaly))
+
+
     def __len__(self):
         """
         Returns the length of dataset loader with respect to batch size
         """
-        if self.split == "test":
-            length = len(self.indices)
-        elif self.split == "train":
-            length = min(len(self.indices_normal), len(self.indices_anomaly))
+        length = self.examples_len()
 
         if not self.drop_last and length % self.batch_size != 0:
             length += self.batch_size

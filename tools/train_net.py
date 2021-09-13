@@ -45,7 +45,13 @@ def train(cfg):
         best_auc = 0.0
         best_epoch = 1
 
-    _print_train_stats(cfg, training_from_checkpoint, completed_epochs, best_auc)
+    _print_train_stats(
+        cfg,
+        training_from_checkpoint,
+        completed_epochs,
+        train_dataloader.examples_len(),
+        len(train_dataloader)
+    )
 
     for epoch in range(completed_epochs + 1, cfg.TRAIN.MAX_EPOCH + 1):
         cfg.TRAIN.CURRENT_EPOCH = epoch
@@ -85,7 +91,9 @@ def train(cfg):
     cfg.TRAIN.ENABLE = temp_training_enabled
 
 
-def _print_train_stats(cfg, training_from_checkpoint, completed_epochs, best_auc):
+def _print_train_stats(
+        cfg, training_from_checkpoint, completed_epochs, best_auc, train_examples_len, train_batches_len
+    ):
     """
     Prints a summary of the training process
     Args:
@@ -94,6 +102,8 @@ def _print_train_stats(cfg, training_from_checkpoint, completed_epochs, best_auc
             from a checkpoint or not
         completed_epochs (int): Number of completed epochs if training_from_checkpoint
         best_auc (float): Best achieved AUC if training_from_checkpoint
+        train_examples_len (int): Number of training examples
+        train_batches_len (int): Number of training batches
     """
 
     print("Training Summary:")
@@ -106,6 +116,8 @@ def _print_train_stats(cfg, training_from_checkpoint, completed_epochs, best_auc
         ["Dataset", cfg.TRAIN.DATASET],
         ["Train Batch Size", cfg.TRAIN.BATCH_SIZE],
         ["Test Batch Size", cfg.TEST.BATCH_SIZE],
+        ["Number of Training Examples", train_examples_len],
+        ["Number of Training Batches", train_batches_len],
         ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
         ["Extraction Frames Inner Batch Size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
         ["Training Type", cfg.TRAIN.TYPE],
