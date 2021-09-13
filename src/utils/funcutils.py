@@ -87,17 +87,3 @@ def force_garbage_collection(before, after):
         return wrapper_gc
     return decorator_gc
 
-
-def static_variables(**wrapper_kwargs):
-    """
-    Adds set of static variables to methods
-    """
-    def decorator_sv(func):
-        @functools.wraps(func)
-        def wrapper_sv(*args, **kwargs):
-            for k in wrapper_kwargs:
-                setattr(func, k, wrapper_kwargs[k])
-
-            func(*args, **kwargs)
-        return wrapper_sv
-    return decorator_sv

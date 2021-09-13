@@ -3,7 +3,6 @@
 import torch
 from tqdm import tqdm
 
-from src.utils import funcutils
 from src.engine import test_engine
 
 
@@ -86,7 +85,6 @@ def multiple_instance_learning_train(cfg, model, loss_class, optimizer, train_da
     return total_loss / len(train_dataloader)
 
 
-@funcutils.static_variables(auc=None)
 def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats=False):
     """
     Utility to update the progress bar inside the training function
@@ -100,6 +98,9 @@ def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, 
         print_stats (Bool): Whether to print stats or not
     """
     if print_stats:
+        if 'auc' not in _update_progress_bar.__dict__:
+            _update_progress_bar.auc = None
+
         if cfg.TRAIN.ENABLE_EVAL_BATCH and idx % cfg.TRAIN.EVAL_BATCH_PERIOD == 0:
             _update_progress_bar.auc, _, _, _ = test_engine.test(model, test_dataloader, False)
             model.train()
