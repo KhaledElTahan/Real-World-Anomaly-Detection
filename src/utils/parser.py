@@ -13,7 +13,12 @@ def parse_args():
     Parse the following arguments for a default parser for users.
     Args:
         gpus (int): Number of used gpus, if 0 then use cpu.
-        extract: Whether to extract features or not.
+        extract (Bool): Whether to extract features or not.
+        train (Bool): Whether to train the model or not.
+        trainbs (int): Train batch size
+        test (Boool): Whether to evaluate the model or not.
+        testbs (int): Test batch size
+        readorder (str): Training data read order
         cfg_extract (str): path to the feature extraction config file.
         opts (argument): provide addtional options from the command line, it
             overwrites the config loaded from file.
@@ -40,10 +45,31 @@ def parse_args():
         action='store_true',
     )
     parser.add_argument(
+        "--trainbs",
+        dest="trainbs",
+        help="Training batch size",
+        default=-1,
+        type=int,
+    )
+    parser.add_argument(
         "--test",
         dest="test",
         help="Select this option to test and evaluate the model",
         action='store_true',
+    )
+    parser.add_argument(
+        "--testbs",
+        dest="testbs",
+        help="Testing batch size",
+        default=-1,
+        type=int,
+    )
+    parser.add_argument(
+        "--readorder",
+        dest="readorder",
+        help="Specify the training read order",
+        default=None,
+        type=str,
     )
     parser.set_defaults(extract=False)
     parser.add_argument(
@@ -84,26 +110,26 @@ def load_config(args):
         cfg.merge_from_file(str(extraction_cfg_file_path))
 
     # Check whether we have to extract features
-    if hasattr(args, "extract"):
-        cfg.EXTRACT.ENABLE = args.extract
-    else:
-        cfg.EXTRACT.ENABLE = False
+    cfg.EXTRACT.ENABLE = args.extract
 
     # Check whether we have to train model
-    if hasattr(args, "train"):
-        cfg.TRAIN.ENABLE = args.train
-    else:
-        cfg.TRAIN.ENABLE = False
+    cfg.TRAIN.ENABLE = args.train
 
     # Check whether we have to test model
-    if hasattr(args, "test"):
-        cfg.TEST.ENABLE = args.test
-    else:
-        cfg.TEST.ENABLE = False
+    cfg.TEST.ENABLE = args.test
 
     # Set number of GPUs
-    if hasattr(args, "gpus") and args.gpus != -1:
+    if args.gpus != -1:
         cfg.NUM_GPUS = args.gpus
+
+    if args.readorder is not None:
+        cfg.TRAIN.DATA_READ_ORDER = args.readorder
+
+    if args.trainbs != -1:
+        cfg.TRAIN.BATCH_SIZE = args.trainbs
+
+    if args.testbs != -1:
+        cfg.TEST.BATCH_SIZE = args.testbs
 
     # Load config from command line, overwrite config from opts.
     if args.opts is not None:

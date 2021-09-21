@@ -49,6 +49,7 @@ def train(cfg):
         cfg,
         training_from_checkpoint,
         completed_epochs,
+        best_auc,
         train_dataloader.examples_len(),
         len(train_dataloader)
     )

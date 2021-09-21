@@ -24,10 +24,10 @@ sudo apt-get install --no-install-recommends \
     libcudnn7-dev=7.6.5.32-1+cuda10.1
 
 # Download Anaconda
-wget https://repo.anaconda.com/archive/Anaconda3-2020.07-Linux-x86_64.sh
+wget https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-x86_64.sh
 
 # Install Anaconda
-bash Anaconda3-2020.07-Linux-x86_64.sh
+bash Anaconda3-2021.05-Linux-x86_64.sh
 
 # Add Anaconda to $PATH
 echo "export PATH=~/anaconda3/bin:$PATH" >> ~/.bashrc
