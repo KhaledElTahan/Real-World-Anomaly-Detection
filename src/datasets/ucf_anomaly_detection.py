@@ -306,6 +306,11 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         features_segments = loaded['features_segments']
         is_anomaly_segment = loaded['is_anomaly_segment']
 
+        assert features_segments.shape[1] == self.cfg.BACKBONE.FEATURES_LENGTH, \
+            "The backbone configuration features length doesn't match with extracted data\n" + \
+            "Extracted data length {} - Backbone configurations features length {}". \
+            format(features_segments.shape[1], self.cfg.BACKBONE.FEATURES_LENGTH)
+
         return features_segments, is_anomaly_segment
 
 
