@@ -120,14 +120,15 @@ class DatasetLoader():
         if self.drop_last or index + 1 < len(self):
             return self.batch_size
         else: ## index is last element now
-            length = self.examples_length
+            if self.batch_size == self.examples_length:
+                return self.batch_size
 
             # An example to illustrate the idea:
             # length is 20
             # batch_size is 7
             # We need last 6
             # 20 % 7 = 20 - 2 * 7 = 6
-            return length % self.batch_size
+            return self.examples_length % self.batch_size
 
 
     @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
