@@ -41,6 +41,7 @@ class DatasetLoader():
 
         self._construct_dataset()
         self._construct_indices()
+        self._construct_lengths()
 
 
     def _construct_dataset(self):
@@ -50,12 +51,9 @@ class DatasetLoader():
         dataset_name = self.cfg.TRAIN.DATASET if self.split == 'train' else self.cfg.TEST.DATASET
         self.dataset = build_dataset(dataset_name, self.cfg, self.split, self.is_features)
 
-        if self.batch_size > len(self.dataset):
-            self.batch_size = len(self.dataset)
-
 
     def _construct_indices(self):
-        """"
+        """
         Construct the indices used in reading order
         """
         if self.split == "test":
@@ -74,6 +72,24 @@ class DatasetLoader():
                 self.indices_anomaly = list(range(self.dataset.len_anomalies()))
 
         self._initial_shuffle()
+
+
+    def _construct_lengths(self):
+        """
+        Calculate examples length and adapt batch size to it if necessary
+        """
+        if self.split == "test":
+            self.examples_length = len(self.indices)
+        elif self.split == "train":
+            self.examples_length = min(len(self.indices_normal), len(self.indices_anomaly))
+
+        if self.batch_size > self.examples_length:
+            self.batch_size = self.examples_length
+
+            if self.split == "test":
+                self.cfg.TEST.BATCH_SIZE = self.examples_length
+            elif self.split == "train":
+                self.cfg.TRAIN.BATCH_SIZE = self.examples_length
 
 
     def _initial_shuffle(self):
@@ -104,7 +120,7 @@ class DatasetLoader():
         if self.drop_last or index + 1 < len(self):
             return self.batch_size
         else: ## index is last element now
-            length = self.examples_len()
+            length = self.examples_length
 
             # An example to illustrate the idea:
             # length is 20
@@ -179,21 +195,11 @@ class DatasetLoader():
             return _indices_to_batch(indices, None)
 
 
-    def examples_len(self):
-        """
-        Returns the number of examples in the dataloader
-        """
-        if self.split == "test":
-            return len(self.indices)
-        elif self.split == "train":
-            return min(len(self.indices_normal), len(self.indices_anomaly))
-
-
     def __len__(self):
         """
         Returns the length of dataset loader with respect to batch size
         """
-        length = self.examples_len()
+        length = self.examples_length
 
         if not self.drop_last and length % self.batch_size != 0:
             length += self.batch_size
