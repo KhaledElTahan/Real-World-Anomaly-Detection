@@ -233,7 +233,7 @@ _C.DATA.SKIP_LARGE_VIDEOS = True
 
 # Maximimum of Video size in bytes
 # Only enforced when DATA.SKIP_LARGE_VIDEOS = True
-_C.DATA.MAX_VIDEO_SIZE = 500 * 1024 * 1024
+_C.DATA.MAX_VIDEO_SIZE = 200 * 1024 * 1024
 
 # The general separator used between path and label.
 _C.DATA.PATH_LABEL_SEPARATOR = " "
