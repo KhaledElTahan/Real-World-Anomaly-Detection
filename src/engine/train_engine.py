@@ -66,8 +66,15 @@ def multiple_instance_learning_train(cfg, model, loss_class, optimizer, train_da
     total_loss = 0.0
 
     for idx, (normal_batch, anomaly_batch) in enumerate(train_dataloader):
-        normal_preds = model(normal_batch["features_batched"])
-        anomaly_preds = model(anomaly_batch["features_batched"])
+        features_normal_batch = normal_batch["features_batched"]
+        features_anomaly_batch = anomaly_batch["features_batched"]
+
+        if cfg.NUM_GPUS > 0:
+            features_normal_batch = features_normal_batch.cuda()
+            features_anomaly_batch = features_anomaly_batch.cuda()
+
+        normal_preds = model(features_normal_batch)
+        anomaly_preds = model(features_anomaly_batch)
 
         loss = loss_class(normal_preds, anomaly_preds)
         our_loss = loss()
@@ -102,7 +109,7 @@ def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, 
             _update_progress_bar.auc = None
 
         if cfg.TRAIN.ENABLE_EVAL_BATCH and idx % cfg.TRAIN.EVAL_BATCH_PERIOD == 0:
-            _update_progress_bar.auc, _, _, _ = test_engine.test(model, test_dataloader, False)
+            _update_progress_bar.auc, _, _, _ = test_engine.test(cfg, model, test_dataloader, False)
             model.train()
 
         progress_bar.update(n=1)

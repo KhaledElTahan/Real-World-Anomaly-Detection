@@ -8,10 +8,11 @@ from src.utils import funcutils
 
 @torch.no_grad()
 @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
-def test(model, dataloader, print_stats=False):
+def test(cfg, model, dataloader, print_stats=False):
     """
     Test model on data loader
     Args:
+        cfg (cfgNode): Model configurations
         model (torch.nn.model): Video model
         dataloader (DatasetLoader): testing dataset loader
         print_stats (Bool): Whether to print stats or not
@@ -35,11 +36,16 @@ def test(model, dataloader, print_stats=False):
         )
 
     for data_batch in dataloader:
-        preds = model(data_batch["features_batched"]).squeeze(-1)
+        features_batch = data_batch["features_batched"]
+
+        if cfg.NUM_GPUS > 0:
+            features_batch = features_batch.cuda()
+
+        preds = model(features_batch).squeeze(-1)
         ground_truth = data_batch["annotations"]
 
-        preds_list.append(preds.detach())
-        gt_list.append(ground_truth.detach())
+        preds_list.append(preds.detach().cpu())
+        gt_list.append(ground_truth.detach().cpu())
 
         if print_stats:
             progress_bar.update(n=1)

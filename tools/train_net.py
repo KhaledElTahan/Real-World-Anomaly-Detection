@@ -68,7 +68,7 @@ def train(cfg):
         )
 
         if epoch % cfg.TRAIN.EVAL_PERIOD == 0:
-            auc, _, _, _ = test_engine.test(model, test_dataloader, True)
+            auc, _, _, _ = test_engine.test(cfg, model, test_dataloader, True)
 
             if auc > best_auc:
                 best_auc = auc

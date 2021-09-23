@@ -34,7 +34,7 @@ def test(cfg):
 
     _print_test_stats(cfg, completed_epochs, best_auc)
 
-    auc, fpr, tpr, _ = test_engine.test(model, test_dataloader, True)
+    auc, fpr, tpr, _ = test_engine.test(cfg, model, test_dataloader, True)
     print("Test completed with AUC ", auc)
 
     roc_auc.plot_signle_roc_auc(cfg, auc, fpr, tpr)
