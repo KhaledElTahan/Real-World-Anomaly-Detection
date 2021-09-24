@@ -1,5 +1,6 @@
 """Model training engine"""
 
+from src.utils import funcutils
 import torch
 from tqdm import tqdm
 
@@ -46,6 +47,7 @@ def train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, 
     return loss_value
 
 
+@funcutils.profile(apply=False, lines_to_print=15, strip_dirs=True)
 def multiple_instance_learning_train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats=False, progress_bar=None):
     """
     Basic multiple instance learning as in exactly as in sultani paper https://arxiv.org/abs/1801.04264v3

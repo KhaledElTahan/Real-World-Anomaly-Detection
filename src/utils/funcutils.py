@@ -91,11 +91,13 @@ def force_garbage_collection(before, after):
     return decorator_gc
 
 
-def profile(apply=False):
+def profile(apply=False, lines_to_print=None, strip_dirs=False):
     """
     Profile the function & print stats
     Args:
         apply (Bool): Turn on or off the effect of this decorator
+        lines_to_print (int | None): Number of lines to print. Default (None) is for all the lines.
+        strip_dirs (bool): Whether to remove the leading path info from file names.
     """
     def decorator_pr(func):
         @functools.wraps(func)
@@ -110,9 +112,13 @@ def profile(apply=False):
                 func_profile.disable()
 
                 stream_str = io.StringIO()
-                sortby = pstats.SortKey.CUMULATIVE
-                profile_stats = pstats.Stats(func_profile, stream=stream_str).sort_stats(sortby)
-                profile_stats.print_stats()
+                profile_stats = pstats.Stats(func_profile, stream=stream_str)
+
+                if strip_dirs:
+                    profile_stats.strip_dirs()
+
+                profile_stats.sort_stats(pstats.SortKey.CUMULATIVE)
+                profile_stats.print_stats(lines_to_print)
 
                 print(stream_str.getvalue())
 
