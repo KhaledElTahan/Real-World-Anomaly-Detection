@@ -223,6 +223,10 @@ _C.DATA.PATH_TO_DATA_DIR = "UCF_Anomaly_Detection"
 # If false, read from videos
 _C.DATA.READ_FEATURES = False
 
+# If true, preload all extracted videos to RAM
+# If false, read extracted from disk
+_C.DATA.FEATURES_PRELOAD = True
+
 # If "all", an error will be created if all the dataset files aren't available
 # If "available", will use only the available files, error will be created if empty
 # If "ignore", will not check whether files exist or not

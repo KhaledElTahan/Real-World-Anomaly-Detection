@@ -88,17 +88,20 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
         self._labels = []
         self._temporal_annotations = []
         self._is_anomaly = []
-
+        
         # Store anomaly and normal separately
         self._path_to_anomaly_videos = []
         self._anomaly_videos_labels = []
         self._anomaly_temporal_annotations = []
+        self._anomaly_index_to_general_index = []
 
         self._path_to_normal_videos = []
+        self._normal_index_to_general_index = []
 
         self._dataset_directory = pathutils.get_specific_dataset_path(self.cfg, self.is_features)
 
         labels_set = set()
+        _general_index = 0
         with path_to_file.open("r") as file_ptr:
             for index, line in enumerate(file_ptr.read().splitlines()):
                 line = line.strip()
@@ -150,9 +153,12 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                     self._path_to_anomaly_videos.append(video_path)
                     self._anomaly_videos_labels.append(video_label)
                     self._anomaly_temporal_annotations.append(temporal_annotation)
+                    self._anomaly_index_to_general_index.append(_general_index)
                 else:
                     self._path_to_normal_videos.append(video_path)
-
+                    self._normal_index_to_general_index.append(_general_index)
+                    
+                _general_index += 1
 
         assert (
             len(self._path_to_videos) > 0
@@ -171,6 +177,9 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
                 self.mode, len(self._path_to_videos), path_to_file
             )
         )
+
+        if self.is_features and self.cfg.DATA.FEATURES_PRELOAD:
+            self._preload_features()
 
         self._print_dataset_stats()
 
@@ -193,6 +202,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             ["Name", "UFC Anomaly Detection"],
             ["Mode", self.mode],
             ["Type", dataset_type],
+            ["Preload Features", self.cfg.DATA.FEATURES_PRELOAD] if self.is_features else None,
             ["Directory", self._dataset_directory],
             ["N. Output Classes", len(self.output_classes)],
             ["Output Classes", self.output_classes[:7]],
@@ -211,6 +221,28 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         print(tabulate(table, headers, tablefmt="pretty", colalign=("center", "left")))
         print()
+
+
+    def _preload_features(self):
+        """
+        Preload all features to RAM to improve performance
+        """
+        self._features_segments_list = []
+        self._is_anomaly_segment_list = []
+
+        for features_path in self._path_to_videos:
+            loaded = torch.load(features_path)
+
+            features_segments = loaded['features_segments']
+            is_anomaly_segment = loaded['is_anomaly_segment']
+
+            self._features_segments_list.append(features_segments)
+            self._is_anomaly_segment_list.append(is_anomaly_segment)
+
+            assert features_segments.shape[1] == self.cfg.BACKBONE.FEATURES_LENGTH, \
+                "The backbone configuration features length doesn't match with extracted data\n" + \
+                "Extracted data length {} - Backbone configurations features length {}". \
+                format(features_segments.shape[1], self.cfg.BACKBONE.FEATURES_LENGTH)
 
 
     def _check_file_exists(self, path):
@@ -291,37 +323,44 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
     
     @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
     @funcutils.force_garbage_collection(before=True, after=True)
-    def _get_features(self, features_path):
+    def _get_features(self, general_index, features_path):
         """"
-        Loads the features produced by the backbone
+        Loads the features produced by the backbone, if preloading is true, it reads it from RAM
+            otherwise it reads it from disk
         Args:
+            general_index (int): Index of item in general list, used for preloading
             features_path (Path): The absolute path of the features
         Returns:
             features_segments (Torch.Tensor): feature representation of video segments
             is_anomaly_segment (Torch.Tensor): boolean vector, each cell represents whether
                 the coresponding video segment is anomaly (True) or normal (False)
         """
-        loaded = torch.load(features_path)
+        if self.cfg.DATA.FEATURES_PRELOAD:
+            features_segments = self._features_segments_list[general_index]
+            is_anomaly_segment = self._is_anomaly_segment_list[general_index]
+        else:
+            loaded = torch.load(features_path)
 
-        features_segments = loaded['features_segments']
-        is_anomaly_segment = loaded['is_anomaly_segment']
+            features_segments = loaded['features_segments']
+            is_anomaly_segment = loaded['is_anomaly_segment']
 
-        assert features_segments.shape[1] == self.cfg.BACKBONE.FEATURES_LENGTH, \
-            "The backbone configuration features length doesn't match with extracted data\n" + \
-            "Extracted data length {} - Backbone configurations features length {}". \
-            format(features_segments.shape[1], self.cfg.BACKBONE.FEATURES_LENGTH)
+            assert features_segments.shape[1] == self.cfg.BACKBONE.FEATURES_LENGTH, \
+                "The backbone configuration features length doesn't match with extracted data\n" + \
+                "Extracted data length {} - Backbone configurations features length {}". \
+                format(features_segments.shape[1], self.cfg.BACKBONE.FEATURES_LENGTH)
 
         return features_segments, is_anomaly_segment
 
 
-    def _get_frames_or_features(self, item_path):
+    def _get_frames_or_features(self, general_index, item_path):
         """
         Gets the frames of the item or the features based on self.is_features
         Args:
+            general_index (int): Index of item in general list, used for preloading
             item_path (pathlib.Path): path for video or features file
         """
         if self.is_features:
-            return self._get_features(item_path)
+            return self._get_features(general_index, item_path)
         else:
             return self._get_video(item_path)
 
@@ -358,14 +397,17 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             paths_list = self._path_to_videos
             labels_list = self._labels
             temporal_annotations_list = self._temporal_annotations
+            general_index = index
         elif anomaly is True:
             paths_list = self._path_to_anomaly_videos
             labels_list = self._anomaly_videos_labels
             temporal_annotations_list = self._anomaly_temporal_annotations
+            general_index = self._anomaly_index_to_general_index[index]
         elif anomaly is False:
             paths_list = self._path_to_normal_videos
             labels_list = ["Normal"] * self.len_normal()
             temporal_annotations_list = [(-1, -1, -1, -1)] * self.len_normal()
+            general_index = self._normal_index_to_general_index[index]
 
         skip_reading = False
 
@@ -382,7 +424,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             one_hot = None
             annotation = None
         else:
-            item = self._get_frames_or_features(paths_list[index])
+            item = self._get_frames_or_features(general_index, paths_list[index])
             label = labels_list[index]
             one_hot = utils.label_to_one_hot(label, self.output_classes)
 
