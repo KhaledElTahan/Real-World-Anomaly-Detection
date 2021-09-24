@@ -322,7 +322,6 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
     
     @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
-    @funcutils.force_garbage_collection(before=True, after=True)
     def _get_features(self, general_index, features_path):
         """"
         Loads the features produced by the backbone, if preloading is true, it reads it from RAM

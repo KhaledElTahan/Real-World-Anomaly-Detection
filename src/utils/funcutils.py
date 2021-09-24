@@ -1,6 +1,9 @@
 """Function Utils, decorators for debugging and other utilities"""
 import functools
 import gc
+import cProfile
+import io
+import pstats
 from pprint import pprint
 
 from src.utils import debugutils
@@ -87,3 +90,32 @@ def force_garbage_collection(before, after):
         return wrapper_gc
     return decorator_gc
 
+
+def profile(apply=False):
+    """
+    Profile the function & print stats
+    Args:
+        apply (Bool): Turn on or off the effect of this decorator
+    """
+    def decorator_pr(func):
+        @functools.wraps(func)
+        def wrapper_pr(*args, **kwargs):
+            if apply:
+                func_profile = cProfile.Profile()
+                func_profile.enable()
+
+            retval = func(*args, **kwargs)
+
+            if apply:
+                func_profile.disable()
+
+                stream_str = io.StringIO()
+                sortby = pstats.SortKey.CUMULATIVE
+                profile_stats = pstats.Stats(func_profile, stream=stream_str).sort_stats(sortby)
+                profile_stats.print_stats()
+
+                print(stream_str.getvalue())
+
+            return retval
+        return wrapper_pr
+    return decorator_pr
