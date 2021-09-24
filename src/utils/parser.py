@@ -5,7 +5,7 @@ import sys
 
 from src.config.defaults import get_cfg
 from src.utils import pathutils
-from src.config import custom_config
+from src.config import custom_untracked_config, custom_tracked_config
 
 
 def parse_args():
@@ -147,6 +147,7 @@ def load_config(args):
         cfg.merge_from_list(args.opts)
 
     # Final Step, add custom config with default values.
-    custom_config.add_custom_config(cfg)
+    custom_tracked_config.add_custom_tracked_config(cfg)
+    custom_untracked_config.add_custom_untracked_config(cfg)
 
     return cfg
