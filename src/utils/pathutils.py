@@ -1,5 +1,7 @@
 """Utility used to handle absoule paths"""
 from pathlib import Path
+
+import torch
 from src.utils import infoutils
 
 def get_app_path():
@@ -48,6 +50,100 @@ def get_model_checkpoint_path(cfg):
     return cp_path
 
 
+def get_temp_model_checkpoint_path(cfg):
+    """
+    Retrieve the absolute Path object of the temp checkpoint of the whole model
+    Used to avoid data loss in case of corruption save operation
+    Args
+        cfg (CfgNode): Model Configurations
+    Returns
+        cp_path_tmp (Path): Path of the temp checkpoint
+    """
+    return checkpoint_path_to_temp_path(get_model_checkpoint_path(cfg))
+
+
+def checkpoint_path_to_temp_path(cp_path):
+    """
+    Converts the absolute Path object of the checkpoint of the whole model
+        to a temp checkpoint Path
+    Args:
+        cp_path (Path): Path of the checkpoint
+    Returns:
+        cp_path_tmp (Path): Path of the temp checkpoint
+    """
+    file_name = cp_path.stem
+    file_ext = cp_path.suffix
+
+    tmp_name =  file_name + '_TMP' + file_ext
+
+    directory = cp_path.parent
+
+    return Path(directory, tmp_name)
+
+
+def temp_path_to_checkout_path(cp_path_tmp):
+    """
+    Converts the absolute Path object of the temp checkpoint to a checkpoint Path
+    Args:
+        cp_path_tmp (Path): Path of the temp checkpoint
+    Returns:
+        cp_path (Path): Path of the checkpoint
+    """
+    file_name = cp_path_tmp.stem
+    file_ext = cp_path_tmp.suffix
+
+    checkout_name =  file_name.replace('_TMP', '') + file_ext
+
+    directory = cp_path_tmp.parent
+
+    return Path(directory, checkout_name)
+
+
+def refresh_checkpoints_paths(cfg):
+    """
+    Fixes any corruption that could happen from save checkpoint on the following order:
+        1) Remove corrupted temp files
+        2) Removes old checkpoints
+        2) Renames temp paths to checkpoint paths
+    Args:
+        cfg (CfgNode): Model Configurations
+    """
+    checkpoints_dir_path = get_models_checkpoint_directory_path(cfg)
+
+    # Remove corrupted files
+    for checkpoint_path in checkpoints_dir_path.iterdir():
+        try:
+            torch.load(checkpoint_path, map_location='cpu')
+        except Exception:
+            checkpoint_path.unlink(missing_ok=True)
+
+    # Collect temp paths
+    tmp_paths = []
+    for checkpoint_path in checkpoints_dir_path.iterdir():
+        if '_TMP' in checkpoint_path.stem:
+            tmp_paths.append(checkpoint_path)
+
+    # Remove old checkpoints & Rename temp to checkpoints
+    for tmp_path in tmp_paths:
+        checkpoint_path = temp_path_to_checkout_path(tmp_path)
+        checkpoint_path.unlink(missing_ok=True)
+        tmp_path.rename(checkpoint_path)
+
+
+def get_all_checkpoints_paths(cfg):
+    """
+    Retrieves all checkpoints paths
+    Args:
+        cfg (CfgNode): Model Configurations
+    Returns:
+        checkpoints_paths (List): All checkpoints paths
+    """
+    refresh_checkpoints_paths(cfg)
+
+    checkpoints_dir_path = get_models_checkpoint_directory_path(cfg)
+    return list(checkpoints_dir_path.iterdir())
+
+
 def get_datasets_path():
     """Retrieve the absolute Path object of the datasets directory"""
     return get_app_path() / "datasets"
@@ -72,6 +168,7 @@ def get_specific_dataset_path(cfg, features=False):
         dataset_directory = dataset_directory / "videos"
 
     return dataset_directory
+
 
 def get_configs_path():
     """Retrieve the absolute Path object of the configurations directory"""

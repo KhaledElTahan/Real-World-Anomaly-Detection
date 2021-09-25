@@ -28,8 +28,9 @@ def save_checkpoint(cfg, optimizer, model, epoch_auc, best_model_state_dict, bes
         is_best (bool): Is this the model that achieved best auc so far?
     """
     model_state_dict = modelutils.create_state_dictionary(cfg, model)
-    cp_path = pathutils.get_model_checkpoint_path(cfg)
+    cp_path_tmp = pathutils.get_temp_model_checkpoint_path(cfg)
 
+    # Save to temp file, to avoid data loss in case of corrupted save
     torch.save(
         {
             "cfg": cfg.dump(),
@@ -40,8 +41,13 @@ def save_checkpoint(cfg, optimizer, model, epoch_auc, best_model_state_dict, bes
             "best_model_state_dict": best_model_state_dict,
             "best_auc": best_auc,
             "best_epoch": best_epoch,
-        }, cp_path
+        }, cp_path_tmp
     )
+
+    cp_path = pathutils.get_model_checkpoint_path(cfg)
+    cp_path.unlink(missing_ok=True)
+
+    cp_path_tmp.rename(cp_path)
 
 
 def _assert_checkpoint(cfg, checkpoint_cfg):
@@ -116,4 +122,5 @@ def checkpoint_exists(cfg):
     Returns:
         exits (Bool): Whether a checkpoint exists or not
     """
+    pathutils.refresh_checkpoints_paths(cfg)
     return pathutils.get_model_checkpoint_path(cfg).exists()

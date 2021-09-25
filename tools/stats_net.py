@@ -33,10 +33,8 @@ def _print_trained_models_stats(cfg):
         "Epochs Completed",
     ]
 
-    checkpoints_dir_path = pathutils.get_models_checkpoint_directory_path(cfg)
-
     table = []
-    for checkpoint_path in checkpoints_dir_path.iterdir():
+    for checkpoint_path in pathutils.get_all_checkpoints_paths(cfg):
         if checkpoint_path.is_file():
             checkpoint_cfg, _, _, auc, epoch, _, best_auc, best_epoch = checkpoint.load_checkpoint(
                 cfg, False, checkpoint_path
@@ -57,8 +55,14 @@ def _print_trained_models_stats(cfg):
     table.sort(key=lambda row: row[1])
     table.sort(key=lambda row: row[0])
 
+    spaced_table = []
+    for index, row in enumerate(table):
+        if index > 0 and table[index][0] != table[index - 1][0]:
+            spaced_table.append(['---'] * len(headers))
+        spaced_table.append(row)
+
     print(tabulate(
-        table, headers, tablefmt="pretty",
+        spaced_table, headers, tablefmt="pretty",
         colalign=("center", "center", "center", "center", "center", "center", "center"))
     )
 
