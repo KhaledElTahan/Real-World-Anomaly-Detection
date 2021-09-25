@@ -73,6 +73,7 @@ def load_checkpoint(cfg, assert_cfg=True, checkpoint_path=None):
         checkpoint_path (Path): If None, default checkpoint will be loaded by the guide
             of the cfg, otherwise the requested path will be loaded
     Returns:
+        checkpoint_cfg (cfgNide): Checkpoint configurations
         optimizer_state_dict: Optimizer state dictionary
         model_state_dict: Model state dictionary of current epoch
         auc: Area under the ROC of current epoch
@@ -91,8 +92,9 @@ def load_checkpoint(cfg, assert_cfg=True, checkpoint_path=None):
     # Load the checkpoint on CPU to avoid GPU mem spike.
     loaded = torch.load(cp_path, map_location='cpu')
 
+    checkpoint_cfg = CfgNode.load_cfg(loaded['cfg'])
     if assert_cfg:
-        _assert_checkpoint(cfg, CfgNode.load_cfg(loaded['cfg']))
+        _assert_checkpoint(cfg, checkpoint_cfg)
 
     optimizer_state_dict = loaded['optimizer_state_dict']
     model_state_dict = loaded['model_state_dict']
@@ -102,8 +104,8 @@ def load_checkpoint(cfg, assert_cfg=True, checkpoint_path=None):
     best_auc = loaded['best_auc']
     best_epoch = loaded['best_epoch']
 
-    return optimizer_state_dict, model_state_dict, auc, epoch, \
-        best_model_state_dict, best_auc, best_epoch
+    return checkpoint_cfg, optimizer_state_dict, model_state_dict, \
+        auc, epoch, best_model_state_dict, best_auc, best_epoch
 
 
 def checkpoint_exists(cfg):

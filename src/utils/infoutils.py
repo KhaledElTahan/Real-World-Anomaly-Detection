@@ -61,7 +61,8 @@ def get_full_model_name(cfg):
     Returns:
         full_model_name (String): represents the whole model name
             BackboneName_TransformationCode_InternalFramesBatchSize_
-                NumberOfOutputSegments_ModelName_LossName_TrainingType_ReadingOrderCode_MOdelSignature
+                NumberOfOutputSegments_ModelName_LossName_TrainingType_
+                    ReadingOrderCode_MOdelSignature
     Example:
         get_full_model_name(cfg) =>
             "Kinetics_c2_I3D_NLN_8x8_R50_BG-KNN_32x32_SultaniBaseline_SultaniLoss_MIL_SHR_Baseline"

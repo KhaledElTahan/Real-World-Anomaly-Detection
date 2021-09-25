@@ -33,7 +33,7 @@ def train(cfg):
 
     training_from_checkpoint = cfg.TRAIN.AUTO_RESUME and checkpoint.checkpoint_exists(cfg)
     if training_from_checkpoint:
-        optimizer_state_dict, model_state_dict, auc, completed_epochs, \
+        _, optimizer_state_dict, model_state_dict, auc, completed_epochs, \
         best_model_state_dict, best_auc, best_epoch = checkpoint.load_checkpoint(cfg)
         model = build_model(cfg, model_state_dict)
         optimizer = optimizers.get_optimizer(cfg, model)

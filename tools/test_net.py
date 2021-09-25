@@ -29,7 +29,7 @@ def test(cfg):
     assert checkpoint.checkpoint_exists(cfg), "Checkpoint is needed for Testing!" + \
         "\nCheckpoint path: " + str(pathutils.get_model_checkpoint_path(cfg))
 
-    _, _, _, completed_epochs, best_model_state_dict, best_auc, _ = checkpoint.load_checkpoint(cfg)
+    _, _, _, _, completed_epochs, best_model_state_dict, best_auc, _ = checkpoint.load_checkpoint(cfg)
     model = build_model(cfg, best_model_state_dict)
 
     _print_test_stats(cfg, completed_epochs, best_auc)
