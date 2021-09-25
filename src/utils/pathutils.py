@@ -22,6 +22,18 @@ def get_checkpoints_path():
     return get_app_path() / "checkpoints"
 
 
+def get_models_checkpoint_directory_path(cfg):
+    """
+    Retrieve the absolute Path object of the directory that has all
+        checkpoints of the whole model
+    Args
+        cfg (CfgNode): Model Configurations
+    Returns
+        dir_path (Path): Path of the directory
+    """
+    return get_checkpoints_path() / cfg.MODEL.CHECKPOINTS_DIRECTORY
+
+
 def get_model_checkpoint_path(cfg):
     """
     Retrieve the absolute Path object of the checkpoint of the whole model
@@ -30,7 +42,7 @@ def get_model_checkpoint_path(cfg):
     Returns
         cp_path (Path): Path of the checkpoint
     """
-    cp_path = get_checkpoints_path() / cfg.MODEL.CHECKPOINTS_DIRECTORY
+    cp_path = get_models_checkpoint_directory_path(cfg)
     cp_path = cp_path / (infoutils.get_full_model_name(cfg) + '.pt')
 
     return cp_path

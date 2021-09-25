@@ -82,7 +82,7 @@ _C.TRAIN.CHECKPOINT_TYPE = "pytorch"
 _C.TRAIN.CURRENT_EPOCH = 1
 
 # Maximum number of training epochs
-_C.TRAIN.MAX_EPOCH = 8000
+_C.TRAIN.MAX_EPOCH = 1000000
 
 # If "Sequential", then read dataset sequentially until min(normal, anomaly)
 # if "Shuffle", we will shuffle both normal and anomaly each epoch
@@ -350,6 +350,9 @@ _C.RNG_SEED = 1
 
 # If True, log the model info.
 _C.LOG_MODEL_INFO = True
+
+# If True, run the run stats tool
+_C.RUN_STATS_TOOL = False
 
 
 # ---------------------------------------------------------------------------- #

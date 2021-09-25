@@ -8,6 +8,7 @@ from tools.extract_video_features import extract
 from tools.train_net import train
 from tools.test_net import test
 from tools.demo_net import demo
+from tools.stats_net import stats
 
 
 def main():
@@ -36,6 +37,11 @@ def main():
     # Make a demo
     if cfg.DEMO.ENABLE:
         demo(cfg)
+
+    # --stats
+    # Print stats
+    if cfg.RUN_STATS_TOOL:
+        stats(cfg)
 
     print()
     print("Execution completed.")
