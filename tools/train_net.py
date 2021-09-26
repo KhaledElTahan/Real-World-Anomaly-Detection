@@ -122,6 +122,8 @@ def _print_train_stats(
         ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
         ["Extraction Frames Inner Batch Size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
         ["Training Type", cfg.TRAIN.TYPE],
+        ["Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_CODE]
+            if cfg.TRAIN.TYPE == "PL-MIL" else None,
         ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],
         ["Training from Checkpoint", training_from_checkpoint],
         ["Completed Epochs", completed_epochs] if training_from_checkpoint else None,

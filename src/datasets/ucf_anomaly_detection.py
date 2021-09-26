@@ -7,7 +7,7 @@ from tabulate import tabulate
 
 from src.datasets import decoder
 from src.datasets import utils
-from src.utils import pathutils
+from src.utils import infoutils, pathutils
 from src.datasets import video_container as container
 from src.datasets.build import DATASET_REGISTRY
 from src.datasets import transform_helper
@@ -64,7 +64,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         self._video_meta = {}
 
-        print("Constructing UCF Anomaly Detection {}...".format(mode))
+        print("Constructing UCF Anomaly Detection ({}) - ".format(mode), end="")
 
         self._construct_dataset()
 
@@ -162,7 +162,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         assert (
             len(self._path_to_videos) > 0
-        ), "Failed to load UCF Anomaly Detection {} from {}".format(
+        ), "\nFailed to load UCF Anomaly Detection {} from {}".format(
             self.mode, path_to_file
         )
 
@@ -172,11 +172,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         self.output_classes = sorted(list(labels_set))
         
-        print(
-            "Done Constructing UCF Anomaly Detection {} (size: {}) from {}".format(
-                self.mode, len(self._path_to_videos), path_to_file
-            )
-        )
+        print("SUCCESS - ", end="")
 
         if self.is_features and self.cfg.DATA.FEATURES_PRELOAD:
             self._preload_features()
@@ -202,6 +198,9 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             ["Name", "UFC Anomaly Detection"],
             ["Mode", self.mode],
             ["Type", dataset_type],
+            ["Features Name", infoutils.get_dataset_features_name(self.cfg)]
+                if self.is_features else None,
+            ["Transformation Code", self.cfg.TRANSFORM.CODE],
             ["Preload Features", self.cfg.DATA.FEATURES_PRELOAD] if self.is_features else None,
             ["Directory", self._dataset_directory],
             ["N. Output Classes", len(self.output_classes)],

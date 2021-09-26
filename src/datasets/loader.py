@@ -1,6 +1,7 @@
 """Dataset loader."""
 
 import random
+import copy
 
 from src.datasets import loader_helper
 from src.datasets.build import build_dataset
@@ -50,6 +51,18 @@ class DatasetLoader():
         """
         dataset_name = self.cfg.TRAIN.DATASET if self.split == 'train' else self.cfg.TEST.DATASET
         self.dataset = build_dataset(dataset_name, self.cfg, self.split, self.is_features)
+
+        if self.split == 'train' and self.cfg.TRAIN.TYPE == 'PL-MIL':
+            assert self.cfg.TRANSFORM.CODE == "NONE"
+
+            aug_dataset_cfg = copy.deepcopy(self.cfg)
+            aug_dataset_cfg.TRANSFORM.CODE = aug_dataset_cfg.TRAIN.PL_AUG_CODE
+
+            self.aug_dataset = \
+                build_dataset(dataset_name, aug_dataset_cfg, self.split, self.is_features)
+
+            assert self.dataset.len_normal() == self.aug_dataset.len_normal()
+            assert self.dataset.len_anomalies() == self.aug_dataset.len_anomalies()
 
 
     def _construct_indices(self):

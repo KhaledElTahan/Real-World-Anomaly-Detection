@@ -48,7 +48,11 @@ _C.TRAIN = CfgNode()
 _C.TRAIN.ENABLE = True
 
 # The type of the training
+# "MIL" or "PL-MIL"
 _C.TRAIN.TYPE = "MIL"
+
+# if "PL-MIL" then choose Augmented features code
+_C.TRAIN.PL_AUG_CODE = "BG-MOG2"
 
 # Dataset for training.
 _C.TRAIN.DATASET = "UCFAnomalyDetection"

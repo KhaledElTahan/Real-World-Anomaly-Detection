@@ -67,7 +67,8 @@ def _print_trained_models_stats(cfg):
             rows = row
         else:
             for idx, col in enumerate(row):
-                rows[idx] += '\n' + col
+                if idx > 0:
+                    rows[idx] += '\n' + col
 
     print(tabulate(
         spaced_table, headers, tablefmt="fancy_grid",
