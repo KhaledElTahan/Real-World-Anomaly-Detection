@@ -194,16 +194,16 @@ def pseudo_labels_MIP_train(cfg, model, loss_class, optimizer, train_dataloader,
     """
     total_loss = 0.0
 
-    for idx, (normal_batch, anomaly_batch) in enumerate(train_dataloader):
-        features_normal_batch = normal_batch["features_batched"]
-        features_anomaly_batch = anomaly_batch["features_batched"]
+    for idx, (org_normal_batch, org_anomaleous_batch, aug_normal_batch, aug_anomaleous_batch) in enumerate(train_dataloader):
+        features_org_normal_batch = org_normal_batch["features_batched"]
+        features_org_anomaly_batch = org_anomaleous_batch["features_batched"]
 
         if cfg.NUM_GPUS > 0:
-            features_normal_batch = features_normal_batch.cuda()
-            features_anomaly_batch = features_anomaly_batch.cuda()
+            features_org_normal_batch = features_org_normal_batch.cuda()
+            features_org_anomaly_batch = features_org_anomaly_batch.cuda()
 
-        normal_preds = model(features_normal_batch)
-        anomaly_preds = model(features_anomaly_batch)
+        normal_preds = model(features_org_normal_batch)
+        anomaly_preds = model(features_org_anomaly_batch)
 
         loss = loss_class(normal_preds, anomaly_preds)
         our_loss = loss()

@@ -145,7 +145,7 @@ class DatasetLoader():
 
 
     @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
-    def __getitem__(self, index):
+    def get_batch(self, dataset, index, allow_shuffle=True):
         """
         if split == "train"
             Gets two batches of dataset with respect to batch_size
@@ -153,7 +153,9 @@ class DatasetLoader():
         if split == "test"
             Gets one batch of dataset with respect to batch_size
         Args
+            dataset: Dataset to return the batch from
             index (int): batch index
+            allow_shuffle (Bool): Allow shuffling for first index
         Returns
             if split == "train"
                 normal_batch (dict):
@@ -172,7 +174,7 @@ class DatasetLoader():
         if index >= len(self):
             raise StopIteration
 
-        if index == 0:
+        if allow_shuffle and index == 0:
             self._initial_shuffle()
 
         current_batch_size = self._get_batch_size(index)
@@ -193,9 +195,9 @@ class DatasetLoader():
 
             for idx in indices:
                 if is_anomaly is None:
-                    results.append(self.dataset[idx])
+                    results.append(dataset[idx])
                 elif is_anomaly in [True, False]:
-                    results.append(self.dataset[idx, is_anomaly])
+                    results.append(dataset[idx, is_anomaly])
 
             return loader_helper.features_dataset_results_list_to_batch(results)
 
@@ -207,6 +209,48 @@ class DatasetLoader():
         elif self.split == "test":
             indices = _get_indices(self.reading_order, current_batch_size, self.indices)
             return _indices_to_batch(indices, None)
+
+
+    @funcutils.debug(apply=False, sign=True, ret=True, sign_beautify=True, ret_beautify=True)
+    def __getitem__(self, index):
+        """
+        if split == "train"
+            if cfg.TRAIN.TYPE == 'PL-MIL'
+                Gets four batches from two datasets
+                    Two from no transform dataset
+                    Two from augmented dataset
+                Each two is: one normal batch, one anomaly batch
+            else
+                Gets two batches of dataset with respect to batch_size
+                One normal batch, and one anomaleous batch
+        if split == "test"
+            Gets one batch of dataset with respect to batch_size
+        Args
+            index (int): batch index
+        Returns
+            if split == "train"
+                if cfg.TRAIN.TYPE == 'PL-MIL'
+                    org_normal_batch (dict), org_anomaleous_batch (dict),
+                            aug_normal_batch (dict), aug_anomaleous_batch (dict)
+                else
+                    normal_batch (dict), anomaleous_batch (dict)
+            if split == "test"
+                batch (dict)
+            
+            each batch is of the format (dict):
+            {
+                features_batched: Tensor(Torch) features batched,
+                labels: List(str) labels batched,
+                one_hots: Tensor(Torch) one hot vectors batched,
+                annotations: Tensor(Torch) segments annotations batched,
+                paths: List(Path) features paths batched
+            }
+        """
+        if self.split == 'train' and self.cfg.TRAIN.TYPE == 'PL-MIL':
+            return self.get_batch(self.dataset, index), \
+                self.get_batch(self.aug_dataset, index, False)
+        else:
+            return self.get_batch(self.dataset, index)
 
 
     def __len__(self):
