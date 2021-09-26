@@ -109,6 +109,7 @@ def refresh_checkpoints_paths(cfg):
         cfg (CfgNode): Model Configurations
     """
     checkpoints_dir_path = get_models_checkpoint_directory_path(cfg)
+    checkpoints_dir_path.mkdir(parents=True, exist_ok=True)
 
     # Remove corrupted files
     for checkpoint_path in checkpoints_dir_path.iterdir():

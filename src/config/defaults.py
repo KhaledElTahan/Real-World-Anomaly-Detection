@@ -24,6 +24,9 @@ _C.MODEL.NUM_CLASSES = 2
 # Loss function.
 _C.MODEL.LOSS_FUNC = "SultaniLoss"
 
+# Pseudo Labels Loss, if TRAIN.TYPE in ['PL', 'PL-MIL']
+_C.MODEL.PSEUDO_LOSS_FUNC = "PseudoLabelsLoss"
+
 # Dropout rate.
 _C.MODEL.DROPOUT_RATE = 0.6
 
@@ -53,6 +56,9 @@ _C.TRAIN.TYPE = "MIL"
 
 # if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose Augmented features code
 _C.TRAIN.PL_AUG_CODE = "BG-MOG2"
+
+# if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose pseudo label threshold [0.0, 1.0]
+_C.TRAIN.PL_THRESHOLD = 0.6
 
 # Dataset for training.
 _C.TRAIN.DATASET = "UCFAnomalyDetection"

@@ -1,5 +1,6 @@
 """Model training engine"""
 
+from src.models import losses
 from src.utils import funcutils
 import torch
 from tqdm import tqdm
@@ -8,13 +9,12 @@ from src.engine import test_engine
 
 
 @torch.enable_grad()
-def train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, current_epoch, print_stats=False):
+def train(cfg, model, optimizer, train_dataloader, test_dataloader, current_epoch, print_stats=False):
     """
     Chooses the training policy then train the model one epoch on the data loader
     Args:
         cfg (cfgNode): Model configurations
         model (torch.nn.model): Video model
-        loss_class: Custom defined loss class
         optimizer (torch.nn.optimizer): The used optimizer
         train_dataloader (DatasetLoader): training dataset loader
         test_dataloader (DatasetLoader): testing dataset loader
@@ -37,18 +37,30 @@ def train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, 
         )
 
     if cfg.TRAIN.TYPE == "MIL":
-        loss_value = multiple_instance_learning_train(
-            cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats, progress_bar
+        loss_value = generic_train( 
+            cfg,
+            model,
+            losses.get_loss_class(cfg, False),
+            optimizer,
+            train_dataloader,
+            test_dataloader, 
+            print_stats,
+            progress_bar
         )
     elif cfg.TRAIN.TYPE == "PL":
-        exit()
-        loss_value = pseudo_labels_train(
-            cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats, progress_bar
+        loss_value = generic_train( 
+            cfg,
+            model,
+            losses.get_loss_class(cfg, True),
+            optimizer,
+            train_dataloader,
+            test_dataloader,
+            print_stats,
+            progress_bar
         )
     elif cfg.TRAIN.TYPE == "PL-MIL":
-        exit()
         loss_value = pseudo_labels_MIL_train(
-            cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats, progress_bar
+            cfg, model, optimizer, train_dataloader, test_dataloader, print_stats, progress_bar
         )
 
 
@@ -59,10 +71,10 @@ def train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, 
 
 
 @funcutils.profile(apply=False, lines_to_print=15, strip_dirs=True)
-def multiple_instance_learning_train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats=False, progress_bar=None):
+def generic_train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats=False, progress_bar=None):
     """
-    Basic multiple instance learning as in exactly as in sultani paper https://arxiv.org/abs/1801.04264v3
-    Train the model one epoch on the data loader
+    Generic training method that runs any training mechanism based on the loss_class.
+    Train the model one epoch on the data loader.
     Args:
         cfg (cfgNode): Model configurations
         model (torch.nn.model): Video model
@@ -78,16 +90,63 @@ def multiple_instance_learning_train(cfg, model, loss_class, optimizer, train_da
     """
     total_loss = 0.0
 
-    for idx, (normal_batch, anomaly_batch) in enumerate(train_dataloader):
-        features_normal_batch = normal_batch["features_batched"]
-        features_anomaly_batch = anomaly_batch["features_batched"]
+    for idx, batches in enumerate(train_dataloader):
+        if cfg.NUM_GPUS > 0:
+            features = [batch["features_batched"].cuda() for batch in batches]
+        else:
+            features = [batch["features_batched"] for batch in batches]
+
+        preds = [model(features_batch) for features_batch in features]
+
+        loss = loss_class(cfg, preds)
+        our_loss = loss()
+
+        # Make sure testing inside training doesn't cause problems
+        assert our_loss.requires_grad
+
+        total_loss += our_loss.detach().item()
+
+        optimizer.zero_grad()
+        our_loss.backward()
+        optimizer.step()
+
+        _update_progress_bar(
+            cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats
+        )
+
+    return total_loss / len(train_dataloader)
+
+
+@funcutils.profile(apply=False, lines_to_print=15, strip_dirs=True)
+def pseudo_labels_MIL_train(cfg, model, optimizer, train_dataloader, test_dataloader, print_stats=False, progress_bar=None):
+    """
+    Mltiple instance learning + pseudo labels training
+    Train the model one epoch on the data loader
+    Args:
+        cfg (cfgNode): Model configurations
+        model (torch.nn.model): Video model
+        optimizer (torch.nn.optimizer): The used optimizer
+        train_dataloader (DatasetLoader): training dataset loader
+        test_dataloader (DatasetLoader): testing dataset loader
+        current_epoch (int): Current epoch for the training process
+        print_stats (Bool): Whether to print stats or not
+        progress_bar (tqdm): if print_status, will be used to print a training progress bar
+    Retunrs:
+        loss_value (float): mean loss per example in this training epoch
+    """
+    total_loss = 0.0
+
+    for idx, (org_normal_batch, org_anomaleous_batch, aug_normal_batch, aug_anomaleous_batch) \
+            in enumerate(train_dataloader):
+        features_org_normal_batch = org_normal_batch["features_batched"]
+        features_org_anomaly_batch = org_anomaleous_batch["features_batched"]
 
         if cfg.NUM_GPUS > 0:
-            features_normal_batch = features_normal_batch.cuda()
-            features_anomaly_batch = features_anomaly_batch.cuda()
+            features_org_normal_batch = features_org_normal_batch.cuda()
+            features_org_anomaly_batch = features_org_anomaly_batch.cuda()
 
-        normal_preds = model(features_normal_batch)
-        anomaly_preds = model(features_anomaly_batch)
+        normal_preds = model(features_org_normal_batch)
+        anomaly_preds = model(features_org_anomaly_batch)
 
         loss = loss_class(normal_preds, anomaly_preds)
         our_loss = loss()
@@ -100,7 +159,9 @@ def multiple_instance_learning_train(cfg, model, loss_class, optimizer, train_da
         our_loss.backward()
         optimizer.step()
 
-        _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats)
+        _update_progress_bar(
+            cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats
+        )
 
     return total_loss / len(train_dataloader)
 
@@ -131,97 +192,3 @@ def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, 
             progress_bar.set_postfix(loss=total_loss / (idx + 1), AUC=_update_progress_bar.auc)
         else:
             progress_bar.set_postfix(loss=total_loss / (idx + 1))
-
-
-@funcutils.profile(apply=False, lines_to_print=15, strip_dirs=True)
-def pseudo_labels_train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats=False, progress_bar=None):
-    """
-    Pseudo labels training
-    Train the model one epoch on the data loader
-    Args:
-        cfg (cfgNode): Model configurations
-        model (torch.nn.model): Video model
-        loss_class: Custom defined loss class
-        optimizer (torch.nn.optimizer): The used optimizer
-        train_dataloader (DatasetLoader): training dataset loader
-        test_dataloader (DatasetLoader): testing dataset loader
-        current_epoch (int): Current epoch for the training process
-        print_stats (Bool): Whether to print stats or not
-        progress_bar (tqdm): if print_status, will be used to print a training progress bar
-    Retunrs:
-        loss_value (float): mean loss per example in this training epoch
-    """
-    total_loss = 0.0
-
-    for idx, (normal_batch, anomaly_batch) in enumerate(train_dataloader):
-        features_normal_batch = normal_batch["features_batched"]
-        features_anomaly_batch = anomaly_batch["features_batched"]
-
-        if cfg.NUM_GPUS > 0:
-            features_normal_batch = features_normal_batch.cuda()
-            features_anomaly_batch = features_anomaly_batch.cuda()
-
-        normal_preds = model(features_normal_batch)
-        anomaly_preds = model(features_anomaly_batch)
-
-        loss = loss_class(normal_preds, anomaly_preds)
-        our_loss = loss()
-
-        assert our_loss.requires_grad # to make sure testing inside training doesn't cause problems
-
-        total_loss += our_loss.detach().item()
-
-        optimizer.zero_grad()
-        our_loss.backward()
-        optimizer.step()
-
-        _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats)
-
-    return total_loss / len(train_dataloader)
-
-
-@funcutils.profile(apply=False, lines_to_print=15, strip_dirs=True)
-def pseudo_labels_MIL_train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats=False, progress_bar=None):
-    """
-    Mltiple instance learning + pseudo labels training
-    Train the model one epoch on the data loader
-    Args:
-        cfg (cfgNode): Model configurations
-        model (torch.nn.model): Video model
-        loss_class: Custom defined loss class
-        optimizer (torch.nn.optimizer): The used optimizer
-        train_dataloader (DatasetLoader): training dataset loader
-        test_dataloader (DatasetLoader): testing dataset loader
-        current_epoch (int): Current epoch for the training process
-        print_stats (Bool): Whether to print stats or not
-        progress_bar (tqdm): if print_status, will be used to print a training progress bar
-    Retunrs:
-        loss_value (float): mean loss per example in this training epoch
-    """
-    total_loss = 0.0
-
-    for idx, (org_normal_batch, org_anomaleous_batch, aug_normal_batch, aug_anomaleous_batch) in enumerate(train_dataloader):
-        features_org_normal_batch = org_normal_batch["features_batched"]
-        features_org_anomaly_batch = org_anomaleous_batch["features_batched"]
-
-        if cfg.NUM_GPUS > 0:
-            features_org_normal_batch = features_org_normal_batch.cuda()
-            features_org_anomaly_batch = features_org_anomaly_batch.cuda()
-
-        normal_preds = model(features_org_normal_batch)
-        anomaly_preds = model(features_org_anomaly_batch)
-
-        loss = loss_class(normal_preds, anomaly_preds)
-        our_loss = loss()
-
-        assert our_loss.requires_grad # to make sure testing inside training doesn't cause problems
-
-        total_loss += our_loss.detach().item()
-
-        optimizer.zero_grad()
-        our_loss.backward()
-        optimizer.step()
-
-        _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats)
-
-    return total_loss / len(train_dataloader)

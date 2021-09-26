@@ -6,7 +6,7 @@ from tabulate import tabulate
 from src.utils import infoutils, checkpoint, modelutils
 from src.datasets import loader
 from src.models.build import build_model
-from src.models import losses, optimizers
+from src.models import optimizers
 from src.engine import test_engine, train_engine
 
 
@@ -59,7 +59,6 @@ def train(cfg):
         loss_value = train_engine.train(
             cfg,
             model,
-            losses.get_loss_class(cfg),
             optimizer,
             train_dataloader,
             test_dataloader,
