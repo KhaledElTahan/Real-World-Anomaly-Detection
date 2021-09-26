@@ -23,7 +23,7 @@ def train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, 
     Returns:
         loss_value (float): The loss of one epoch
     """
-    assert cfg.TRAIN.TYPE in ['MIL', 'PL-MIL']
+    assert cfg.TRAIN.TYPE in ['MIL', 'PL', 'PL-MIL']
 
     model.train()
 
@@ -40,11 +40,17 @@ def train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, 
         loss_value = multiple_instance_learning_train(
             cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats, progress_bar
         )
-    elif cfg.TRAIN.TYPE == "PL-MIL":
+    elif cfg.TRAIN.TYPE == "PL":
         exit()
-        loss_value = pseudo_labels_MIP_train(
+        loss_value = pseudo_labels_train(
             cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats, progress_bar
         )
+    elif cfg.TRAIN.TYPE == "PL-MIL":
+        exit()
+        loss_value = pseudo_labels_MIL_train(
+            cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats, progress_bar
+        )
+
 
     if print_stats:
         progress_bar.close()
@@ -175,7 +181,7 @@ def pseudo_labels_train(cfg, model, loss_class, optimizer, train_dataloader, tes
 
 
 @funcutils.profile(apply=False, lines_to_print=15, strip_dirs=True)
-def pseudo_labels_MIP_train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats=False, progress_bar=None):
+def pseudo_labels_MIL_train(cfg, model, loss_class, optimizer, train_dataloader, test_dataloader, print_stats=False, progress_bar=None):
     """
     Mltiple instance learning + pseudo labels training
     Train the model one epoch on the data loader

@@ -52,8 +52,8 @@ class DatasetLoader():
         dataset_name = self.cfg.TRAIN.DATASET if self.split == 'train' else self.cfg.TEST.DATASET
         self.dataset = build_dataset(dataset_name, self.cfg, self.split, self.is_features)
 
-        if self.split == 'train' and self.cfg.TRAIN.TYPE == 'PL-MIL':
-            assert self.cfg.TRANSFORM.CODE == "NONE"
+        if self.split == 'train' and self.cfg.TRAIN.TYPE in ['PL', 'PL-MIL']:
+            assert self.cfg.TRANSFORM.CODE != self.cfg.TRAIN.PL_AUG_CODE
 
             aug_dataset_cfg = copy.deepcopy(self.cfg)
             aug_dataset_cfg.TRANSFORM.CODE = aug_dataset_cfg.TRAIN.PL_AUG_CODE
@@ -215,7 +215,7 @@ class DatasetLoader():
     def __getitem__(self, index):
         """
         if split == "train"
-            if cfg.TRAIN.TYPE == 'PL-MIL'
+            if cfg.TRAIN.TYPE in ['PL', 'PL-MIL']
                 Gets four batches from two datasets
                     Two from no transform dataset
                     Two from augmented dataset
@@ -229,7 +229,7 @@ class DatasetLoader():
             index (int): batch index
         Returns
             if split == "train"
-                if cfg.TRAIN.TYPE == 'PL-MIL'
+                if cfg.TRAIN.TYPE in ['PL', 'PL-MIL']
                     org_normal_batch (dict), org_anomaleous_batch (dict),
                             aug_normal_batch (dict), aug_anomaleous_batch (dict)
                 else
@@ -246,7 +246,7 @@ class DatasetLoader():
                 paths: List(Path) features paths batched
             }
         """
-        if self.split == 'train' and self.cfg.TRAIN.TYPE == 'PL-MIL':
+        if self.split == 'train' and self.cfg.TRAIN.TYPE in ['PL', 'PL-MIL']:
             return self.get_batch(self.dataset, index), \
                 self.get_batch(self.aug_dataset, index, False)
         else:

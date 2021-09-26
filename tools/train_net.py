@@ -121,7 +121,7 @@ def _print_train_stats(
         ["Number of Training Batches", train_batches_len],
         ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
         ["Extraction Frames Inner Batch Size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
-        ["Training Type", cfg.TRAIN.TYPE],
+        ["Training Type", infoutils.get_detailed_train_type(cfg)],
         ["Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_CODE]
             if cfg.TRAIN.TYPE == "PL-MIL" else None,
         ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],
