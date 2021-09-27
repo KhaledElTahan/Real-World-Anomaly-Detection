@@ -88,6 +88,13 @@ class SultaniLoss():
         return self.overall_loss()
 
 
+    def get_progress_bar_info(self):
+        """
+        Returns progress bar information to be updated per batch
+        """
+        return {}
+
+
 @MODEL_REGISTRY.register()
 class PseudoLabelsLoss():
     """
@@ -113,6 +120,7 @@ class PseudoLabelsLoss():
         self.preds_aug_normal = preds[2].squeeze(-1) # shape ((batch_size x number_of_segments)
         self.preds_aug_anomaly = preds[3].squeeze(-1) # shape (batch_size x number_of_segments)
 
+        self.examples_length = None
         self.cfg = cfg
         self.threshold = cfg.TRAIN.PL_THRESHOLD
 
@@ -128,8 +136,7 @@ class PseudoLabelsLoss():
         pos_anomalies = self.preds_aug_anomaly[self.preds_org_anomaly >= self.threshold]
         segments_len = len(pos_anomalies)
 
-        print()
-        print(segments_len)
+        self.examples_length = segments_len
 
         return pos_anomalies, segments_len
 
@@ -140,19 +147,35 @@ class PseudoLabelsLoss():
         The idea is to collect the hardest examples with greatest false alarm
         Args:
             topk (int): Number of top segments to be selected
+            corrected_top_k (int): The corrected length of pos_anomalies
         """
+        assert self.cfg.TRAIN.PL_NORMAL_LABEL_SRC in ["ORG", "AUG"]
+        assert self.cfg.TRAIN.PL_NORMAL_LABEL_DST in ["ORG", "AUG"]
+
+        ## To avoid NAN loss
+        if topk <= 10:
+            topk = 10
+
+        if self.cfg.TRAIN.PL_NORMAL_LABEL_SRC == "ORG":
+            indices = torch.topk(self.preds_org_normal.view(-1), topk, largest=False).indices
+        elif self.cfg.TRAIN.PL_NORMAL_LABEL_SRC == "AUG":
+            indices = torch.topk(self.preds_aug_normal.view(-1), topk, largest=False).indices
+
         ## Could use preds_org_normal ???
-        return torch.topk(self.preds_aug_normal.view(-1), topk).values
+        if self.cfg.TRAIN.PL_NORMAL_LABEL_DST == "ORG":
+            return self.preds_org_normal.view(-1)[indices], topk
+        elif self.cfg.TRAIN.PL_NORMAL_LABEL_DST == "AUG":
+            return self.preds_aug_anomaly.view(-1)[indices], topk
 
 
     def overall_loss(self):
         """The overall pseudo labels loss"""
         preds_anomalies, segments_len = self.calculate_positive_anomalies()
-        preds_normal = self.calculate_topk_negative_normals(segments_len)
+        preds_normal, corrected_top_k = self.calculate_topk_negative_normals(segments_len)
         preds = torch.cat([preds_anomalies, preds_normal])
 
         targets_anomalies = torch.ones(segments_len, dtype=torch.float32)
-        targets_normal = torch.zeros(segments_len, dtype=torch.float32)
+        targets_normal = torch.zeros(corrected_top_k, dtype=torch.float32)
         targets = torch.cat([targets_anomalies, targets_normal])
 
         binary_cross_entropy_loss = torch.nn.BCELoss()
@@ -160,3 +183,10 @@ class PseudoLabelsLoss():
 
     def __call__(self):
         return self.overall_loss()
+
+
+    def get_progress_bar_info(self):
+        """
+        Returns progress bar information to be updated per batch
+        """
+        return {"No. Examples": self.examples_length}

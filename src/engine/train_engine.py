@@ -111,7 +111,7 @@ def generic_train(cfg, model, loss_class, optimizer, train_dataloader, test_data
         optimizer.step()
 
         auc = _evaluate_per_batch(cfg, model, test_dataloader, idx)
-        _update_progress_bar(progress_bar, total_loss, idx, auc, print_stats)
+        _update_progress_bar(progress_bar, total_loss, idx, auc, print_stats, **loss.get_progress_bar_info())
 
     return total_loss / len(train_dataloader)
 
@@ -182,7 +182,7 @@ def _evaluate_per_batch(cfg, model, test_dataloader, idx):
 
     return auc
 
-def _update_progress_bar(progress_bar, total_loss, idx, auc=None, print_stats=False):
+def _update_progress_bar(progress_bar, total_loss, idx, auc, print_stats, **kwargs):
     """
     Utility to update the progress bar inside the training function
     Args:
@@ -202,6 +202,6 @@ def _update_progress_bar(progress_bar, total_loss, idx, auc=None, print_stats=Fa
         progress_bar.update(n=1)
 
         if _update_progress_bar.auc is not None:
-            progress_bar.set_postfix(loss=total_loss / (idx + 1), AUC=_update_progress_bar.auc)
+            progress_bar.set_postfix(loss=total_loss / (idx + 1), AUC=_update_progress_bar.auc, **kwargs)
         else:
-            progress_bar.set_postfix(loss=total_loss / (idx + 1))
+            progress_bar.set_postfix(loss=total_loss / (idx + 1), **kwargs)

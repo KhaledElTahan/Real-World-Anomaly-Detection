@@ -60,6 +60,13 @@ _C.TRAIN.PL_AUG_CODE = "BG-MOG2"
 # if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose pseudo label threshold [0.0, 1.0]
 _C.TRAIN.PL_THRESHOLD = 0.6
 
+# if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose the source dataset of the normal pseudo label
+# Either "ORG" for features without transformations or "AUG" for features with transformations
+# SRC: The one we will choose least values indices from
+# DST: The actuall dataset we will use to optimize model
+_C.TRAIN.PL_NORMAL_LABEL_SRC = "AUG"
+_C.TRAIN.PL_NORMAL_LABEL_DST = "AUG"
+
 # Dataset for training.
 _C.TRAIN.DATASET = "UCFAnomalyDetection"
 
