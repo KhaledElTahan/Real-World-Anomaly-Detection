@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from src.models import losses
 from src.engine import test_engine
+from src.utils import funcutils
 
 
 @torch.enable_grad()

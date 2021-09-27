@@ -1,6 +1,6 @@
 """Define the model optimizers"""
 
-from torch.optim import Adagrad, Adam, Adadelta
+from torch.optim import Adagrad, Adam, Adadelta, SGD
 
 def get_optimizer(cfg, model):
     """
@@ -12,7 +12,7 @@ def get_optimizer(cfg, model):
         optimizer (torch.optim.optimizer)
     """
 
-    assert cfg.OPTIMIZER.NAME in ["Adagrad", "Adam", "Adadelta"]
+    assert cfg.OPTIMIZER.NAME in ["Adagrad", "Adam", "Adadelta", "SDG"]
 
     if cfg.OPTIMIZER.NAME == "Adagrad":
         optimizer = Adagrad(
@@ -35,5 +35,11 @@ def get_optimizer(cfg, model):
             eps=cfg.OPTIMIZER.EPS,
             weight_decay=cfg.OPTIMIZER.WEIGHT_DECAY
         )
-    
+    elif cfg.OPTIMIZER.NAME == "SGD":
+        optimizer = SGD(
+            model.parameters(),
+            lr=cfg.OPTIMIZER.BASE_LR,
+            weight_decay=cfg.OPTIMIZER.WEIGHT_DECAY
+        )
+
     return optimizer
