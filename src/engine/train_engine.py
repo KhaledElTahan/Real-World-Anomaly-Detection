@@ -1,10 +1,9 @@
 """Model training engine"""
 
-from src.models import losses
-from src.utils import funcutils
 import torch
 from tqdm import tqdm
 
+from src.models import losses
 from src.engine import test_engine
 
 
@@ -110,9 +109,8 @@ def generic_train(cfg, model, loss_class, optimizer, train_dataloader, test_data
         our_loss.backward()
         optimizer.step()
 
-        _update_progress_bar(
-            cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats
-        )
+        auc = _evaluate_per_batch(cfg, model, test_dataloader, idx)
+        _update_progress_bar(progress_bar, total_loss, idx, auc, print_stats)
 
     return total_loss / len(train_dataloader)
 
@@ -159,32 +157,46 @@ def pseudo_labels_MIL_train(cfg, model, optimizer, train_dataloader, test_datalo
         our_loss.backward()
         optimizer.step()
 
-        _update_progress_bar(
-            cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats
-        )
+        auc = _evaluate_per_batch(cfg, model, test_dataloader, idx)
+        _update_progress_bar(progress_bar, total_loss, idx, auc, print_stats)
 
     return total_loss / len(train_dataloader)
 
 
-def _update_progress_bar(cfg, model, test_dataloader, progress_bar, total_loss, idx, print_stats=False):
+def _evaluate_per_batch(cfg, model, test_dataloader, idx):
     """
-    Utility to update the progress bar inside the training function
+    Evalues the model inside the epoch
     Args:
         cfg (cfgNode): Model configurations
         model (torch.nn.model): Video model
         test_dataloader (DatasetLoader): testing dataset loader
+        idx (int): Index of batch inside the training epoch
+    Returns:
+        auc (float | None): Area under the ROC curve, or None if no evaluation is needed
+    """
+    auc = None
+    if cfg.TRAIN.ENABLE_EVAL_BATCH and idx % cfg.TRAIN.EVAL_BATCH_PERIOD == 0:
+        auc, _, _, _ = test_engine.test(cfg, model, test_dataloader, False)
+        model.train()
+
+    return auc
+
+def _update_progress_bar(progress_bar, total_loss, idx, auc=None, print_stats=False):
+    """
+    Utility to update the progress bar inside the training function
+    Args:
+        progress_bar (tqdm): if print_status, will be used to print a training progress bar
         total_loss (float): Total loss so far in this training epoch
         idx (int): Index of batch inside the training epoch
-        progress_bar (tqdm): if print_status, will be used to print a training progress bar
+        auc (float | None): Area under the ROC curve, or None if no evaluation is needed
         print_stats (Bool): Whether to print stats or not
     """
     if print_stats:
         if 'auc' not in _update_progress_bar.__dict__:
             _update_progress_bar.auc = None
 
-        if cfg.TRAIN.ENABLE_EVAL_BATCH and idx % cfg.TRAIN.EVAL_BATCH_PERIOD == 0:
-            _update_progress_bar.auc, _, _, _ = test_engine.test(cfg, model, test_dataloader, False)
-            model.train()
+        if auc is not None:
+            _update_progress_bar.auc = auc
 
         progress_bar.update(n=1)
 

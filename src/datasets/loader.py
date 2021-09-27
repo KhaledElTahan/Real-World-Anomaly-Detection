@@ -236,7 +236,7 @@ class DatasetLoader():
                     normal_batch (dict), anomaleous_batch (dict)
             if split == "test"
                 batch (dict)
-            
+
             each batch is of the format (dict):
             {
                 features_batched: Tensor(Torch) features batched,
@@ -247,8 +247,9 @@ class DatasetLoader():
             }
         """
         if self.split == 'train' and self.cfg.TRAIN.TYPE in ['PL', 'PL-MIL']:
-            return self.get_batch(self.dataset, index), \
-                self.get_batch(self.aug_dataset, index, False)
+            org_normal_batch, org_anomaleous_batch = self.get_batch(self.dataset, index)
+            aug_normal_batch, aug_anomaleous_batch = self.get_batch(self.aug_dataset, index, False)
+            return org_normal_batch, org_anomaleous_batch, aug_normal_batch, aug_anomaleous_batch
         else:
             return self.get_batch(self.dataset, index)
 
