@@ -42,6 +42,17 @@ _C.MODEL.SIGN = "Baseline"
 # Path to the checkpoint directory to load weights.
 _C.MODEL.CHECKPOINTS_DIRECTORY = "model-checkpoints"
 
+# -----------------------------------------------------------------------------
+# Losses options
+# -----------------------------------------------------------------------------
+_C.LOSS = CfgNode()
+
+# Sultani Smoothness Lambda
+_C.LOSS.SL_SMOOTHNESS_LAMBDA = 8e-5
+
+# Sultani Smoothness Lambda
+_C.LOSS.SL_SPARISTY_LAMBDA = 8e-5
+
 # ---------------------------------------------------------------------------- #
 # Training options.
 # ---------------------------------------------------------------------------- #

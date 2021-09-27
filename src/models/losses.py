@@ -45,8 +45,8 @@ class SultaniLoss():
         self.preds_normal = preds[0].squeeze(-1) # shape ((batch_size x number_of_segments)
         self.preds_anomaly = preds[1].squeeze(-1) # shape (batch_size x number_of_segments)
 
-        self.smoothness_lambda = 8e-5
-        self.sparisty_lambda = 8e-5
+        self.smoothness_lambda = cfg.LOSS.SL_SMOOTHNESS_LAMBDA
+        self.sparisty_lambda = cfg.LOSS.SL_SPARISTY_LAMBDA
 
         self.cfg = cfg
 
@@ -141,7 +141,7 @@ class PseudoLabelsLoss():
         return pos_anomalies, segments_len
 
 
-    def calculate_topk_negative_normals(self, topk):
+    def calculate_topk_normals(self, topk):
         """
         Calculates the top k (k = segments_len) negative normals
         The idea is to collect the hardest examples with greatest false alarm
@@ -171,7 +171,7 @@ class PseudoLabelsLoss():
     def overall_loss(self):
         """The overall pseudo labels loss"""
         preds_anomalies, segments_len = self.calculate_positive_anomalies()
-        preds_normal, corrected_top_k = self.calculate_topk_negative_normals(segments_len)
+        preds_normal, corrected_top_k = self.calculate_topk_normals(segments_len)
         preds = torch.cat([preds_anomalies, preds_normal])
 
         targets_anomalies = torch.ones(segments_len, dtype=torch.float32)
