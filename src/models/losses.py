@@ -189,4 +189,10 @@ class PseudoLabelsLoss():
         """
         Returns progress bar information to be updated per batch
         """
-        return {"No. Examples": self.examples_length}
+        all_segments_number = 1
+        for dim in self.preds_org_normal.size():
+            all_segments_number *= dim
+
+        return {
+            "PLs/Anomaly": "{0:.1f}%".format(100.0 * self.examples_length / all_segments_number)
+        }

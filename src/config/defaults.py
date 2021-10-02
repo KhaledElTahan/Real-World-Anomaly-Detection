@@ -81,13 +81,13 @@ _C.TRAIN.PL_NORMAL_LABEL_DST = "AUG"
 # if TRAIN.TYPE is 'PL-MIL
 # List of intervals, each interval will use the PL_MIL_PERCENTAGE as a percentage for PL training
 # Last Interval will always be repeated if all intervals have passed
-_C.TRAIN.PL_MIL_INTERVALS = []
+_C.TRAIN.PL_MIL_INTERVALS = [10] + [5] * 5 + [5] * 5 + [10]
 
 # if TRAIN.TYPE is 'PL-MIL
 # List of percentages, each percentage represents the percentage of PL_MIL_INTERVALS interval
 #   to train with MIL if PL_MIL_MILFIRST is True, or PL if False
 # Must be of length TRAIN.PL_MIL_INTERVALS
-_C.TRAIN.PL_MIL_PERCENTAGE = []
+_C.TRAIN.PL_MIL_PERCENTAGE = [1] + [0.6] * 5 + [0.4] * 5 + [0.5]
 
 # if TRAIN.TYPE is 'PL-MIL
 # If True, then each interval will begin with percentage of MIL Training
