@@ -78,6 +78,22 @@ _C.TRAIN.PL_THRESHOLD = 0.6
 _C.TRAIN.PL_NORMAL_LABEL_SRC = "AUG"
 _C.TRAIN.PL_NORMAL_LABEL_DST = "AUG"
 
+# if TRAIN.TYPE is 'PL-MIL
+# List of intervals, each interval will use the PL_MIL_PERCENTAGE as a percentage for PL training
+# Last Interval will always be repeated if all intervals have passed
+_C.TRAIN.PL_MIL_INTERVALS = []
+
+# if TRAIN.TYPE is 'PL-MIL
+# List of percentages, each percentage represents the percentage of PL_MIL_INTERVALS interval
+#   to train with MIL if PL_MIL_MILFIRST is True, or PL if False
+# Must be of length TRAIN.PL_MIL_INTERVALS
+_C.TRAIN.PL_MIL_PERCENTAGE = []
+
+# if TRAIN.TYPE is 'PL-MIL
+# If True, then each interval will begin with percentage of MIL Training
+# If False, then each interval will begin with percentage of PL Training
+_C.TRAIN.PL_MIL_MILFIRST = True
+
 # Dataset for training.
 _C.TRAIN.DATASET = "UCFAnomalyDetection"
 
@@ -382,6 +398,8 @@ _C.LOG_MODEL_INFO = True
 # If True, run the run stats tool
 _C.RUN_STATS_TOOL = False
 
+# If True, run the run dev test tool
+_C.RUN_DEV_TEST = False
 
 # ---------------------------------------------------------------------------- #
 # Benchmark options

@@ -85,6 +85,12 @@ def parse_args():
         help="Select this option to run the stats tool",
         action='store_true',
     )
+    parser.add_argument(
+        "--devtest",
+        dest="devtest",
+        help="Select this option to run the developer testing tool",
+        action='store_true',
+    )
     parser.set_defaults(extract=False)
     parser.add_argument(
         "--cfg_extract",
@@ -134,6 +140,9 @@ def load_config(args):
 
     # Check whether we have to run the stats tool
     cfg.RUN_STATS_TOOL = args.stats
+
+    # Check whether we have to run the stats tool
+    cfg.RUN_DEV_TEST = args.devtest
 
     # Set number of GPUs
     if args.gpus != -1:

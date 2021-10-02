@@ -9,6 +9,7 @@ from tools.train_net import train
 from tools.test_net import test
 from tools.demo_net import demo
 from tools.stats_net import stats
+from tools.dev_test import dev_test
 
 
 def main():
@@ -42,6 +43,11 @@ def main():
     # Print stats
     if cfg.RUN_STATS_TOOL:
         stats(cfg)
+
+    # --devtest
+    # Run development tests
+    if cfg.RUN_DEV_TEST:
+        dev_test(cfg)
 
     print()
     print("Execution completed.")
