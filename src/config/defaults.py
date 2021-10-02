@@ -87,7 +87,7 @@ _C.TRAIN.PL_MIL_INTERVALS = [10] + [5] * 5 + [5] * 5 + [10]
 # List of percentages, each percentage represents the percentage of PL_MIL_INTERVALS interval
 #   to train with MIL if PL_MIL_MILFIRST is True, or PL if False
 # Must be of length TRAIN.PL_MIL_INTERVALS
-_C.TRAIN.PL_MIL_PERCENTAGE = [1] + [0.6] * 5 + [0.4] * 5 + [0.5]
+_C.TRAIN.PL_MIL_PERCENTAGE = [1] + [0.6] * 5 + [0.4] * 5 + [0.6]
 
 # if TRAIN.TYPE is 'PL-MIL
 # If True, then each interval will begin with percentage of MIL Training

@@ -135,12 +135,12 @@ def pseudo_labels_MIL_train(cfg, model, optimizer, train_dataloader, test_datalo
             losses.get_loss_class(cfg, False),
             optimizer,
             train_dataloader,
-            test_dataloader, 
+            test_dataloader,
             print_stats,
             progress_bar
         )
     elif training_selection == "PL":
-        loss_value = generic_train( 
+        loss_value = generic_train(
             cfg,
             model,
             losses.get_loss_class(cfg, True),
@@ -182,7 +182,10 @@ def _get_training_selection_for_epoch_PL_MIL(cfg):
     # Consider after last interval scenario
     if remaining_intervals > cfg.TRAIN.PL_MIL_INTERVALS[interval_index]:
         remaining_intervals %= cfg.TRAIN.PL_MIL_INTERVALS[interval_index]
-
+    
+    if remaining_intervals == 0:
+        remaining_intervals = cfg.TRAIN.PL_MIL_INTERVALS[interval_index]
+    
     greater = False
     if remaining_intervals > \
         cfg.TRAIN.PL_MIL_INTERVALS[interval_index] * cfg.TRAIN.PL_MIL_PERCENTAGE[interval_index]:
