@@ -122,6 +122,12 @@ def _print_train_stats(
         ["Extraction Frames Inner Batch Size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
         ["Training Type", infoutils.get_detailed_train_type(cfg)],
         ["Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_CODE]
+            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
+        ["PL MIL Intervals", cfg.TRAIN.PL_MIL_INTERVALS]
+            if cfg.TRAIN.TYPE == "PL-MIL" else None,
+        ["PL MIL Percentages", cfg.TRAIN.PL_MIL_PERCENTAGES]
+            if cfg.TRAIN.TYPE == "PL-MIL" else None,
+        ["PL MIL - MIL First", cfg.TRAIN.PL_MIL_MILFIRST]
             if cfg.TRAIN.TYPE == "PL-MIL" else None,
         ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],
         ["Training from Checkpoint", training_from_checkpoint],

@@ -164,10 +164,10 @@ def _get_training_selection_for_epoch_PL_MIL(cfg):
     """
     assert cfg.TRAIN.TYPE == 'PL-MIL'
     assert len(cfg.TRAIN.PL_MIL_INTERVALS) > 0
-    assert len(cfg.TRAIN.PL_MIL_PERCENTAGE) == len(cfg.TRAIN.PL_MIL_INTERVALS)
+    assert len(cfg.TRAIN.PL_MIL_PERCENTAGES) == len(cfg.TRAIN.PL_MIL_INTERVALS)
 
     sum_intervals = 0
-    interval_index = len(cfg.TRAIN.PL_MIL_PERCENTAGE) - 1
+    interval_index = len(cfg.TRAIN.PL_MIL_PERCENTAGES) - 1
     remaining_intervals = cfg.TRAIN.CURRENT_EPOCH
 
     for index, interval in enumerate(cfg.TRAIN.PL_MIL_INTERVALS):
@@ -188,7 +188,7 @@ def _get_training_selection_for_epoch_PL_MIL(cfg):
     
     greater = False
     if remaining_intervals > \
-        cfg.TRAIN.PL_MIL_INTERVALS[interval_index] * cfg.TRAIN.PL_MIL_PERCENTAGE[interval_index]:
+        cfg.TRAIN.PL_MIL_INTERVALS[interval_index] * cfg.TRAIN.PL_MIL_PERCENTAGES[interval_index]:
         greater = True
 
     #     Table      | MIL_FIRST (True) | MIL_First (False)
