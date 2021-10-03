@@ -5,11 +5,12 @@ import torch
 import numpy as np
 
 
-def _reduce_consec_strings(items):
+def reduce_consec_values(items, item_type=(str, int, float)):
     """
-    Reduce consecutive strings inside a list/tuple, to beautify the output
+    Reduce consecutive item_type inside a list/tuple, to beautify the output
     Args:
-        items (list/tuple): Nested list of strings
+        items (list/tuple): Nested list of item_type
+        item_type (type): Type of items to be reduced
     Returns:
         reduced_items (list/tuple): Same as items but with reduced elements
     Example:
@@ -25,7 +26,7 @@ def _reduce_consec_strings(items):
 
     counter = 1
     for idx, item in enumerate(items):
-        if isinstance(item, str) and idx + 1 < len(items) and item == items[idx + 1]:
+        if isinstance(item, item_type) and idx + 1 < len(items) and item == items[idx + 1]:
             counter = counter + 1
         else:
             if counter > 1:
@@ -75,7 +76,7 @@ def _tesnors_to_shapes(tensors):
         elif isinstance(shapes, dict):
             shapes[keys[idx]] = res
 
-    return _reduce_consec_strings(shapes)
+    return reduce_consec_values(shapes)
 
 
 def _tensor_representation(tensor):

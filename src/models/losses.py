@@ -157,9 +157,9 @@ class PseudoLabelsLoss():
             topk = 10
 
         if self.cfg.TRAIN.PL_NORMAL_LABEL_SRC == "ORG":
-            indices = torch.topk(self.preds_org_normal.view(-1), topk, largest=False).indices
+            indices = torch.topk(self.preds_org_normal.view(-1), topk, largest=True).indices
         elif self.cfg.TRAIN.PL_NORMAL_LABEL_SRC == "AUG":
-            indices = torch.topk(self.preds_aug_normal.view(-1), topk, largest=False).indices
+            indices = torch.topk(self.preds_aug_normal.view(-1), topk, largest=True).indices
 
         ## Could use preds_org_normal ???
         if self.cfg.TRAIN.PL_NORMAL_LABEL_DST == "ORG":

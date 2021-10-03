@@ -54,6 +54,8 @@ def train(cfg):
         len(train_dataloader)
     )
 
+    _print_hyperparameters_stats(cfg)
+
     for epoch in range(completed_epochs + 1, cfg.TRAIN.MAX_EPOCH + 1):
         cfg.TRAIN.CURRENT_EPOCH = epoch
         loss_value = train_engine.train(
@@ -112,23 +114,12 @@ def _print_train_stats(
     table = [
         ["Full Model Name", infoutils.get_full_model_name(cfg)],
         ["Classifier Name", cfg.MODEL.MODEL_NAME],
-        ["Loss Name", cfg.MODEL.LOSS_FUNC],
         ["Dataset", cfg.TRAIN.DATASET],
         ["Train Batch Size", cfg.TRAIN.BATCH_SIZE],
         ["Test Batch Size", cfg.TEST.BATCH_SIZE],
         ["Number of Training Examples", train_examples_len],
         ["Number of Training Batches", train_batches_len],
-        ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
-        ["Extraction Frames Inner Batch Size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
         ["Training Type", infoutils.get_detailed_train_type(cfg)],
-        ["Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_CODE]
-            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
-        ["PL MIL Intervals", cfg.TRAIN.PL_MIL_INTERVALS]
-            if cfg.TRAIN.TYPE == "PL-MIL" else None,
-        ["PL MIL Percentages", cfg.TRAIN.PL_MIL_PERCENTAGES]
-            if cfg.TRAIN.TYPE == "PL-MIL" else None,
-        ["PL MIL - MIL First", cfg.TRAIN.PL_MIL_MILFIRST]
-            if cfg.TRAIN.TYPE == "PL-MIL" else None,
         ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],
         ["Training from Checkpoint", training_from_checkpoint],
         ["Completed Epochs", completed_epochs] if training_from_checkpoint else None,
@@ -150,6 +141,47 @@ def _print_train_stats(
         ["BG_Sub Algorithm", cfg.TRANSFORM.BG_SUBTRACTION_ALGORITHM]
             if cfg.TRANSFORM.BG_SUBTRACTION_ENABLED else None,
         ["Transformation Code", cfg.TRANSFORM.CODE],
+    ]
+
+    table = [x for x in table if x is not None]
+
+    print(tabulate(table, headers, tablefmt="pretty", colalign=("center", "left")))
+    print()
+
+
+def _print_hyperparameters_stats(cfg):
+    """
+    Prints a summary of the hyperparameters
+    Args:
+        cfg (cfgNode): Video model configurations
+    """
+
+    print("Hyperparameters Summary:")
+
+    headers = ["Attribute", "Value"]
+    table = [
+        ["Full Model Name", infoutils.get_full_model_name(cfg)],
+        ["Features Name", infoutils.get_dataset_features_name(cfg)],
+        ["Transformation Code", cfg.TRANSFORM.CODE],
+        ["Number of Segments", cfg.EXTRACT.NUMBER_OUTPUT_SEGMENTS],
+        ["Extraction Frames Inner Batch Size", cfg.EXTRACT.FRAMES_BATCH_SIZE],
+        ["Loss Name", cfg.MODEL.LOSS_FUNC],
+        ["Sultani Smoothness Lambda", cfg.LOSS.SL_SMOOTHNESS_LAMBDA]
+            if cfg.MODEL.LOSS_FUNC == "SultaniLoss" else None,
+        ["Sultani Sparisty Lambda", cfg.LOSS.SL_SPARISTY_LAMBDA]
+            if cfg.MODEL.LOSS_FUNC == "SultaniLoss" else None,
+        ["Training Type", infoutils.get_detailed_train_type(cfg)],
+        ["Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_CODE]
+            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
+        ["Pseudo Labels Threshold", cfg.TRAIN.PL_THRESHOLD]
+            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
+        ["PL MIL Intervals", infoutils.get_PL_MIL_printable_intervals(cfg)]
+            if cfg.TRAIN.TYPE == "PL-MIL" else None,
+        ["PL MIL - MIL First", cfg.TRAIN.PL_MIL_MILFIRST]
+            if cfg.TRAIN.TYPE == "PL-MIL" else None,
+        ["Optimizer", cfg.OPTIMIZER.NAME],
+        ["Base Learning Rate", cfg.OPTIMIZER.BASE_LR],
+        ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],
     ]
 
     table = [x for x in table if x is not None]

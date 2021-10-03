@@ -26,7 +26,7 @@ def _print_trained_models_stats(cfg):
     headers = [
         "Features Name",
         "Model Name",
-        "Reading Order",
+        "Train Type",
         "Best AUC",
         "Best Epoch",
         "Last AUC",
@@ -44,7 +44,7 @@ def _print_trained_models_stats(cfg):
                 [
                     infoutils.get_dataset_features_name(checkpoint_cfg),
                     infoutils.get_full_model_without_features(checkpoint_cfg),
-                    checkpoint_cfg.TRAIN.DATA_READ_ORDER,
+                    infoutils.get_train_type(checkpoint_cfg),
                     "{:6f}".format(best_auc),
                     str(best_epoch),
                     "{:6f}".format(auc),

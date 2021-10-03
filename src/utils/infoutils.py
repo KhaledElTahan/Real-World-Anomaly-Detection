@@ -1,5 +1,8 @@
 """Information Utils"""
 
+from src.utils import debugutils
+
+
 def get_dataset_features_name(cfg):
     """
     Creates dataset features name
@@ -56,6 +59,27 @@ def get_detailed_train_type(cfg):
             format(cfg.TRAIN.PL_NORMAL_LABEL_SRC + "-" + cfg.TRAIN.PL_NORMAL_LABEL_DST)
 
     return detailed_train_type
+
+
+def get_PL_MIL_printable_intervals(cfg):
+    """
+    Gets a beautified version of cfg.TRAIN.PL_MIL_INTERVALS and cfg.TRAIN.PL_MIL_PERCENTAGES
+    Args
+        cfg: The video model configuration file
+    Returns:
+        printable_intervals (List): Beautified version of PL-MIL intervals
+    """
+    assert cfg.TRAIN.TYPE == 'PL-MIL'
+    assert len(cfg.TRAIN.PL_MIL_INTERVALS) > 0
+    assert len(cfg.TRAIN.PL_MIL_INTERVALS) == len(cfg.TRAIN.PL_MIL_PERCENTAGES)
+
+    printable_intervals = []
+    for idx in range(len(cfg.TRAIN.PL_MIL_INTERVALS)):
+        printable_intervals.append(
+            (cfg.TRAIN.PL_MIL_INTERVALS[idx], cfg.TRAIN.PL_MIL_PERCENTAGES[idx])
+        )
+
+    return debugutils.reduce_consec_values(printable_intervals, tuple)
 
 
 def get_full_model_without_features(cfg):
