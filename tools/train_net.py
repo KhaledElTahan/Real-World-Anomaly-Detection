@@ -177,8 +177,6 @@ def _print_hyperparameters_stats(cfg):
             if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
         ["PL MIL Intervals", infoutils.get_PL_MIL_printable_intervals(cfg)]
             if cfg.TRAIN.TYPE == "PL-MIL" else None,
-        ["PL MIL - MIL First", cfg.TRAIN.PL_MIL_MILFIRST]
-            if cfg.TRAIN.TYPE == "PL-MIL" else None,
         ["Optimizer", cfg.OPTIMIZER.NAME],
         ["Base Learning Rate", cfg.OPTIMIZER.BASE_LR],
         ["Training Data Read Order", cfg.TRAIN.DATA_READ_ORDER],

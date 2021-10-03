@@ -1,5 +1,6 @@
 """Information Utils"""
 
+import re
 from src.utils import debugutils
 
 
@@ -73,13 +74,25 @@ def get_PL_MIL_printable_intervals(cfg):
     assert len(cfg.TRAIN.PL_MIL_INTERVALS) > 0
     assert len(cfg.TRAIN.PL_MIL_INTERVALS) == len(cfg.TRAIN.PL_MIL_PERCENTAGES)
 
+    if cfg.TRAIN.PL_MIL_MILFIRST:
+        first_type = 'MIL'
+        second_type = 'PL'
+    else:
+        first_type = 'PL'
+        second_type = 'MIL'
+
     printable_intervals = []
     for idx in range(len(cfg.TRAIN.PL_MIL_INTERVALS)):
-        printable_intervals.append(
-            (cfg.TRAIN.PL_MIL_INTERVALS[idx], cfg.TRAIN.PL_MIL_PERCENTAGES[idx])
-        )
+        first_value = int(cfg.TRAIN.PL_MIL_INTERVALS[idx] * cfg.TRAIN.PL_MIL_PERCENTAGES[idx])
+        second_value = cfg.TRAIN.PL_MIL_INTERVALS[idx] - first_value
 
-    return debugutils.reduce_consec_values(printable_intervals, tuple)
+        printable_intervals.append('({}:{}, {}:{})'.\
+            format(first_type, first_value, second_type, second_value))
+
+    printable_intervals = debugutils.reduce_consec_values(printable_intervals, show_one=True)
+    printable_intervals[-1] = re.sub('x \d+','x Inf', printable_intervals[-1])
+
+    return printable_intervals
 
 
 def get_full_model_without_features(cfg):

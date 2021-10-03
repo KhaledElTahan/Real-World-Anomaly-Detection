@@ -5,17 +5,18 @@ import torch
 import numpy as np
 
 
-def reduce_consec_values(items, item_type=(str, int, float)):
+def reduce_consec_values(items, item_type=(str, int, float), show_one=False):
     """
     Reduce consecutive item_type inside a list/tuple, to beautify the output
     Args:
         items (list/tuple): Nested list of item_type
         item_type (type): Type of items to be reduced
+        show_one (Bool): Whether to add x 1 for one items
     Returns:
         reduced_items (list/tuple): Same as items but with reduced elements
     Example:
-        items: ('A', 'A', 'B', 'A')
-        reduced_items: ('A x 2', 'B', 'A')
+        reduce_consec_values(('A', 'A', 'B', 'A')) => ('A x 2', 'B', 'A')
+        reduce_consec_values(('A', 'A', 'B', 'A'), show_one=True) => ('A x 2', 'B x 1', 'A x 1')
     """
     if isinstance(items, list):
         reduced_items = []
@@ -29,7 +30,7 @@ def reduce_consec_values(items, item_type=(str, int, float)):
         if isinstance(item, item_type) and idx + 1 < len(items) and item == items[idx + 1]:
             counter = counter + 1
         else:
-            if counter > 1:
+            if show_one or counter > 1:
                 res = "{} x {}".format(item, counter)
                 counter = 1
             else:
