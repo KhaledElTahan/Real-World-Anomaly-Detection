@@ -20,7 +20,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
     UCFAnomalyDetection video loader.
     """
 
-    def __init__(self, cfg, mode, is_features=False):
+    def __init__(self, cfg, mode, is_features=False, title=None):
         """
         Construct the UCF Anomaly Detection video loader with a given two txt files.
         The format of the training file is:
@@ -52,6 +52,7 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
             cfg (CfgNode): configs.
             mode (string): Options includes `train`, or `test` mode.
             is_features (Bool): Whether to load features or videos
+            title (str): Extra optional title to be printed
         """
         # Only support train, and test mode.
         assert mode in [
@@ -64,7 +65,10 @@ class UCFAnomalyDetection(torch.utils.data.Dataset):
 
         self._video_meta = {}
 
-        print("Constructing UCF Anomaly Detection ({}) - ".format(mode), end="")
+        if title is None:
+            print("Constructing UCF Anomaly Detection ({}) - ".format(mode), end="")
+        else:
+            print("Constructing UCF Anomaly Detection ({}) - ".format(title), end="")
 
         self._construct_dataset()
 

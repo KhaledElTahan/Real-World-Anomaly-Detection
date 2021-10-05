@@ -28,8 +28,8 @@ def get_train_type(cfg):
         train_type (String): Representing the model training type
     """
     if cfg.TRAIN.TYPE in ['PL', 'PL-MIL']:
-        return cfg.TRAIN.TYPE + "-" + cfg.TRAIN.PL_AUG_CODE + "-" + \
-            cfg.TRAIN.PL_NORMAL_LABEL_SRC + "-" + cfg.TRAIN.PL_NORMAL_LABEL_DST
+        return cfg.TRAIN.TYPE + "-" + cfg.TRAIN.PL_AUG_WEAK_CODE + "-" + \
+            cfg.TRAIN.PL_AUG_STRONG_CODE
     else:
         return cfg.TRAIN.TYPE
 
@@ -49,15 +49,13 @@ def get_detailed_train_type(cfg):
         detailed_train_type = "Multiple Instance Learning"
     elif cfg.TRAIN.TYPE == "PL":
         detailed_train_type = \
-            "Pseudo Labels - Base:{} Aug:{}".format(cfg.TRANSFORM.CODE, cfg.TRAIN.PL_AUG_CODE)
+            "Pseudo Labels - Base:{} - WeakAug:{} - StrongAug:{}".\
+                format(cfg.TRANSFORM.CODE, cfg.TRAIN.PL_AUG_WEAK_CODE, cfg.TRAIN.PL_AUG_STRONG_CODE)
     elif cfg.TRAIN.TYPE == "PL-MIL":
         detailed_train_type = \
-            "Pseudo Labels with Multiple Instance Learning - Base:{} Aug:{}".\
-                format(cfg.TRANSFORM.CODE, cfg.TRAIN.PL_AUG_CODE)
+            "Pseudo Labels with Multiple Instance Learning - Base:{} - WeakAug:{} - StrongAug:{}".\
+                format(cfg.TRANSFORM.CODE, cfg.TRAIN.PL_AUG_WEAK_CODE, cfg.TRAIN.PL_AUG_STRONG_CODE)
 
-    if cfg.TRAIN.TYPE in ["PL", "PL-MIL"]:
-        detailed_train_type += " - Normal Labels Source: {}".\
-            format(cfg.TRAIN.PL_NORMAL_LABEL_SRC + "-" + cfg.TRAIN.PL_NORMAL_LABEL_DST)
 
     return detailed_train_type
 

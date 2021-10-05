@@ -48,10 +48,10 @@ _C.MODEL.CHECKPOINTS_DIRECTORY = "model-checkpoints"
 _C.LOSS = CfgNode()
 
 # Sultani Smoothness Lambda
-_C.LOSS.SL_SMOOTHNESS_LAMBDA = 8e-5
+_C.LOSS.SL_SMOOTHNESS_LAMBDA = 1e-2
 
 # Sultani Smoothness Lambda
-_C.LOSS.SL_SPARISTY_LAMBDA = 8e-5
+_C.LOSS.SL_SPARISTY_LAMBDA = 1e-2
 
 # ---------------------------------------------------------------------------- #
 # Training options.
@@ -63,31 +63,26 @@ _C.TRAIN.ENABLE = True
 
 # The type of the training
 # "MIL", "PL", or "PL-MIL"
-_C.TRAIN.TYPE = "MIL"
+_C.TRAIN.TYPE = "PI-MIL"
 
-# if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose Augmented features code
-_C.TRAIN.PL_AUG_CODE = "BG-MOG2"
+# if TRAIN.TYPE in ['PL', 'PL-MIL'] then
+# Choose Weak Augmentation & Strong Augmentation Features Transform Code
+_C.TRAIN.PL_AUG_WEAK_CODE = "BG-KNN"
+_C.TRAIN.PL_AUG_STRONG_CODE = "BG-MOG2"
 
 # if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose pseudo label threshold [0.0, 1.0]
-_C.TRAIN.PL_THRESHOLD = 0.6
-
-# if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose the source dataset of the normal pseudo label
-# Either "ORG" for features without transformations or "AUG" for features with transformations
-# SRC: The one we will choose least values indices from
-# DST: The actuall dataset we will use to optimize model
-_C.TRAIN.PL_NORMAL_LABEL_SRC = "AUG"
-_C.TRAIN.PL_NORMAL_LABEL_DST = "AUG"
+_C.TRAIN.PL_THRESHOLD = 0.7
 
 # if TRAIN.TYPE is 'PL-MIL
 # List of intervals, each interval will use the PL_MIL_PERCENTAGES as a percentage for PL training
 # Last Interval will always be repeated if all intervals have passed
-_C.TRAIN.PL_MIL_INTERVALS = [10] + [5] * 5 + [5] * 5 + [10]
+_C.TRAIN.PL_MIL_INTERVALS = [10] + [5] * 5 + [5] * 10 + [5]
 
 # if TRAIN.TYPE is 'PL-MIL
 # List of percentages, each percentage represents the percentage of PL_MIL_INTERVALS interval
 #   to train with MIL if PL_MIL_MILFIRST is True, or PL if False
 # Must be of length TRAIN.PL_MIL_INTERVALS
-_C.TRAIN.PL_MIL_PERCENTAGES = [1] + [0.6] * 5 + [0.4] * 5 + [0.4]
+_C.TRAIN.PL_MIL_PERCENTAGES = [1] + [0.6] * 5 + [0.4] * 10 + [0.2]
 
 # if TRAIN.TYPE is 'PL-MIL
 # If True, then each interval will begin with percentage of MIL Training
@@ -134,7 +129,7 @@ _C.TRAIN.MAX_EPOCH = 1000000
 # if "All Pairs", will create dataset of all pairs (Normal, Anomaly) ~ O(N^2)
 # if "Shuffle Pairs", will create dataset of all pairs (Normal, Anomaly) ~ O(N^2) and
 #   shuffle each epoch
-_C.TRAIN.DATA_READ_ORDER = "Shuffle Pairs"
+_C.TRAIN.DATA_READ_ORDER = "Shuffle with Replacement"
 
 
 # ---------------------------------------------------------------------------- #

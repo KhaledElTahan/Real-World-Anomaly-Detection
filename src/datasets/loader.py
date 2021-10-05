@@ -49,20 +49,37 @@ class DatasetLoader():
         """
         Construct the dataset.
         """
+        title = "Base Train"\
+            if self.split == 'train' and self.cfg.TRAIN.TYPE in ['PL', 'PL-MIL'] else None
+
         dataset_name = self.cfg.TRAIN.DATASET if self.split == 'train' else self.cfg.TEST.DATASET
-        self.dataset = build_dataset(dataset_name, self.cfg, self.split, self.is_features)
+        self.dataset = build_dataset(dataset_name, self.cfg, self.split, self.is_features, title)
 
         if self.split == 'train' and self.cfg.TRAIN.TYPE in ['PL', 'PL-MIL']:
-            assert self.cfg.TRANSFORM.CODE != self.cfg.TRAIN.PL_AUG_CODE
+            aug_weak_dataset_cfg = copy.deepcopy(self.cfg)
+            aug_weak_dataset_cfg.TRANSFORM.CODE = aug_weak_dataset_cfg.TRAIN.PL_AUG_WEAK_CODE
+            aug_strong_dataset_cfg = copy.deepcopy(self.cfg)
+            aug_strong_dataset_cfg.TRANSFORM.CODE = aug_weak_dataset_cfg.TRAIN.PL_AUG_STRONG_CODE
 
-            aug_dataset_cfg = copy.deepcopy(self.cfg)
-            aug_dataset_cfg.TRANSFORM.CODE = aug_dataset_cfg.TRAIN.PL_AUG_CODE
+            self.aug_weak_dataset = build_dataset(
+                    dataset_name,
+                    aug_weak_dataset_cfg,
+                    self.split,
+                    self.is_features,
+                    "Weak Augmentation Train"
+            )
+            self.aug_strong_dataset = build_dataset(
+                dataset_name,
+                aug_strong_dataset_cfg,
+                self.split,
+                self.is_features,
+                "Strong Augmentation Train"
+            )
 
-            self.aug_dataset = \
-                build_dataset(dataset_name, aug_dataset_cfg, self.split, self.is_features)
-
-            assert self.dataset.len_normal() == self.aug_dataset.len_normal()
-            assert self.dataset.len_anomalies() == self.aug_dataset.len_anomalies()
+            assert self.dataset.len_normal() == self.aug_weak_dataset.len_normal()
+            assert self.dataset.len_anomalies() == self.aug_weak_dataset.len_anomalies()
+            assert self.dataset.len_normal() == self.aug_strong_dataset.len_normal()
+            assert self.dataset.len_normal() == self.aug_strong_dataset.len_normal()
 
 
     def _construct_indices(self):
@@ -231,7 +248,8 @@ class DatasetLoader():
             if split == "train"
                 if cfg.TRAIN.TYPE in ['PL', 'PL-MIL']
                     org_normal_batch (dict), org_anomaleous_batch (dict),
-                            aug_normal_batch (dict), aug_anomaleous_batch (dict)
+                    aug_weak_normal_batch (dict), aug_weak_anomaleous_batch (dict),
+                    aug_strong_normal_batch (dict), aug_strong_anomaleous_batch (dict)
                 else
                     normal_batch (dict), anomaleous_batch (dict)
             if split == "test"
@@ -248,8 +266,13 @@ class DatasetLoader():
         """
         if self.split == 'train' and self.cfg.TRAIN.TYPE in ['PL', 'PL-MIL']:
             org_normal_batch, org_anomaleous_batch = self.get_batch(self.dataset, index)
-            aug_normal_batch, aug_anomaleous_batch = self.get_batch(self.aug_dataset, index, False)
-            return org_normal_batch, org_anomaleous_batch, aug_normal_batch, aug_anomaleous_batch
+            aug_weak_normal_batch, aug_weak_anomaleous_batch =\
+                self.get_batch(self.aug_weak_dataset, index, False)
+            aug_strong_normal_batch, aug_strong_anomaleous_batch =\
+                self.get_batch(self.aug_strong_dataset, index, False)
+            return org_normal_batch, org_anomaleous_batch,\
+                aug_weak_normal_batch, aug_weak_anomaleous_batch,\
+                aug_strong_normal_batch, aug_strong_anomaleous_batch
         else:
             return self.get_batch(self.dataset, index)
 
