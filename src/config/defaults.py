@@ -84,19 +84,19 @@ _C.TRAIN.PL_THRESHOLD = 0.7
 # if TRAIN.TYPE is 'PL-MIL
 # List of intervals, each interval will use the PL_MIL_PERCENTAGES as a percentage for PL training
 # Last Interval will always be repeated if all intervals have passed
-_C.TRAIN.PL_MIL_INTERVALS = [10] + [5] * 5 + [5] * 10 + [5]
+_C.TRAIN.PL_MIL_INTERVALS = [10] + [5] * 15 + [5] * 10 + [5]
 
 # if TRAIN.TYPE is 'PL-MIL
 # List of percentages, each percentage represents the percentage of PL_MIL_INTERVALS interval
 #   to train with MIL if PL_MIL_MILFIRST is True, or PL if False
 # Must be of length TRAIN.PL_MIL_INTERVALS
-_C.TRAIN.PL_MIL_PERCENTAGES = [1] + [0.6] * 5 + [0.4] * 10 + [0.2]
+_C.TRAIN.PL_MIL_PERCENTAGES = [1] + [0.6] * 15 + [0.4] * 10 + [0.2]
 
 # if TRAIN.TYPE is 'PL-MIL
 # List of booleans, each boolean will select whether the following interval selects PL by percentage
 #   or by threshold
 # Last Interval will always be repeated if all intervals have passed
-_C.TRAIN.PL_MIL_PERCENTAGE_THRESHOLD = [False] + [False] * 10 + [True] * 10 + [True]
+_C.TRAIN.PL_MIL_PERCENTAGE_THRESHOLD = [False] + [False] * 15 + [False] * 10 + [True]
 
 # if TRAIN.TYPE is 'PL-MIL
 # If True, then each interval will begin with percentage of MIL Training
@@ -394,8 +394,11 @@ _C.OPTIMIZER.EPS = 1e-8
 # Misc options
 # ---------------------------------------------------------------------------- #
 
-# Number of GPUs to use (applies to both training and testing).
-_C.NUM_GPUS = 1
+# Number of GPUs to use (applies to both training, testing and features extraction).
+_C.NUM_GPUS = 2
+
+# If True, reproducibility is achieved
+_C.SET_RNG_SEED = True
 
 # Note that non-determinism may still be present due to non-deterministic
 # operator implementations in GPU operator libraries.

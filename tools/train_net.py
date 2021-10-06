@@ -141,6 +141,8 @@ def _print_train_stats(
         ["BG_Sub Algorithm", cfg.TRANSFORM.BG_SUBTRACTION_ALGORITHM]
             if cfg.TRANSFORM.BG_SUBTRACTION_ENABLED else None,
         ["Transformation Code", cfg.TRANSFORM.CODE],
+        ["Maunal Seed", cfg.SET_RNG_SEED],
+        ["Seed Value", cfg.RNG_SEED] if cfg.SET_RNG_SEED else None,
     ]
 
     table = [x for x in table if x is not None]
@@ -174,7 +176,7 @@ def _print_hyperparameters_stats(cfg):
         ["Weak Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_WEAK_CODE]
             if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
         ["Strong Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_STRONG_CODE]
-            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
+            if cfg.TRAIN.TYPE == "PL" else None,
         ["PL Use Percentage", cfg.TRAIN.PL_USE_PERCENTAGE]
             if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
         ["Pseudo Labels Percentage", cfg.TRAIN.PL_PERCENTAGE]

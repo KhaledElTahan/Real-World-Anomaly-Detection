@@ -4,6 +4,7 @@ from pathlib import Path
 app_directory = Path(__file__).absolute().parents[1]
 sys.path.insert(0, str(app_directory))
 from src.utils.parser import load_config, parse_args
+from src.utils import env
 from tools.extract_video_features import extract
 from tools.train_net import train
 from tools.test_net import test
@@ -18,6 +19,7 @@ def main():
     """
     args = parse_args()
     cfg = load_config(args)
+    env.setup_random_environment(cfg)
 
     # --extract
     # Perform feature extraction
