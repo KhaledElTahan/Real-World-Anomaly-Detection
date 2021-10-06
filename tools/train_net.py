@@ -175,6 +175,10 @@ def _print_hyperparameters_stats(cfg):
             if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
         ["Strong Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_STRONG_CODE]
             if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
+        ["PL Use Percentage", cfg.TRAIN.PL_USE_PERCENTAGE]
+            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
+        ["Pseudo Labels Percentage", cfg.TRAIN.PL_PERCENTAGE]
+            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
         ["Pseudo Labels Threshold", cfg.TRAIN.PL_THRESHOLD]
             if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
         ["PL MIL Intervals", infoutils.get_PL_MIL_printable_intervals(cfg)]

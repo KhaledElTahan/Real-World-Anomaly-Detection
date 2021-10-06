@@ -70,6 +70,14 @@ _C.TRAIN.TYPE = "PI-MIL"
 _C.TRAIN.PL_AUG_WEAK_CODE = "BG-KNN"
 _C.TRAIN.PL_AUG_STRONG_CODE = "BG-MOG2"
 
+# if TRAIN.TYPE in ['PL', 'PL-MIL']
+# If True, then cfg.TRAIN.PL_PERCENTAGE will be effective
+# Else, then cfg.TRAIN.PL_THRESHOLD will be effective
+_C.TRAIN.PL_USE_PERCENTAGE = True
+
+# if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose pseudo label percentage [0.0, 1.0]
+_C.TRAIN.PL_PERCENTAGE = 0.2
+
 # if TRAIN.TYPE in ['PL', 'PL-MIL'] then choose pseudo label threshold [0.0, 1.0]
 _C.TRAIN.PL_THRESHOLD = 0.7
 

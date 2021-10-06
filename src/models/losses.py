@@ -123,9 +123,11 @@ class PseudoLabelsLoss():
         self.preds_aug_strong_normal = preds[4].squeeze(-1)
         self.preds_aug_strong_anomaly = preds[5].squeeze(-1)
 
+        self.pos_anomalies = None
         self.examples_length = None
         self.cfg = cfg
         self.threshold = cfg.TRAIN.PL_THRESHOLD
+        self.percentage = cfg.TRAIN.PL_PERCENTAGE
 
 
     def calculate_positive_anomalies(self):
@@ -136,11 +138,16 @@ class PseudoLabelsLoss():
                 original values exceed a threshold
             segments_len (int): The length of pos_anomalies
         """
-        pos_anomalies = self.preds_aug_strong_anomaly[self.preds_aug_weak_anomaly >= self.threshold]
+        if self.cfg.TRAIN.PL_USE_PERCENTAGE:
+            topk = int(self.percentage * self._get_all_segments_number())
+            pos_anomalies = torch.topk(self.preds_aug_weak_normal.view(-1), topk, largest=True).values
+        else:
+            pos_anomalies = self.preds_aug_strong_anomaly[self.preds_aug_weak_anomaly >= self.threshold]
+
         segments_len = len(pos_anomalies)
-
+        self.pos_anomalies = pos_anomalies
         self.examples_length = segments_len
-
+        
         return pos_anomalies, segments_len
 
 
@@ -181,10 +188,29 @@ class PseudoLabelsLoss():
         """
         Returns progress bar information to be updated per batch
         """
+        if self.cfg.TRAIN.PL_USE_PERCENTAGE:
+            pl_trace = "PLs Threshold"
+            pl_trace_val = 100.0 * self.pos_anomalies[-1].item()
+
+        else:
+            all_segments_number = self._get_all_segments_number()
+            pl_trace = "PLs/Anomaly"
+            pl_trace_val = 100.0 * self.examples_length / all_segments_number
+
+
+        return {
+            pl_trace: "{0:.1f}%".format(pl_trace_val),
+        }
+
+
+    def _get_all_segments_number(self):
+        """
+        Utility used to get all number of segments in one batch
+        Returns
+            all_segments_number (int): Count of segments in one batch
+        """
         all_segments_number = 1
         for dim in self.preds_org_normal.size():
             all_segments_number *= dim
 
-        return {
-            "PLs/Anomaly": "{0:.1f}%".format(100.0 * self.examples_length / all_segments_number)
-        }
+        return all_segments_number
