@@ -138,7 +138,7 @@ class PseudoLabelsLoss():
                 original values exceed a threshold
             segments_len (int): The length of pos_anomalies
         """
-        if self.cfg.TRAIN.PL_USE_PERCENTAGE:
+        if self._use_percentage_or_threshold():
             topk = int(self.percentage * self._get_all_segments_number())
             pos_anomalies = torch.topk(self.preds_aug_weak_normal.view(-1), topk, largest=True).values
         else:
@@ -184,11 +184,47 @@ class PseudoLabelsLoss():
         return self.overall_loss()
 
 
+    def _get_all_segments_number(self):
+        """
+        Utility used to get all number of segments in one batch
+        Returns
+            all_segments_number (int): Count of segments in one batch
+        """
+        all_segments_number = 1
+        for dim in self.preds_org_normal.size():
+            all_segments_number *= dim
+
+        return all_segments_number
+
+
+    def _use_percentage_or_threshold(self):
+        """
+        Utility to check whether to use percentage or threshold
+        Returns
+            use_percentage (Bool): If True, then use percentage,
+                otherwise use threshold
+        """
+        if self.cfg.TRAIN.TYPE == "PL-MIL":
+            sum_intervals = 0
+            interval_index = len(self.cfg.TRAIN.PL_MIL_PERCENTAGES) - 1
+
+            for index, interval in enumerate(self.cfg.TRAIN.PL_MIL_INTERVALS):
+                sum_intervals += interval
+
+                if self.cfg.TRAIN.CURRENT_EPOCH <= sum_intervals:
+                    interval_index = index
+                    break
+
+            return self.cfg.TRAIN.PL_MIL_PERCENTAGE_THRESHOLD[interval_index]
+        elif self.cfg.TRAIN.TYPE == "PL":
+            return self.cfg.TRAIN.PL_USE_PERCENTAGE
+
+
     def get_progress_bar_info(self):
         """
         Returns progress bar information to be updated per batch
         """
-        if self.cfg.TRAIN.PL_USE_PERCENTAGE:
+        if self._use_percentage_or_threshold():
             pl_trace = "PLs Threshold"
             pl_trace_val = 100.0 * self.pos_anomalies[-1].item()
 
@@ -201,16 +237,3 @@ class PseudoLabelsLoss():
         return {
             pl_trace: "{0:.1f}%".format(pl_trace_val),
         }
-
-
-    def _get_all_segments_number(self):
-        """
-        Utility used to get all number of segments in one batch
-        Returns
-            all_segments_number (int): Count of segments in one batch
-        """
-        all_segments_number = 1
-        for dim in self.preds_org_normal.size():
-            all_segments_number *= dim
-
-        return all_segments_number

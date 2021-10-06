@@ -84,11 +84,18 @@ def get_PL_MIL_printable_intervals(cfg):
         first_value = int(cfg.TRAIN.PL_MIL_INTERVALS[idx] * cfg.TRAIN.PL_MIL_PERCENTAGES[idx])
         second_value = cfg.TRAIN.PL_MIL_INTERVALS[idx] - first_value
 
+        pl_selection_type = '%' if cfg.TRAIN.PL_MIL_PERCENTAGE_THRESHOLD[idx] else '[]'
+
+        if cfg.TRAIN.PL_MIL_MILFIRST:
+            second_type = 'PL' + pl_selection_type
+        else:
+            first_type = 'PL' + pl_selection_type
+
         printable_intervals.append('({}:{}, {}:{})'.\
             format(first_type, first_value, second_type, second_value))
 
     printable_intervals = debugutils.reduce_consec_values(printable_intervals, show_one=True)
-    printable_intervals[-1] = re.sub('x \d+','x Inf', printable_intervals[-1])
+    printable_intervals[-1] = re.sub(r'x \d+','x Inf', printable_intervals[-1])
 
     return printable_intervals
 

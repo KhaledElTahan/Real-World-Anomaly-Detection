@@ -63,7 +63,7 @@ _C.TRAIN.ENABLE = True
 
 # The type of the training
 # "MIL", "PL", or "PL-MIL"
-_C.TRAIN.TYPE = "PI-MIL"
+_C.TRAIN.TYPE = "PL-MIL"
 
 # if TRAIN.TYPE in ['PL', 'PL-MIL'] then
 # Choose Weak Augmentation & Strong Augmentation Features Transform Code
@@ -91,6 +91,12 @@ _C.TRAIN.PL_MIL_INTERVALS = [10] + [5] * 5 + [5] * 10 + [5]
 #   to train with MIL if PL_MIL_MILFIRST is True, or PL if False
 # Must be of length TRAIN.PL_MIL_INTERVALS
 _C.TRAIN.PL_MIL_PERCENTAGES = [1] + [0.6] * 5 + [0.4] * 10 + [0.2]
+
+# if TRAIN.TYPE is 'PL-MIL
+# List of booleans, each boolean will select whether the following interval selects PL by percentage
+#   or by threshold
+# Last Interval will always be repeated if all intervals have passed
+_C.TRAIN.PL_MIL_PERCENTAGE_THRESHOLD = [False] + [False] * 10 + [True] * 10 + [True]
 
 # if TRAIN.TYPE is 'PL-MIL
 # If True, then each interval will begin with percentage of MIL Training
