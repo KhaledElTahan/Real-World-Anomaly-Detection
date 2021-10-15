@@ -69,15 +69,19 @@ def train(cfg):
         )
 
         if epoch % cfg.TRAIN.EVAL_PERIOD == 0:
-            auc, _, _, _ = test_engine.test(cfg, model, test_dataloader, True)
+            auc, _, _, _, acc, acc_normal, acc_anomaly = test_engine.test(cfg, model, test_dataloader, True)
 
             if auc > best_auc:
                 best_auc = auc
                 best_epoch = epoch
                 best_model_state_dict = modelutils.create_state_dictionary(cfg, model)
 
-            print("Loss = {0:.6f} --- AUC = {1:.6f} --- Best AUC = {2:.6f} -- Best Epoch = {3}\n".
-                format(loss_value, auc, best_auc, best_epoch))
+            print(
+                "Loss = {0:.6f} --- AUC = {1:.6f} --- Best AUC = {2:.6f} -- Best Epoch = {3}".
+                format(loss_value, auc, best_auc, best_epoch) + \
+                " --- ACC = {0:.6f} --- ACC_NORM = {1:.6f} -- ACC_ANOM = {2:.6f}\n".
+                format(acc, acc_normal, acc_anomaly)
+            )
 
         if epoch % cfg.TRAIN.CHECKPOINT_PERIOD == 0 and best_auc != 0.0:
             checkpoint.save_checkpoint(

@@ -215,7 +215,7 @@ def _evaluate_per_batch(cfg, model, test_dataloader, idx):
     """
     auc = None
     if cfg.TRAIN.ENABLE_EVAL_BATCH and idx % cfg.TRAIN.EVAL_BATCH_PERIOD == 0:
-        auc, _, _, _ = test_engine.test(cfg, model, test_dataloader, False)
+        auc, _, _, _, _, _, _  = test_engine.test(cfg, model, test_dataloader, False)
         model.train()
 
     return auc

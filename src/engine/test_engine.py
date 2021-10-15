@@ -21,6 +21,9 @@ def test(cfg, model, dataloader, print_stats=False):
         fpr (numpy.ndarray): False postive rate
         tpr (numpy.ndarray): True positive rate
         thresholds (numpy.ndarray): Thresholds for ROC curve
+        acc (float): The overall accuracy
+        acc_normal (float): The normal (class = 0) prediction accuracy
+        acc_anomaly (float): The anomaly (class = 1) prediction accuracy
     """
     model.eval()
 
@@ -53,9 +56,10 @@ def test(cfg, model, dataloader, print_stats=False):
     if print_stats:
         progress_bar.close()
 
-    auc, fpr, tpr, thresholds = metrics.roc_auc(
-        torch.flatten(torch.cat(gt_list)),
-        torch.flatten(torch.cat(preds_list))
-    )
+    y_true = torch.flatten(torch.cat(gt_list))
+    y_probs = torch.flatten(torch.cat(preds_list))
 
-    return auc, fpr, tpr, thresholds
+    auc, fpr, tpr, thresholds = metrics.roc_auc(y_true, y_probs)
+    acc, acc_normal, acc_anomaly = metrics.accuracy(y_true, y_probs)
+
+    return auc, fpr, tpr, thresholds, acc, acc_normal, acc_anomaly

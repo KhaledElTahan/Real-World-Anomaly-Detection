@@ -34,8 +34,9 @@ def test(cfg):
 
     _print_test_stats(cfg, completed_epochs, best_auc)
 
-    auc, fpr, tpr, _ = test_engine.test(cfg, model, test_dataloader, True)
-    print("Test completed with AUC ", auc)
+    auc, fpr, tpr, _, acc, acc_normal, acc_anomaly = test_engine.test(cfg, model, test_dataloader, True)
+    print("TEST RESULTS:: AUC = {0:.6f} --- ACC = {1:.6f} --- ACC_NORM = {2:.6f} -- ACC_ANOM = {3:.6f}\n".
+        format(auc, acc, acc_normal, acc_anomaly))
 
     roc_auc.plot_signle_roc_auc(cfg, auc, fpr, tpr)
 
