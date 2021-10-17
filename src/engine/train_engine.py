@@ -164,7 +164,9 @@ def _get_training_selection_for_epoch_PL_MIL(cfg):
     """
     assert cfg.TRAIN.TYPE == 'PL-MIL'
     assert len(cfg.TRAIN.PL_MIL_INTERVALS) > 0
-    assert len(cfg.TRAIN.PL_MIL_PERCENTAGES) == len(cfg.TRAIN.PL_MIL_INTERVALS)
+    assert len(cfg.TRAIN.PL_MIL_INTERVALS) == len(cfg.TRAIN.PL_MIL_PERCENTAGES)
+    assert len(cfg.TRAIN.PL_MIL_INTERVALS) == len(cfg.TRAIN.PL_MIL_PERCENTAGE_THRESHOLD)
+
 
     sum_intervals = 0
     interval_index = len(cfg.TRAIN.PL_MIL_PERCENTAGES) - 1

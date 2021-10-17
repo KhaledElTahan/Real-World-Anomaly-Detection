@@ -195,11 +195,7 @@ class PseudoLabelsLoss():
         Returns
             all_segments_number (int): Count of segments in one batch
         """
-        all_segments_number = 1
-        for dim in self.preds_org_normal.size():
-            all_segments_number *= dim
-
-        return all_segments_number
+        return torch.numel(self.preds_org_normal)
 
 
     def _use_percentage_or_threshold(self):

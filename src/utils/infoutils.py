@@ -71,6 +71,7 @@ def get_PL_MIL_printable_intervals(cfg):
     assert cfg.TRAIN.TYPE == 'PL-MIL'
     assert len(cfg.TRAIN.PL_MIL_INTERVALS) > 0
     assert len(cfg.TRAIN.PL_MIL_INTERVALS) == len(cfg.TRAIN.PL_MIL_PERCENTAGES)
+    assert len(cfg.TRAIN.PL_MIL_INTERVALS) == len(cfg.TRAIN.PL_MIL_PERCENTAGE_THRESHOLD)
 
     if cfg.TRAIN.PL_MIL_MILFIRST:
         first_type = 'MIL'

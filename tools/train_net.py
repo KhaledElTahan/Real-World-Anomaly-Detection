@@ -177,12 +177,8 @@ def _print_hyperparameters_stats(cfg):
         ["Sultani Sparisty Lambda", cfg.LOSS.SL_SPARISTY_LAMBDA]
             if cfg.MODEL.LOSS_FUNC == "SultaniLoss" else None,
         ["Training Type", infoutils.get_detailed_train_type(cfg)],
-        ["Weak Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_WEAK_CODE]
-            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
-        ["Strong Aug Dataset Transform Code", cfg.TRAIN.PL_AUG_STRONG_CODE]
-            if cfg.TRAIN.TYPE == "PL" else None,
         ["PL Use Percentage", cfg.TRAIN.PL_USE_PERCENTAGE]
-            if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
+            if cfg.TRAIN.TYPE == "PL" else None,
         ["Pseudo Labels Percentage", cfg.TRAIN.PL_PERCENTAGE]
             if cfg.TRAIN.TYPE in ["PL", "PL-MIL"] else None,
         ["Pseudo Labels Threshold", cfg.TRAIN.PL_THRESHOLD]
