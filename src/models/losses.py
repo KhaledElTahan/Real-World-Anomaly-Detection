@@ -140,7 +140,8 @@ class PseudoLabelsLoss():
         """
         if self._use_percentage_or_threshold():
             topk = int(self.percentage * self._get_all_segments_number())
-            pos_anomalies = torch.topk(self.preds_aug_weak_normal.view(-1), topk, largest=True).values
+            indices = torch.topk(self.preds_aug_weak_anomaly.view(-1), topk, largest=True).indices
+            pos_anomalies = self.preds_aug_strong_anomaly.view(-1)[indices]
         else:
             pos_anomalies = self.preds_aug_strong_anomaly[self.preds_aug_weak_anomaly >= self.threshold]
 

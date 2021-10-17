@@ -12,7 +12,7 @@ def get_optimizer(cfg, model):
         optimizer (torch.optim.optimizer)
     """
 
-    assert cfg.OPTIMIZER.NAME in ["Adagrad", "Adam", "Adadelta", "SDG"]
+    assert cfg.OPTIMIZER.NAME in ["Adagrad", "Adam", "Adadelta", "SGD"]
 
     if cfg.OPTIMIZER.NAME == "Adagrad":
         optimizer = Adagrad(
