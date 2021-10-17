@@ -395,7 +395,7 @@ _C.OPTIMIZER.EPS = 1e-8
 # ---------------------------------------------------------------------------- #
 
 # Number of GPUs to use (applies to both training, testing and features extraction).
-_C.NUM_GPUS = 2
+_C.NUM_GPUS = 4
 
 # If True, reproducibility is achieved
 _C.SET_RNG_SEED = True

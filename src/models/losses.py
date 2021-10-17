@@ -177,6 +177,11 @@ class PseudoLabelsLoss():
         targets_normal = torch.zeros(corrected_top_k, dtype=torch.float32)
         targets = torch.cat([targets_anomalies, targets_normal])
 
+        if self.cfg.NUM_GPUS > 0:
+            targets_anomalies = targets_anomalies.cuda()
+            targets_normal = targets_normal.cuda()
+            targets = targets.cuda()
+
         binary_cross_entropy_loss = torch.nn.BCELoss()
         return binary_cross_entropy_loss(preds, targets)
 

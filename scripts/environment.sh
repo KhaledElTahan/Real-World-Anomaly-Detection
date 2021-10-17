@@ -1,14 +1,8 @@
-# Add NVIDIA package repositories
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.1.243-1_amd64.deb
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-sudo dpkg -i cuda-repo-ubuntu1804_10.1.243-1_amd64.deb
-sudo apt-get update
-wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
-sudo apt install ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
-sudo apt-get update
-
 # Install NVIDIA driver
-sudo apt-get install --no-install-recommends nvidia-driver-450
+sudo apt install ubuntu-drivers-common
+ubuntu-drivers devices
+sudo apt-get update
+sudo ubuntu-drivers autoinstall
 # Reboot. 
 
 # Check that GPUs are visible
@@ -17,12 +11,6 @@ nvidia-smi
 # Update apt-get
 sudo apt-get update
 
-# Install development and runtime libraries (~4GB)
-sudo apt-get install --no-install-recommends \
-    cuda-10-1 \
-    libcudnn7=7.6.5.32-1+cuda10.1  \
-    libcudnn7-dev=7.6.5.32-1+cuda10.1
-
 # Download Anaconda
 wget https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-x86_64.sh
 
@@ -30,10 +18,25 @@ wget https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-x86_64.sh
 bash Anaconda3-2021.05-Linux-x86_64.sh
 
 # Add Anaconda to $PATH
-echo "export PATH=~/anaconda3/bin:$PATH" >> ~/.bashrc
+echo "export PATH=~/anaconda3/bin:$PATH" >> /.bashrc
 
 # Reload environment variables
 source ~/.bashrc
+
+# Install CUDA
+conda install -c anaconda cudatoolkit 
+sudo apt install nvidia-cuda-toolkit
+
+# Check CUDA installation
+nvcc --version
+
+# Install Cudnn https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html#package-manager-ubuntu-install
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+sudo apt-get update
+
+sudo apt-get install libcudnn8=8.2.4.*-1+cuda11.4
+sudo apt-get install libcudnn8-dev=8.2.4.*-1+cuda11.4
 
 # Install Sckikit-Learn
 conda install -c anaconda scikit-learn 
